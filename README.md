@@ -35,7 +35,15 @@ single-document writers never need to think about structure.
 ## Philosophy
 
 The mission, beliefs and decision tests live in [PHILOSOPHY.md](PHILOSOPHY.md). Read it before adding features.
+The rules for the optional AI guide are in [AI-POLICY.md](AI-POLICY.md) (draft).
 
 ## Not built yet
 
-Setting sheets (obstacle-first, with a prop list), a cast grid view, a voice-blind dialogue test, chapter guides, optional cloud sync, an opt-in AI helper, mobile apps.
+The agreed roadmap is at the end of [PHILOSOPHY.md](PHILOSOPHY.md). In short:
+- **Import and export:** import .docx, .md and .txt; export a manuscript .docx, "Copy for AO3" and poem-safe formats.
+- **Safety and devices:** visible backups, then optional sync across devices that writers can host themselves.
+- **Writing tools:** read-aloud, a notes pane, a rhythm view, a private challenge mode.
+- **AI:** an optional, self-hosted AI guide, off by default.
+- **From before:** setting sheets, a cast grid view, a voice-blind dialogue test, chapter guides, mobile apps.
+
+The project has no licence file yet. Add one before calling it open source.

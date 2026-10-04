@@ -1,0 +1,126 @@
+{
+  "_comment": "Search phrases per research theme. Edit freely. Themes map to the gaps in research.md section 9.",
+  "themes": {
+    "starting": [
+      "writer's block",
+      "can't start writing",
+      "blank page",
+      "afraid my writing is bad",
+      "procrastination writing"
+    ],
+    "abandon-finish": [
+      "never finish my novel",
+      "abandoned my draft",
+      "lost motivation mid-draft",
+      "stuck in the middle of my novel",
+      "how do I finish a story"
+    ],
+    "revision-feedback": [
+      "how to revise a novel",
+      "critique group",
+      "beta readers feedback",
+      "overwhelmed by revision",
+      "cutting scenes"
+    ],
+    "structure-plot": [
+      "plotter or pantser",
+      "outline novel",
+      "saggy middle",
+      "multiple POV",
+      "subplots tracking"
+    ],
+    "continuity-world": [
+      "continuity errors",
+      "worldbuilding too much",
+      "series bible",
+      "timeline in my novel",
+      "track characters"
+    ],
+    "tools": [
+      "Scrivener",
+      "writing software",
+      "Obsidian for writing",
+      "app to write a novel",
+      "best word processor for writers"
+    ],
+    "ai": [
+      "AI generated writing",
+      "ChatGPT for writers",
+      "AI writing assistant",
+      "using AI for brainstorming"
+    ],
+    "fanfic-serial": [
+      "fan fiction",
+      "AO3",
+      "web serial",
+      "Royal Road",
+      "posting chapters on a schedule"
+    ],
+    "poetry": [
+      "poetry line breaks",
+      "poem formatting",
+      "when is a poem finished",
+      "revising a poem",
+      "poetry collection order"
+    ],
+    "accessibility": [
+      "ADHD writing",
+      "dyslexia writing",
+      "chronic illness writing",
+      "writing anxiety",
+      "writing with a disability"
+    ],
+    "submission-format": [
+      "submitting short stories",
+      "manuscript format",
+      "rejection letters",
+      "submission tracker",
+      "cover letter short story"
+    ],
+    "language": [
+      "French typography",
+      "bilingual writing",
+      "writing in a second language",
+      "non-native English writer",
+      "quotation marks in other languages"
+    ],
+    "products": [
+      "writing app for novelists",
+      "Show HN writing app",
+      "distraction-free writing",
+      "Scrivener alternative",
+      "novel writing software",
+      "iA Writer",
+      "Ulysses subscription",
+      "writing app offline",
+      "Obsidian novel writing",
+      "Ellipsus",
+      "Plottr",
+      "fiction writing tool"
+    ],
+    "trust": [
+      "Google Docs locked out author",
+      "NaNoWriMo AI",
+      "AI training on writers",
+      "authors AI training consent",
+      "local-first software",
+      "lost my manuscript",
+      "Grammarly AI authors",
+      "writers against AI"
+    ]
+  },
+  "lemmy": {
+    "_comment": "community@instance. Found with `fetch_threads.py discover-lemmy`. Add or remove as you like.",
+    "communities": [
+      "writing@lemmy.world",
+      "writing@beehaw.org",
+      "keepwriting@lemmy.world",
+      "worldbuilding@lemmy.world",
+      "poetry@lemmy.world",
+      "fanfiction@lemmy.world",
+      "writing_lounge@literature.cafe",
+      "writing@sh.itjust.works",
+      "writing@lemmy.ml"
+    ]
+  }
+}
