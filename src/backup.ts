@@ -1,4 +1,5 @@
 import { db } from './db'
+import { markBackup } from './safekeeping'
 import type { Character, DrawerItem, Folder, Scene, Snapshot, Story, WritingDay } from './types'
 import { countWords } from './words'
 
@@ -14,7 +15,8 @@ export interface BackupFile {
   data: Record<TableName, { id: string }[]> & { days?: WritingDay[]; drawer?: DrawerItem[] }
 }
 
-export async function exportBackup() {
+/** Downloads everything as one JSON file, records the moment, and returns the file name. */
+export async function exportBackup(): Promise<string> {
   const data: BackupFile['data'] = {
     folders: await db.folders.toArray(),
     stories: await db.stories.toArray(),
@@ -32,6 +34,8 @@ export async function exportBackup() {
   a.download = `parchemin-backup-${new Date().toISOString().slice(0, 10)}.json`
   a.click()
   setTimeout(() => URL.revokeObjectURL(url), 1000)
+  await markBackup()
+  return a.download
 }
 
 function parse(text: string): BackupFile {
@@ -122,4 +126,28 @@ export async function restoreBackup(file: File): Promise<RestoreCounts> {
     if (d.drawer.length) await db.drawer.bulkPut(d.drawer)
   })
   return { stories: d.stories.length, characters: d.characters.length }
+}
+
+export interface BackupCounts {
+  stories: number
+  chapters: number
+  characters: number
+  snapshots: number
+  words: number
+  exportedAt: number
+}
+
+/** Reads a backup file back and counts what is in it, so the writer knows the file is whole. Stores nothing. */
+export async function inspectBackup(file: File): Promise<BackupCounts> {
+  const backup = parse(await file.text())
+  const { cleanHtml, cleanImage } = await import('./sanitize')
+  const d = cleanRows(backup.data, cleanHtml, cleanImage)
+  return {
+    stories: d.stories.length,
+    chapters: d.scenes.length,
+    characters: d.characters.length,
+    snapshots: d.snapshots.length,
+    words: d.scenes.reduce((n, s) => n + s.words, 0),
+    exportedAt: typeof backup.exportedAt === 'number' ? backup.exportedAt : file.lastModified,
+  }
 }

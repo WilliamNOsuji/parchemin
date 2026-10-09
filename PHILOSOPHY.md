@@ -134,7 +134,7 @@ When a feature idea comes up, run it through these questions. A "no" to the firs
 | Gentle habit | `src/components/Why.tsx` (today's words, streak), `logWords` in `src/db.ts` |
 | Finishing is learnable | Finish line in `src/components/OutlineTab.tsx`, `pace` in `src/craft/audit.ts` |
 | Craft without a cage | `src/craft/` (voices, hero check, audit), optional chapter plan |
-| The writer owns the work | Local-first IndexedDB in `src/db.ts`, backup in `src/backup.ts`, exports in `src/export.ts`, fonts bundled in `src/main.tsx` |
+| The writer owns the work | Local-first IndexedDB in `src/db.ts`, backup in `src/backup.ts`, safekeeping in `src/safekeeping.ts`, exports in `src/export.ts`, fonts bundled in `src/main.tsx`, `LICENSE` (AGPL-3.0-or-later) |
 | Safe to cut | The drawer: `setAside*` and `putBack` in `src/db.ts`, `src/components/DrawerSection.tsx` |
 | The story is never written for you | Prompts in `src/prompts.ts`; the AI guide's limits in `AI-POLICY.md` |
 
@@ -146,6 +146,8 @@ order yet.
 1. **Trust and safety.** A plain "Your words" page, an open-source licence, browser writing suggestions switched off in
    the editor with a help note, a human-voice pass on all public text, visible backups, a performance check on long
    books, and an install that a non-technical writer finds easy.
+   Done on 2026-10-09: the licence (AGPL-3.0-or-later), the writing-suggestions switch with its help note, and visible
+   backups (the safekeeping panel).
 2. **Getting work in and out.** Import (.docx, .md, .txt) and export (manuscript .docx, "Copy for AO3", poem-safe).
 3. **Between devices.** A "move my library" flow, then optional sync across phone, laptop and desktop that writers can
    host themselves, with a very simple setup guide. How sync works is still open.

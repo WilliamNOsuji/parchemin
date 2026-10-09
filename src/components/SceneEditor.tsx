@@ -4,6 +4,7 @@ import Typography from '@tiptap/extension-typography'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, logWords, touchStory } from '../db'
 import { storyKit } from '../editorSchema'
+import { requestPersistOnce } from '../safekeeping'
 import type { Scene } from '../types'
 import { countWords } from '../words'
 import { ActiveBlock } from './activeBlock'
@@ -53,6 +54,7 @@ export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Pro
       .update(scene.id, { content: html, words: w, updatedAt: Date.now() })
       .then(() => {
         void touchStory(scene.storyId)
+        void requestPersistOnce() // the first real save is the moment to ask the browser to keep the data
         failed.current = false
         setSaveFailed(false)
         if (pending.current === null) setDirty(false)
@@ -81,7 +83,8 @@ export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Pro
     {
       extensions,
       content: scene.content,
-      editorProps: { attributes: { class: 'prose', spellcheck: 'true', 'aria-label': 'Story text' } },
+      // writingsuggestions keeps the browser's own AI rewrites out of the draft, where the browser honours it
+      editorProps: { attributes: { class: 'prose', spellcheck: 'true', writingsuggestions: 'false', 'aria-label': 'Story text' } },
       onUpdate: ({ editor }) => {
         const html = editor.getHTML()
         pending.current = html

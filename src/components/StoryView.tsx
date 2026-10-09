@@ -5,6 +5,7 @@ import { exportEpub, exportMarkdown } from '../export'
 import { navigate, type Tab } from '../route'
 import type { Folder, Scene } from '../types'
 import { Menu } from './Menu'
+import { BackupNudge } from './Safekeeping'
 
 // Each tab pulls in heavy dependencies (Tiptap, dnd-kit), so load them on demand.
 const WriteTab = lazy(() => import('./WriteTab').then((m) => ({ default: m.WriteTab })))
@@ -122,6 +123,7 @@ export function StoryView({ storyId, tab, itemId, focus, onToggleFocus }: Props)
             />
           </div>
         </div>
+        <BackupNudge />
         <nav className="tabs" role="tablist">
           {TABS.map((t) => (
             <button

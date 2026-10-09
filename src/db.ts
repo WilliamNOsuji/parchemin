@@ -1,6 +1,6 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { nanoid } from 'nanoid'
-import type { Character, DrawerItem, Folder, Scene, Snapshot, Story, WritingDay } from './types'
+import type { Character, DrawerItem, Folder, Meta, Scene, Snapshot, Story, WritingDay } from './types'
 import type { Template } from './templates'
 import { dayKey } from './craft/why'
 import { countWords } from './words'
@@ -13,6 +13,7 @@ class ParcheminDB extends Dexie {
   snapshots!: EntityTable<Snapshot, 'id'>
   days!: EntityTable<WritingDay, 'date'>
   drawer!: EntityTable<DrawerItem, 'id'>
+  meta!: EntityTable<Meta, 'key'>
 
   constructor() {
     super('parchemin')
@@ -34,6 +35,8 @@ class ParcheminDB extends Dexie {
         await tx.table('scenes').toCollection().modify(recount)
         await tx.table('snapshots').toCollection().modify(recount)
       })
+    // v4: per-device facts (last backup file, and so on) and an index so safekeeping can find chapters changed since
+    this.version(4).stores({ scenes: 'id, storyId, order, updatedAt', meta: 'key' })
   }
 }
 

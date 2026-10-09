@@ -60,7 +60,7 @@ function CharacterEditor({ character, flushRef }: { character: Character; flushR
     {
       extensions: [StarterKit.configure({ heading: { levels: [2] } }), Placeholder.configure({ placeholder: 'Backstory, voice, quirks, anything that makes them real…' })],
       content: character.bio,
-      editorProps: { attributes: { class: 'prose bio', 'aria-label': 'Biography' } },
+      editorProps: { attributes: { class: 'prose bio', writingsuggestions: 'false', 'aria-label': 'Biography' } },
       onUpdate: ({ editor }) => update({ bio: editor.getHTML() }),
     },
     [],

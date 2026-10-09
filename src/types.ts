@@ -102,6 +102,12 @@ export interface WritingDay {
   words: number
 }
 
+/** A fact Parchemin keeps about this device, such as when the last backup file was made. Not part of a backup. */
+export interface Meta {
+  key: string
+  value: number
+}
+
 /**
  * Work the writer set aside instead of deleting: a whole story, one chapter or one character,
  * with everything needed to put it back exactly as it was, snapshots included.

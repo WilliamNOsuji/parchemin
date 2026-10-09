@@ -189,6 +189,16 @@ textarea { resize: vertical; }
 .drawer-list { list-style: none; padding: 0; margin: 0 0 8px; display: flex; flex-direction: column; gap: 8px; }
 .drawer-list li { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; }
 .drawer-what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.nudge { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; justify-content: space-between; background: var(--accent-soft); border-radius: var(--radius); padding: 10px 14px; font-size: .95em; }
+.story-head .nudge { margin-bottom: 4px; }
+.btn.quiet { border-color: transparent; background: none; }
+.keeping { list-style: none; margin: 0 0 12px; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.keeping li { display: flex; flex-wrap: wrap; gap: 6px 16px; align-items: center; justify-content: space-between; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; }
+.keeping li > span:first-child, .keeping li > strong { flex: 1 1 320px; min-width: 0; }
+.help-note { border-top: 1px solid var(--border); padding-top: 16px; font-size: .95em; color: var(--muted); }
+.help-note summary { cursor: pointer; font-weight: 500; color: var(--text); }
+.help-note ul { padding-left: 20px; }
+.help-note li { margin: 6px 0; }
 .snap-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .snap-list li { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
 .snap-head { display: flex; flex-direction: column; gap: 8px; }
