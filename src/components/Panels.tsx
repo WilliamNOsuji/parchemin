@@ -2,7 +2,14 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
 import { db, takeSnapshot } from '../db'
 import { PROMPT_KINDS, randomPrompt, type PromptKind } from '../prompts'
-import type { Character, Scene, Story } from '../types'
+import { cleanHtml } from '../sanitize'
+import type { Character, Scene, Snapshot, Story } from '../types'
+
+/** Shows a snapshot's text. It is rebuilt through the editor's schema first, so a snapshot from a restored backup cannot run code. */
+function SnapshotPreview({ snapshot }: { snapshot: Snapshot }) {
+  const html = useMemo(() => cleanHtml(snapshot.content), [snapshot.content])
+  return <div className="snap-preview prose" dangerouslySetInnerHTML={{ __html: html || '<p><em>(empty)</em></p>' }} />
+}
 
 export function PromptsPanel({ characters }: { characters: Character[] }) {
   const [kind, setKind] = useState<PromptKind>('stuck')
@@ -77,7 +84,7 @@ export function SnapshotsPanel({ scene }: { scene: Scene }) {
                 <button className="icon-btn" aria-label="Delete snapshot" onClick={() => db.snapshots.delete(s.id)}>✕</button>
               </div>
             </div>
-            {preview === s.id && <div className="snap-preview prose" dangerouslySetInnerHTML={{ __html: s.content || '<p><em>(empty)</em></p>' }} />}
+            {preview === s.id && <SnapshotPreview snapshot={s} />}
           </li>
         ))}
       </ul>

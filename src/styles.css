@@ -183,6 +183,12 @@ textarea { resize: vertical; }
 .panel { border-left: 1px solid var(--border); padding: 14px; overflow-y: auto; background: var(--bg); }
 .panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
 .panel-head h3 { margin: 0; }
+.save-error { margin: 0; padding: 8px 16px; background: var(--surface); border-top: 1px solid var(--danger); color: var(--danger); font-size: .9em; }
+.save-error:empty { padding: 0; border: 0; }
+.btn.danger { color: var(--danger); }
+.drawer-list { list-style: none; padding: 0; margin: 0 0 8px; display: flex; flex-direction: column; gap: 8px; }
+.drawer-list li { display: flex; flex-wrap: wrap; gap: 8px 16px; justify-content: space-between; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 10px 14px; }
+.drawer-what { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
 .snap-list { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 10px; }
 .snap-list li { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 10px; }
 .snap-head { display: flex; flex-direction: column; gap: 8px; }

@@ -1,8 +1,9 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { nanoid } from 'nanoid'
-import type { Character, Folder, Scene, Snapshot, Story, WritingDay } from './types'
+import type { Character, DrawerItem, Folder, Scene, Snapshot, Story, WritingDay } from './types'
 import type { Template } from './templates'
 import { dayKey } from './craft/why'
+import { countWords } from './words'
 
 class ParcheminDB extends Dexie {
   folders!: EntityTable<Folder, 'id'>
@@ -11,6 +12,7 @@ class ParcheminDB extends Dexie {
   characters!: EntityTable<Character, 'id'>
   snapshots!: EntityTable<Snapshot, 'id'>
   days!: EntityTable<WritingDay, 'date'>
+  drawer!: EntityTable<DrawerItem, 'id'>
 
   constructor() {
     super('parchemin')
@@ -22,6 +24,16 @@ class ParcheminDB extends Dexie {
       snapshots: 'id, sceneId, createdAt',
     })
     this.version(2).stores({ days: 'date' })
+    // v3: the drawer, and word counts recounted with the language-aware counter in words.ts
+    this.version(3)
+      .stores({ drawer: 'id, setAsideAt' })
+      .upgrade(async (tx) => {
+        const recount = (row: { content?: unknown; words: number }) => {
+          row.words = countWords(typeof row.content === 'string' ? row.content : '')
+        }
+        await tx.table('scenes').toCollection().modify(recount)
+        await tx.table('snapshots').toCollection().modify(recount)
+      })
   }
 }
 
@@ -29,14 +41,6 @@ export const db = new ParcheminDB()
 export const uid = () => nanoid(10)
 
 export const DEFAULT_CHARACTER_FIELDS = ['Age', 'Appearance', 'Goal', 'Fear / Flaw', 'Secret']
-
-export function countWords(html: string): number {
-  const text = html
-    .replace(/<[^>]+>/g, ' ')
-    .replace(/&nbsp;/g, ' ')
-    .trim()
-  return text ? text.split(/\s+/).length : 0
-}
 
 export async function createStory(opts: {
   title?: string
@@ -107,21 +111,126 @@ export async function reorderScenes(orderedIds: string[]) {
   })
 }
 
-export async function deleteScene(id: string) {
-  await db.transaction('rw', db.scenes, db.snapshots, async () => {
+const DRAWER_TABLES = () => [db.stories, db.scenes, db.characters, db.snapshots, db.drawer]
+
+/** Moves a chapter and its snapshots into the drawer. */
+export async function setAsideScene(id: string) {
+  await db.transaction('rw', DRAWER_TABLES(), async () => {
+    const scene = await db.scenes.get(id)
+    if (!scene) return
+    const story = await db.stories.get(scene.storyId)
+    const snapshots = await db.snapshots.where('sceneId').equals(id).toArray()
+    await db.drawer.add({
+      id: uid(),
+      kind: 'chapter',
+      title: scene.title,
+      storyId: scene.storyId,
+      storyTitle: story?.title ?? '',
+      words: scene.words,
+      setAsideAt: Date.now(),
+      stories: [],
+      scenes: [scene],
+      characters: [],
+      snapshots,
+    })
+    await db.snapshots.bulkDelete(snapshots.map((s) => s.id))
     await db.scenes.delete(id)
-    await db.snapshots.where('sceneId').equals(id).delete()
   })
 }
 
-export async function deleteStory(id: string) {
-  await db.transaction('rw', [db.stories, db.scenes, db.characters, db.snapshots], async () => {
-    const sceneIds = await db.scenes.where('storyId').equals(id).primaryKeys()
-    await db.snapshots.where('sceneId').anyOf(sceneIds).delete()
-    await db.scenes.where('storyId').equals(id).delete()
-    await db.characters.where('storyId').equals(id).delete()
+/** Moves a whole story into the drawer: chapters, characters and snapshots. */
+export async function setAsideStory(id: string) {
+  await db.transaction('rw', DRAWER_TABLES(), async () => {
+    const story = await db.stories.get(id)
+    if (!story) return
+    const scenes = await db.scenes.where('storyId').equals(id).toArray()
+    const characters = await db.characters.where('storyId').equals(id).toArray()
+    const snapshots = await db.snapshots.where('sceneId').anyOf(scenes.map((s) => s.id)).toArray()
+    await db.drawer.add({
+      id: uid(),
+      kind: 'story',
+      title: story.title,
+      storyId: id,
+      storyTitle: story.title,
+      words: scenes.reduce((n, s) => n + s.words, 0),
+      setAsideAt: Date.now(),
+      stories: [story],
+      scenes,
+      characters,
+      snapshots,
+    })
+    await db.snapshots.bulkDelete(snapshots.map((s) => s.id))
+    await db.scenes.bulkDelete(scenes.map((s) => s.id))
+    await db.characters.bulkDelete(characters.map((c) => c.id))
     await db.stories.delete(id)
   })
+}
+
+/** Moves a character into the drawer. */
+export async function setAsideCharacter(id: string) {
+  await db.transaction('rw', DRAWER_TABLES(), async () => {
+    const character = await db.characters.get(id)
+    if (!character) return
+    const story = await db.stories.get(character.storyId)
+    await db.drawer.add({
+      id: uid(),
+      kind: 'character',
+      title: character.name,
+      storyId: character.storyId,
+      storyTitle: story?.title ?? '',
+      words: 0,
+      setAsideAt: Date.now(),
+      stories: [],
+      scenes: [],
+      characters: [character],
+      snapshots: [],
+    })
+    await db.characters.delete(id)
+  })
+}
+
+/**
+ * Puts drawer work back where it came from. A chapter goes to the end of its story.
+ * If its story is gone, a story with the same name is made to hold it, and putting the
+ * whole story back later merges into that one.
+ */
+export async function putBack(itemId: string) {
+  await db.transaction('rw', [...DRAWER_TABLES(), db.folders], async () => {
+    const item = await db.drawer.get(itemId)
+    if (!item) return
+    const now = Date.now()
+    for (const story of item.stories) {
+      const folder = story.folderId ? await db.folders.get(story.folderId) : null
+      await db.stories.put({ ...story, folderId: folder ? story.folderId : null, updatedAt: now })
+    }
+    if (!(await db.stories.get(item.storyId))) {
+      await db.stories.add({
+        id: item.storyId,
+        title: item.storyTitle || 'Untitled story',
+        folderId: null,
+        tags: [],
+        synopsis: '',
+        createdAt: now,
+        updatedAt: now,
+      })
+    }
+    if (item.kind === 'chapter') {
+      const last = await db.scenes.where('storyId').equals(item.storyId).sortBy('order')
+      let order = (last.at(-1)?.order ?? -1) + 1
+      await db.scenes.bulkPut(item.scenes.map((s) => ({ ...s, order: order++ })))
+    } else {
+      await db.scenes.bulkPut(item.scenes)
+    }
+    await db.characters.bulkPut(item.characters)
+    await db.snapshots.bulkPut(item.snapshots)
+    await db.stories.update(item.storyId, { updatedAt: now })
+    await db.drawer.delete(itemId)
+  })
+}
+
+/** The only permanent delete in Parchemin. */
+export async function deleteForGood(itemId: string) {
+  await db.drawer.delete(itemId)
 }
 
 /** Deletes a folder; its stories and subfolders move up to the parent. */

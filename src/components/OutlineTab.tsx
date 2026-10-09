@@ -2,7 +2,7 @@ import { closestCenter, DndContext, KeyboardSensor, PointerSensor, TouchSensor, 
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { auditOutline, pace } from '../craft/audit'
-import { addScene, db, deleteScene, reorderScenes } from '../db'
+import { addScene, db, reorderScenes, setAsideScene } from '../db'
 import { navigate } from '../route'
 import { STATUSES, type ChapterPlan, type Scene, type SceneStatus, type Story } from '../types'
 
@@ -82,13 +82,13 @@ function Card({ scene, storyId, canDelete }: { scene: Scene; storyId: string; ca
             {canDelete && (
               <button
                 className="icon-btn"
-                aria-label={`Delete ${scene.title}`}
+                aria-label={`Move ${scene.title} to the drawer`}
+                title="Move to the drawer"
                 onClick={() => {
-                  const msg = scene.words > 0 ? `Delete "${scene.title}" and its ${scene.words} words?` : `Delete "${scene.title}"?`
-                  if (window.confirm(msg)) void deleteScene(scene.id)
+                  if (window.confirm(`Move "${scene.title}" to the drawer? You can put it back from the home screen.`)) void setAsideScene(scene.id)
                 }}
               >
-                🗑
+                🗄
               </button>
             )}
           </div>

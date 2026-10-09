@@ -52,7 +52,7 @@ export function StoryView({ storyId, tab, itemId, focus, onToggleFocus }: Props)
     return (
       <div className="empty">
         <h2>Story not found</h2>
-        <p className="muted">It may have been deleted.</p>
+        <p className="muted">It may be in the drawer on the home screen.</p>
         <a className="btn" href="#/">Back home</a>
       </div>
     )

@@ -319,6 +319,8 @@ Every note independently produced a reject list. They agree.
 
 Items marked **verified** were checked against the code in this repository. Items marked **agent-reported** come from a researcher's code reading and have not been re-checked here.
 
+> **Status, 2026-10-08:** items 1 to 7 are fixed. Snapshot previews, restores and exports rebuild HTML through the editor's schema; removed work goes to a drawer with its snapshots; word counts use `Intl.Segmenter`; fonts are self-hosted; dialogs trap and return focus; typewriter scroll respects reduced motion; failed saves are announced and retried. Item 8 (agent-reported) is still open.
+
 ### Safety and correctness
 
 1. **Stored HTML is rendered unsanitized in the snapshot preview** (**verified**: `src/components/Panels.tsx:80`, `dangerouslySetInnerHTML`). Normal snapshots come from the editor, which only produces schema-valid HTML, but **backup restore writes whatever is in the file** into `snapshots.content`. A crafted backup could therefore inject script when a snapshot is previewed. Fix: sanitise on import and/or render previews through the editor schema or a sanitiser.

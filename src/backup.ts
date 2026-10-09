@@ -1,5 +1,6 @@
 import { db } from './db'
-import type { Character, Folder, Scene, Snapshot, Story, WritingDay } from './types'
+import type { Character, DrawerItem, Folder, Scene, Snapshot, Story, WritingDay } from './types'
+import { countWords } from './words'
 
 const FORMAT = 'parchemin-backup'
 const VERSION = 1
@@ -10,7 +11,7 @@ export interface BackupFile {
   format: typeof FORMAT
   version: number
   exportedAt: number
-  data: Record<TableName, { id: string }[]> & { days?: WritingDay[] }
+  data: Record<TableName, { id: string }[]> & { days?: WritingDay[]; drawer?: DrawerItem[] }
 }
 
 export async function exportBackup() {
@@ -21,6 +22,7 @@ export async function exportBackup() {
     characters: await db.characters.toArray(),
     snapshots: await db.snapshots.toArray(),
     days: await db.days.toArray(),
+    drawer: await db.drawer.toArray(),
   }
   const file: BackupFile = { format: FORMAT, version: VERSION, exportedAt: Date.now(), data }
   const blob = new Blob([JSON.stringify(file)], { type: 'application/json' })
@@ -55,7 +57,44 @@ function parse(text: string): BackupFile {
   if (f.data.days !== undefined && (!Array.isArray(f.data.days) || f.data.days.some((r) => !r || typeof r.date !== 'string' || typeof r.words !== 'number'))) {
     throw new Error('The backup is damaged (bad "days" data).')
   }
+  if (f.data.drawer !== undefined && (!Array.isArray(f.data.drawer) || f.data.drawer.some((r) => !r || typeof r.id !== 'string'))) {
+    throw new Error('The backup is damaged (bad "drawer" data).')
+  }
   return f as BackupFile
+}
+
+type Clean = (html: unknown) => string
+type CleanImage = (src: unknown) => string | null
+
+/**
+ * A backup file can come from anywhere, so its text is rebuilt through the editor's schema
+ * before it is stored, and word counts are recounted from the text itself.
+ */
+function cleanRows(d: BackupFile['data'], clean: Clean, cleanImage: CleanImage) {
+  const scene = (s: Scene): Scene => {
+    const content = clean(s.content)
+    return { ...s, content, words: countWords(content) }
+  }
+  const snapshot = (s: Snapshot): Snapshot => {
+    const content = clean(s.content)
+    return { ...s, content, words: countWords(content) }
+  }
+  const character = (c: Character): Character => ({ ...c, bio: clean(c.bio), image: cleanImage(c.image) })
+  const list = <T,>(rows: unknown) => (Array.isArray(rows) ? (rows as T[]) : [])
+  return {
+    folders: d.folders as Folder[],
+    stories: d.stories as Story[],
+    scenes: (d.scenes as Scene[]).map(scene),
+    characters: (d.characters as Character[]).map(character),
+    snapshots: (d.snapshots as Snapshot[]).map(snapshot),
+    drawer: (d.drawer ?? []).map((item) => ({
+      ...item,
+      stories: list<Story>(item.stories),
+      scenes: list<Scene>(item.scenes).map(scene),
+      characters: list<Character>(item.characters).map(character),
+      snapshots: list<Snapshot>(item.snapshots).map(snapshot),
+    })),
+  }
 }
 
 export interface RestoreCounts {
@@ -70,14 +109,17 @@ export interface RestoreCounts {
  */
 export async function restoreBackup(file: File): Promise<RestoreCounts> {
   const backup = parse(await file.text())
-  const d = backup.data
-  await db.transaction('rw', [db.folders, db.stories, db.scenes, db.characters, db.snapshots, db.days], async () => {
-    await db.folders.bulkPut(d.folders as Folder[])
-    await db.stories.bulkPut(d.stories as Story[])
-    await db.scenes.bulkPut(d.scenes as Scene[])
-    await db.characters.bulkPut(d.characters as Character[])
-    await db.snapshots.bulkPut(d.snapshots as Snapshot[])
-    if (d.days) await db.days.bulkPut(d.days)
+  const { cleanHtml, cleanImage } = await import('./sanitize')
+  const d = cleanRows(backup.data, cleanHtml, cleanImage)
+  const days = backup.data.days
+  await db.transaction('rw', [db.folders, db.stories, db.scenes, db.characters, db.snapshots, db.days, db.drawer], async () => {
+    await db.folders.bulkPut(d.folders)
+    await db.stories.bulkPut(d.stories)
+    await db.scenes.bulkPut(d.scenes)
+    await db.characters.bulkPut(d.characters)
+    await db.snapshots.bulkPut(d.snapshots)
+    if (days) await db.days.bulkPut(days)
+    if (d.drawer.length) await db.drawer.bulkPut(d.drawer)
   })
-  return { stories: backup.data.stories.length, characters: backup.data.characters.length }
+  return { stories: d.stories.length, characters: d.characters.length }
 }

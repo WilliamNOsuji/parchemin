@@ -15,9 +15,11 @@ const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replac
 async function load(storyId: string) {
   const story = await db.stories.get(storyId)
   if (!story) throw new Error('Story not found')
-  const scenes = (await db.scenes.where('storyId').equals(storyId).sortBy('order')).filter(
-    (s) => s.content.trim() || s.words > 0,
-  )
+  const { cleanHtml } = await import('./sanitize')
+  // Exported files are opened by other apps and e-readers, so only clean, schema-valid text goes out.
+  const scenes = (await db.scenes.where('storyId').equals(storyId).sortBy('order'))
+    .filter((s) => s.content.trim() || s.words > 0)
+    .map((s) => ({ ...s, content: cleanHtml(s.content) }))
   return { story, scenes }
 }
 

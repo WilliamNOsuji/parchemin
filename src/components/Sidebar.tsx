@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useMemo, useState } from 'react'
-import { db, deleteFolder, deleteStory, uid } from '../db'
+import { db, deleteFolder, setAsideStory, uid } from '../db'
 import { navigate } from '../route'
 import type { Folder, Story } from '../types'
 import { Menu } from './Menu'
@@ -75,11 +75,10 @@ export function Sidebar({ activeStoryId, onNewStory, onNavigate }: Props) {
         label={`Actions for ${s.title}`}
         items={[
           {
-            label: 'Delete story',
-            danger: true,
+            label: 'Move to the drawer',
             onClick: async () => {
-              if (!window.confirm(`Delete "${s.title}" and all its chapters and characters? This can't be undone.`)) return
-              await deleteStory(s.id)
+              if (!window.confirm(`Move "${s.title}" to the drawer? Its chapters, characters and snapshots go with it, and you can put it back from the home screen.`)) return
+              await setAsideStory(s.id)
               if (s.id === activeStoryId) navigate({ name: 'home' })
             },
           },

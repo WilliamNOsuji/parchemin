@@ -134,7 +134,8 @@ When a feature idea comes up, run it through these questions. A "no" to the firs
 | Gentle habit | `src/components/Why.tsx` (today's words, streak), `logWords` in `src/db.ts` |
 | Finishing is learnable | Finish line in `src/components/OutlineTab.tsx`, `pace` in `src/craft/audit.ts` |
 | Craft without a cage | `src/craft/` (voices, hero check, audit), optional chapter plan |
-| The writer owns the work | Local-first IndexedDB in `src/db.ts`, backup in `src/backup.ts`, exports in `src/export.ts` |
+| The writer owns the work | Local-first IndexedDB in `src/db.ts`, backup in `src/backup.ts`, exports in `src/export.ts`, fonts bundled in `src/main.tsx` |
+| Safe to cut | The drawer: `setAside*` and `putBack` in `src/db.ts`, `src/components/DrawerSection.tsx` |
 | The story is never written for you | Prompts in `src/prompts.ts`; the AI guide's limits in `AI-POLICY.md` |
 
 ## Roadmap that follows from this

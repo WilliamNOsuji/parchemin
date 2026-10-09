@@ -2,8 +2,8 @@ import { EditorContent, useEditor } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useRef, useState } from 'react'
-import { createCharacter, db } from '../db'
+import { useEffect, useRef, useState, type RefObject } from 'react'
+import { createCharacter, db, setAsideCharacter } from '../db'
 import { navigate } from '../route'
 import type { Character, Story } from '../types'
 import { CraftSection } from './CharacterCraft'
@@ -29,18 +29,23 @@ const Avatar = ({ c, size = 40 }: { c: Pick<Character, 'name' | 'image'>; size?:
     </span>
   )
 
-function CharacterEditor({ character }: { character: Character }) {
+type Flush = () => Promise<unknown>
+
+function CharacterEditor({ character, flushRef }: { character: Character; flushRef: RefObject<Flush | null> }) {
   const [c, setC] = useState(character)
   const latest = useRef(character)
   const timer = useRef<number | undefined>(undefined)
   const dirty = useRef(false)
 
-  const flush = () => {
+  const flush: Flush = () => {
     window.clearTimeout(timer.current)
-    if (!dirty.current) return
+    if (!dirty.current) return Promise.resolve()
     dirty.current = false
-    void db.characters.put({ ...latest.current, updatedAt: Date.now() })
+    // update, not put: a late save must not bring back a character that was just moved to the drawer
+    const { id, ...changes } = latest.current
+    return db.characters.update(id, { ...changes, updatedAt: Date.now() })
   }
+  flushRef.current = flush
   const update = (patch: Partial<Character>) => {
     latest.current = { ...latest.current, ...patch }
     dirty.current = true
@@ -49,7 +54,7 @@ function CharacterEditor({ character }: { character: Character }) {
     timer.current = window.setTimeout(flush, 500)
   }
 
-  useEffect(() => () => flush(), []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => () => void flush(), []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const bio = useEditor(
     {
@@ -122,6 +127,7 @@ export function CharactersTab({ story, selectedId }: { story: Story; selectedId?
   const characters = useLiveQuery(() => db.characters.where('storyId').equals(story.id).sortBy('createdAt'), [story.id], [] as Character[])
   const selected = characters.find((c) => c.id === selectedId)
   const select = (id?: string) => navigate({ name: 'story', storyId: story.id, tab: 'characters', itemId: id })
+  const flushEditor = useRef<Flush | null>(null)
 
   return (
     <div className={`chars${selected ? ' has-selection' : ''}`}>
@@ -148,17 +154,18 @@ export function CharactersTab({ story, selectedId }: { story: Story; selectedId?
             <div className="char-actions">
               <button className="link-btn back" onClick={() => select(undefined)}>← All characters</button>
               <button
-                className="link-btn danger"
+                className="link-btn"
                 onClick={async () => {
-                  if (!window.confirm(`Delete ${selected.name || 'this character'}?`)) return
-                  await db.characters.delete(selected.id)
+                  if (!window.confirm(`Move ${selected.name || 'this character'} to the drawer? You can put them back from the home screen.`)) return
+                  await flushEditor.current?.() // the drawer gets the latest edits
+                  await setAsideCharacter(selected.id)
                   select(undefined)
                 }}
               >
-                Delete character
+                Move to the drawer
               </button>
             </div>
-            <CharacterEditor key={selected.id} character={selected} />
+            <CharacterEditor key={selected.id} character={selected} flushRef={flushEditor} />
           </>
         ) : (
           <p className="muted pad">Select a character to edit their profile.</p>

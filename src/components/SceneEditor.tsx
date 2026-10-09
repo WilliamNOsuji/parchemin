@@ -1,10 +1,11 @@
 import { EditorContent, useEditor } from '@tiptap/react'
-import StarterKit from '@tiptap/starter-kit'
 import Placeholder from '@tiptap/extension-placeholder'
 import Typography from '@tiptap/extension-typography'
 import { useEffect, useMemo, useRef, useState } from 'react'
-import { countWords, db, logWords, touchStory } from '../db'
+import { db, logWords, touchStory } from '../db'
+import { storyKit } from '../editorSchema'
 import type { Scene } from '../types'
+import { countWords } from '../words'
 import { ActiveBlock } from './activeBlock'
 import { Toolbar } from './Toolbar'
 
@@ -19,7 +20,11 @@ interface Props {
 }
 
 const SAVE_DELAY = 600
+const RETRY_DELAY = 5000
 const PASTE_THRESHOLD = 1500
+const SAVE_FAILED =
+  'This chapter could not be saved on this device. Your words are still here on screen. Copy them somewhere safe, and check that the device has free space. Parchemin keeps trying.'
+const reducedMotion = typeof window !== 'undefined' ? window.matchMedia('(prefers-reduced-motion: reduce)') : null
 
 export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Props) {
   const lastSaved = useRef(scene.content)
@@ -30,6 +35,8 @@ export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Pro
   focusRef.current = focus
   const [words, setWords] = useState(scene.words)
   const [dirty, setDirty] = useState(false)
+  const [saveFailed, setSaveFailed] = useState(false)
+  const failed = useRef(false)
 
   const flush = () => {
     window.clearTimeout(timer.current)
@@ -42,15 +49,27 @@ export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Pro
     const delta = w - savedWords.current
     savedWords.current = w
     if (Math.abs(delta) <= PASTE_THRESHOLD) void logWords(delta)
-    void db.scenes.update(scene.id, { content: html, words: w, updatedAt: Date.now() }).then(() => {
-      void touchStory(scene.storyId)
-      setDirty(false)
-    })
+    db.scenes
+      .update(scene.id, { content: html, words: w, updatedAt: Date.now() })
+      .then(() => {
+        void touchStory(scene.storyId)
+        failed.current = false
+        setSaveFailed(false)
+        if (pending.current === null) setDirty(false)
+      })
+      .catch(() => {
+        // keep the text and try again, unless newer text is already waiting to be saved
+        pending.current ??= html
+        failed.current = true
+        setSaveFailed(true)
+        window.clearTimeout(timer.current)
+        timer.current = window.setTimeout(flush, RETRY_DELAY)
+      })
   }
 
   const extensions = useMemo(
     () => [
-      StarterKit.configure({ heading: { levels: [1, 2] } }),
+      storyKit(),
       Placeholder.configure({ placeholder: 'Once upon a time…' }),
       Typography,
       ActiveBlock,
@@ -80,7 +99,7 @@ export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Pro
         const caret = editor.view.coordsAtPos(editor.state.selection.from).top
         const box = scroller.getBoundingClientRect()
         const delta = caret - (box.top + box.height * 0.4)
-        if (Math.abs(delta) > 24) scroller.scrollBy({ top: delta, behavior: 'smooth' })
+        if (Math.abs(delta) > 24) scroller.scrollBy({ top: delta, behavior: reducedMotion?.matches ? 'auto' : 'smooth' })
       },
     },
     [],
@@ -93,15 +112,22 @@ export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Pro
     pending.current = null
     lastSaved.current = scene.content
     editor.commands.setContent(scene.content, { emitUpdate: false })
+    // start counting from the restored text, so the restore itself is not logged as writing
+    savedWords.current = scene.words
     setWords(scene.words)
     setDirty(false)
   }, [editor, scene.content, scene.words])
 
   // flush unsaved text when leaving the scene or closing the tab
   useEffect(() => {
-    window.addEventListener('beforeunload', flush)
+    const onUnload = (e: BeforeUnloadEvent) => {
+      flush()
+      // the browser asks before closing if the last save failed
+      if (failed.current) e.preventDefault()
+    }
+    window.addEventListener('beforeunload', onUnload)
     return () => {
-      window.removeEventListener('beforeunload', flush)
+      window.removeEventListener('beforeunload', onUnload)
       flush()
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -144,9 +170,10 @@ export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Pro
           <EditorContent editor={editor} />
         </div>
       </div>
+      <p className="save-error" role="alert">{saveFailed ? SAVE_FAILED : ''}</p>
       <footer className="editor-foot">
         <span>{words.toLocaleString()} {words === 1 ? 'word' : 'words'}</span>
-        <span className="muted">{dirty ? 'Saving…' : 'Saved on this device'}</span>
+        <span className="muted">{saveFailed ? 'Not saved yet' : dirty ? 'Saving…' : 'Saved on this device'}</span>
       </footer>
     </section>
   )

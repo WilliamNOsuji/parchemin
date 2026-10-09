@@ -5,6 +5,7 @@ import { db } from '../db'
 import { randomPrompt } from '../prompts'
 import { useInstallPrompt } from '../useInstallPrompt'
 import { Epigraph, TodayCard } from './Why'
+import { DrawerSection } from './DrawerSection'
 import { navigate } from '../route'
 
 export function Home({ onNewStory }: { onNewStory: () => void }) {
@@ -79,6 +80,8 @@ export function Home({ onNewStory }: { onNewStory: () => void }) {
         {backupMsg && <p role="status" className="muted">{backupMsg}</p>}
         <p className="muted"><small>Restoring adds the backup's stories and overwrites any with the same id. Nothing else is removed.</small></p>
       </section>
+
+      <DrawerSection />
     </div>
   )
 }

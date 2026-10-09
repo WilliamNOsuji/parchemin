@@ -101,3 +101,22 @@ export interface WritingDay {
   date: string // YYYY-MM-DD, local time
   words: number
 }
+
+/**
+ * Work the writer set aside instead of deleting: a whole story, one chapter or one character,
+ * with everything needed to put it back exactly as it was, snapshots included.
+ * Only "Delete for good" in the drawer removes anything permanently.
+ */
+export interface DrawerItem {
+  id: string
+  kind: 'story' | 'chapter' | 'character'
+  title: string
+  storyId: string
+  storyTitle: string
+  words: number
+  setAsideAt: number
+  stories: Story[]
+  scenes: Scene[]
+  characters: Character[]
+  snapshots: Snapshot[]
+}

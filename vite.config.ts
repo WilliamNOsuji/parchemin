@@ -10,13 +10,13 @@ function offlineServiceWorker(): Plugin {
     name: 'parchemin-offline-sw',
     apply: 'build',
     generateBundle(_, bundle) {
-      const precache = [...STATIC_FILES, ...Object.keys(bundle)]
+      // .woff files are a fallback for browsers without .woff2 support; none of the browsers Parchemin runs in need them
+      const precache = [...STATIC_FILES, ...Object.keys(bundle).filter((f) => !f.endsWith('.woff'))]
       const version = createHash('sha1').update(precache.join('\n')).digest('hex').slice(0, 10)
       this.emitFile({
         type: 'asset',
         fileName: 'sw.js',
         source: `const CACHE = 'parchemin-${version}'
-const FONTS = 'parchemin-fonts'
 const PRECACHE = ${JSON.stringify(precache)}
 const url = (p) => new URL(p, self.registration.scope).href
 
@@ -27,7 +27,7 @@ self.addEventListener('install', (e) => {
 self.addEventListener('activate', (e) => {
   e.waitUntil(
     caches.keys()
-      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE && k !== FONTS).map((k) => caches.delete(k))))
+      .then((keys) => Promise.all(keys.filter((k) => k !== CACHE).map((k) => caches.delete(k))))
       .then(() => self.clients.claim()),
   )
 })
@@ -44,16 +44,6 @@ self.addEventListener('fetch', (e) => {
   }
   if (u.origin === location.origin) {
     e.respondWith(caches.match(req).then((hit) => hit || fetch(req)))
-    return
-  }
-  if (u.hostname === 'fonts.googleapis.com' || u.hostname === 'fonts.gstatic.com') {
-    e.respondWith(
-      caches.open(FONTS).then(async (c) => {
-        const hit = await c.match(req)
-        const net = fetch(req).then((r) => (r.ok || r.type === 'opaque' ? (c.put(req, r.clone()), r) : r)).catch(() => hit)
-        return hit || net
-      }),
-    )
   }
 })
 `,
