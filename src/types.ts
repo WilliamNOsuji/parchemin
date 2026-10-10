@@ -40,6 +40,38 @@ export interface Scene {
   updatedAt: number
   /** Chapter plan, all optional. Goal: what the POV character wants in this scene. */
   plan?: ChapterPlan
+  /** Dialogue prep, a script draft and the writer's own checks. Never part of the manuscript. */
+  dialogue?: ChapterDialogue
+}
+
+/** Someone who talks in one chapter, and what they are after in it. Only the name is needed. */
+export interface Speaker {
+  id: string
+  characterId?: string
+  name: string
+  /** One sentence: what they want in this chapter, not in life. */
+  want?: string
+  /** What they think and choose not to say. */
+  unsaid?: string
+  /** What they could never say out loud, or don't know about themselves. */
+  unsayable?: string
+}
+
+export interface ChapterDialogue {
+  speakers?: Speaker[]
+  /** The third thing: an object that carries what nobody can say. */
+  object?: string
+  /** A named value at the open, and a different one at the close. */
+  opens?: string
+  closes?: string
+  /** What the talk is really about. Never said in it. */
+  underneath?: string
+  /** Who knows more than someone else in the room. The reader counts. */
+  knowsMore?: string
+  /** The dialogue drafted fast, as a script: NAME: line, or NAME (tactic): line. */
+  script?: string
+  /** The writer's own ticks on the dialogue pass. */
+  checks?: Record<string, boolean>
 }
 
 export interface ChapterPlan {
@@ -106,6 +138,29 @@ export interface WritingDay {
 export interface Meta {
   key: string
   value: number
+}
+
+/** A record that changed since the last backup file. Kept per device by changes.ts, not part of a backup. */
+export interface Change {
+  key: string // `${table}:${id}`
+  table: string
+  id: string
+  /** From a counter that only goes up, so a backup file can tell which changes it holds. */
+  rev: number
+  /** The counter when this note was started. */
+  since: number
+  /** Roughly how many words of new writing went into the record since the note was started. */
+  added: number
+  /** How many of those words are already in a backup file known to be saved. */
+  held: number
+}
+
+/** A backup file handed to the browser to download, not yet read back, so not yet known to be saved. */
+export interface Download {
+  at: number // the file's exportedAt
+  /** The change counter the file holds, and the words each note had added by then. */
+  rev: number
+  held: Record<string, number>
 }
 
 /**

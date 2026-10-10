@@ -4,6 +4,8 @@
 |---|---|
 | `notes/01..12-*.md` | Round 1 researcher notes (sources, evidence labels, ideas, gaps) |
 | `notes/13-community-voice.md` | Round 2: what writers say about tools like Parchemin (forums, threads, blogs, reviews) |
+| `notes/14-dialogue.md` | The video series' dialogue lesson, and what it changed in Parchemin |
+| `sources/` | Raw source material such as video transcripts (git-ignored; third-party content, private analysis only) |
 | `tools/fetch_threads.py`, `tools/queries.json` | Fetcher for public writing-community threads from open APIs |
 | `threads/` | Fetched threads (git-ignored; third-party content, private analysis only) |
 | `interviews/guide.md` | Interview guide for 6 to 10 writer conversations |

@@ -1,38 +1,77 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { db } from './db'
-import type { Meta } from './types'
+import type { Change, Download, Meta } from './types'
 
 /**
  * Safekeeping: the facts a writer needs to know their work is safe, and nothing more.
  *
  * Stories live in the browser's storage, which is "best effort" until the browser agrees to keep it.
  * A backup file the writer holds is the only copy that survives a cleared browser or a lost device.
- * So Parchemin records when the last backup file was made, asks the browser to keep the data once
- * there is real work in it, and suggests a backup by how much is new, never by the calendar.
+ * So Parchemin records when the last backup file was made and what has changed since (changes.ts),
+ * asks the browser to keep the data once there is real work in it, and suggests a backup by how much
+ * is new, never by the calendar. It counts a backup file only when it knows the file was saved.
  */
 
 /** New words since the last backup file before Parchemin suggests making one. */
 export const NUDGE_AFTER_WORDS = 2000
-/** How long "Not now" keeps the suggestion quiet. */
+/** How long "Not now", or a download Parchemin can't confirm, keeps the suggestion quiet. */
 const QUIET_DAYS = 5
 
-type Key = 'lastBackupAt' | 'wordsLoggedAtBackup' | 'nudgeDismissedAt' | 'persistAskedAt'
+type Key = 'lastBackupAt' | 'nudgeDismissedAt' | 'persistAskedAt'
 
 const read = (rows: Meta[] | undefined, key: Key) => rows?.find((r) => r.key === key)?.value ?? null
 const sum = (rows: { words: number }[]) => rows.reduce((n, r) => n + r.words, 0)
+/** Words of new writing in no backup file known to be saved. */
+const unsaved = (rows: Change[]) => rows.reduce((n, r) => n + r.added - r.held, 0)
 
 async function set(key: Key, value: number) {
   await db.meta.put({ key, value })
 }
 
-/** Records that a backup file was made just now, and how many words had been logged by then. */
-export async function markBackup() {
-  const words = sum(await db.days.toArray())
-  await db.transaction('rw', db.meta, async () => {
-    await set('lastBackupAt', Date.now())
-    await set('wordsLoggedAtBackup', words)
+async function noteLastBackup(at: number) {
+  const last = await db.meta.get('lastBackupAt')
+  if (!last || last.value < at) await set('lastBackupAt', at)
+  await db.downloads.where('at').belowOrEqual(at).delete()
+}
+
+/**
+ * A backup file made at `at` is saved. Every change up to `rev` is in it, and `held` says how many words
+ * each note had added by then, so notes changed again since keep counting only what came after.
+ */
+export async function markBackup(rev: number, at: number, held: Record<string, number>) {
+  await db.transaction('rw', db.changes, db.meta, db.downloads, async () => {
+    await db.changes.where('rev').belowOrEqual(rev).delete()
+    await db.changes
+      .where('rev')
+      .above(rev)
+      .modify((c) => {
+        // a note started after the file was read has nothing of it, whatever an older note of the same key had
+        if (c.since <= rev && held[c.key] !== undefined) c.held = Math.max(c.held, held[c.key])
+      })
+    await noteLastBackup(at)
   })
+}
+
+/** A backup file made at `at` was just restored: the records it wrote match a file the writer holds. */
+export async function markRestored(keys: string[], at: number) {
+  await db.transaction('rw', db.changes, db.meta, db.downloads, async () => {
+    await db.changes.bulkDelete(keys)
+    await noteLastBackup(at)
+  })
+}
+
+/** A backup file was handed to the browser to download. Parchemin can't see whether it saved until the writer checks it. */
+export async function notePendingBackup(download: Download) {
+  await db.downloads.put(download)
+}
+
+/** A backup file read back here that matches a download made here is known to be saved. Returns whether it matched. */
+export async function confirmBackup(at: number): Promise<boolean> {
+  const download = await db.downloads.get(at)
+  if (!download) return false
+  await markBackup(download.rev, at, download.held)
+  return true
 }
 
 export async function dismissNudge() {
@@ -52,33 +91,45 @@ export async function requestPersist(): Promise<boolean> {
 }
 
 /**
- * Asks once, after the writer's first real save, so the request comes from a site with work in it
- * rather than on first load. If the browser says no, Parchemin does not ask again on its own;
- * the safekeeping panel has a button for that.
+ * Asks once, the first time the home screen shows with writing in the library, so the request comes
+ * from a site with work in it and never mid-sentence (Firefox shows a prompt for it). If the browser
+ * says no, Parchemin does not ask again on its own; the safekeeping panel has a button for that.
+ * Returns whether it asked.
  */
-export async function requestPersistOnce() {
-  if (!canPersist()) return
-  if (await db.meta.get('persistAskedAt')) return
-  await set('persistAskedAt', Date.now())
-  await requestPersist()
+export async function requestPersistOnce(): Promise<boolean> {
+  if (!canPersist()) return false
+  const first = await db.transaction('rw', db.meta, async () => {
+    if (await db.meta.get('persistAskedAt')) return false
+    await set('persistAskedAt', Date.now())
+    return true
+  })
+  if (first) await requestPersist()
+  return first
 }
 
-/** Whether the backup suggestion should show: enough new words, and "Not now" not pressed lately. Cheap enough to run while writing. */
+/** Whether the backup suggestion should show: enough new words, and not quieted lately. Cheap enough to run while writing. */
 export function useBackupNudge() {
   const meta = useLiveQuery(() => db.meta.toArray(), [])
-  const days = useLiveQuery(() => db.days.toArray(), [])
-  if (!meta || !days) return { show: false, newWords: 0, hasBackup: false }
-  const newWords = Math.max(0, sum(days) - (read(meta, 'wordsLoggedAtBackup') ?? 0))
-  const quiet = Date.now() - (read(meta, 'nudgeDismissedAt') ?? 0) < QUIET_DAYS * 86_400_000
+  const changes = useLiveQuery(() => db.changes.toArray(), [])
+  const downloads = useLiveQuery(() => db.downloads.toCollection().primaryKeys(), [])
+  if (!meta || !changes || !downloads) return { show: false, newWords: 0, hasBackup: false }
+  const newWords = unsaved(changes)
+  const quietSince = Math.max(read(meta, 'nudgeDismissedAt') ?? 0, ...downloads)
+  const quiet = Date.now() - quietSince < QUIET_DAYS * 86_400_000
   return { show: newWords >= NUDGE_AFTER_WORDS && !quiet, newWords, hasBackup: read(meta, 'lastBackupAt') !== null }
 }
 
 export interface Keeping {
   lastBackupAt: number | null
-  /** Chapters whose current text is in no backup file, and the words in them. */
-  changed: { chapters: number; words: number }
+  /** The newest backup file downloaded here and not yet read back, when it is newer than the last one known to be saved. */
+  unchecked: number | null
+  /** What changed since the last backup file: how many records of each table, and roughly how many new words. */
+  changed: { tables: Record<string, number>; words: number }
+  /** With no backup file recorded: every chapter here, and the words in them. */
+  library: { chapters: number; words: number } | null
   /** null while unknown, or when the browser has no way to say. */
   persisted: boolean | null
+  /** Everything this site stores, the app's own files included. */
   usage: number | null
   quota: number | null
   installed: boolean
@@ -91,12 +142,18 @@ const isInstalled = () =>
   window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true
 const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
-/** Everything the safekeeping panel shows. Only the home screen uses it, so it may read every changed chapter. */
+/** Everything the safekeeping panel shows. Only the home screen uses it. */
 export function useSafekeeping(): Keeping | null {
   const meta = useLiveQuery(() => db.meta.toArray(), [])
-  const days = useLiveQuery(() => db.days.toArray(), [])
-  const lastBackupAt = read(meta, 'lastBackupAt')
-  const changed = useLiveQuery(() => db.scenes.where('updatedAt').above(lastBackupAt ?? 0).toArray(), [lastBackupAt])
+  const changes = useLiveQuery(() => db.changes.toArray(), [])
+  const downloads = useLiveQuery(() => db.downloads.toCollection().primaryKeys(), [])
+  const lastBackupAt = meta ? read(meta, 'lastBackupAt') : undefined
+  // Only with no backup file recorded is it worth reading every chapter. Until meta loads, wait.
+  const library = useLiveQuery(async () => {
+    if (lastBackupAt !== null) return lastBackupAt === undefined ? undefined : null
+    const scenes = await db.scenes.toArray()
+    return { chapters: scenes.length, words: sum(scenes) }
+  }, [lastBackupAt])
   const [storage, setStorage] = useState<Pick<Keeping, 'persisted' | 'usage' | 'quota'> | null>(null)
   const [tick, setTick] = useState(0)
 
@@ -113,10 +170,15 @@ export function useSafekeeping(): Keeping | null {
     }
   }, [tick])
 
-  if (!meta || !days || !changed || !storage) return null
+  if (!meta || !changes || !downloads || library === undefined || !storage) return null
+  const tables: Record<string, number> = {}
+  for (const c of changes) tables[c.table] = (tables[c.table] ?? 0) + 1
+  const newest = Math.max(0, ...downloads)
   return {
-    lastBackupAt,
-    changed: { chapters: changed.length, words: sum(changed) },
+    lastBackupAt: lastBackupAt ?? null,
+    unchecked: newest > (lastBackupAt ?? 0) ? newest : null,
+    changed: { tables, words: unsaved(changes) },
+    library,
     ...storage,
     installed: isInstalled(),
     ios: isIOS(),

@@ -2,6 +2,7 @@ node_modules
 dist
 *.tsbuildinfo
 research/threads/
+research/sources/
 research/.cache/
 research/interviews/W*.md
 research/.fetch-*

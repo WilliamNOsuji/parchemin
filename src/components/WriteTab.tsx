@@ -3,8 +3,11 @@ import { useState } from 'react'
 import { addScene, db } from '../db'
 import { navigate } from '../route'
 import type { Scene, Story } from '../types'
+import { DialoguePanel } from './DialoguePanel'
 import { NotesPanel, PromptsPanel, SnapshotsPanel } from './Panels'
 import { SceneEditor, type PanelKind } from './SceneEditor'
+
+const PANEL_TITLES: Record<Exclude<PanelKind, null>, string> = { prompts: 'Unblock yourself', dialogue: 'Dialogue', snapshots: 'Snapshots', notes: 'Notes' }
 
 interface Props {
   story: Story
@@ -27,7 +30,7 @@ export function WriteTab({ story, scenes, focus, onToggleFocus, sceneId }: Props
   if (!current) return <p className="muted pad">This story has no chapters yet.</p>
 
   return (
-    <div className={`write${panel ? ' has-panel' : ''}`}>
+    <div className={`write${panel ? ' has-panel' : ''}${panel === 'dialogue' ? ' wide-panel' : ''}`}>
       <aside className={`scene-list${listOpen ? ' open' : ''}`} aria-label="Chapters">
         <button className="scene-list-toggle btn" onClick={() => setListOpen((o) => !o)} aria-expanded={listOpen}>
           {current.title} ▾
@@ -58,10 +61,11 @@ export function WriteTab({ story, scenes, focus, onToggleFocus, sceneId }: Props
       {panel && (
         <aside className="panel" aria-label={panel}>
           <header className="panel-head">
-            <h3>{panel === 'prompts' ? 'Unblock yourself' : panel === 'snapshots' ? 'Snapshots' : 'Notes'}</h3>
+            <h3>{PANEL_TITLES[panel]}</h3>
             <button className="icon-btn" onClick={() => setPanel(null)} aria-label="Close panel">✕</button>
           </header>
           {panel === 'prompts' && <PromptsPanel characters={characters} />}
+          {panel === 'dialogue' && <DialoguePanel key={current.id} scene={current} characters={characters} />}
           {panel === 'snapshots' && <SnapshotsPanel scene={current} />}
           {panel === 'notes' && <NotesPanel scene={current} story={story} />}
         </aside>

@@ -4,13 +4,12 @@ import Typography from '@tiptap/extension-typography'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { db, logWords, touchStory } from '../db'
 import { storyKit } from '../editorSchema'
-import { requestPersistOnce } from '../safekeeping'
 import type { Scene } from '../types'
 import { countWords } from '../words'
 import { ActiveBlock } from './activeBlock'
 import { Toolbar } from './Toolbar'
 
-export type PanelKind = 'prompts' | 'snapshots' | 'notes' | null
+export type PanelKind = 'prompts' | 'dialogue' | 'snapshots' | 'notes' | null
 
 interface Props {
   scene: Scene
@@ -54,7 +53,6 @@ export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Pro
       .update(scene.id, { content: html, words: w, updatedAt: Date.now() })
       .then(() => {
         void touchStory(scene.storyId)
-        void requestPersistOnce() // the first real save is the moment to ask the browser to keep the data
         failed.current = false
         setSaveFailed(false)
         if (pending.current === null) setDirty(false)
@@ -153,6 +151,7 @@ export function SceneEditor({ scene, focus, panel, onPanel, onToggleFocus }: Pro
     <section className="editor-wrap">
       <Toolbar editor={editor}>
         {panelBtn('prompts', '💡 Unblock')}
+        {panelBtn('dialogue', '🗣 Dialogue')}
         {panelBtn('snapshots', '🕘 Snapshots')}
         {panelBtn('notes', '📝 Notes')}
         <button type="button" className="tb-text" onClick={onToggleFocus} title="Focus mode (F11 or Ctrl+Shift+F)">

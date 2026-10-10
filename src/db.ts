@@ -1,7 +1,8 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { nanoid } from 'nanoid'
-import type { Character, DrawerItem, Folder, Meta, Scene, Snapshot, Story, WritingDay } from './types'
+import type { Change, Character, Download, DrawerItem, Folder, Meta, Scene, Snapshot, Story, WritingDay } from './types'
 import type { Template } from './templates'
+import { CHANGE_REV, changeKey, changeTracking } from './changes'
 import { dayKey } from './craft/why'
 import { countWords } from './words'
 
@@ -14,6 +15,8 @@ class ParcheminDB extends Dexie {
   days!: EntityTable<WritingDay, 'date'>
   drawer!: EntityTable<DrawerItem, 'id'>
   meta!: EntityTable<Meta, 'key'>
+  changes!: EntityTable<Change, 'key'>
+  downloads!: EntityTable<Download, 'at'>
 
   constructor() {
     super('parchemin')
@@ -37,6 +40,22 @@ class ParcheminDB extends Dexie {
       })
     // v4: per-device facts (last backup file, and so on) and an index so safekeeping can find chapters changed since
     this.version(4).stores({ scenes: 'id, storyId, order, updatedAt', meta: 'key' })
+    // v5: what changed since the last backup file, kept by the middleware in changes.ts, and downloads not yet read back
+    this.version(5)
+      .stores({ changes: 'key, rev', downloads: 'at' })
+      .upgrade(async (tx) => {
+        const meta = tx.table('meta')
+        await meta.delete('wordsLoggedAtBackup')
+        // v4 kept only the time of the last backup file. What it can show of the changes since is carried over.
+        const last = (await meta.get('lastBackupAt'))?.value as number | undefined
+        if (last === undefined) return
+        const scenes = await tx.table('scenes').where('updatedAt').above(last).primaryKeys()
+        const characters = await tx.table('characters').filter((c: Character) => c.updatedAt > last).primaryKeys()
+        const note = (table: string) => (id: unknown) => ({ key: changeKey(table, String(id)), table, id: String(id), rev: 1, since: 1, added: 0, held: 0 })
+        await tx.table('changes').bulkPut([...scenes.map(note('scenes')), ...characters.map(note('characters'))])
+        await meta.put({ key: CHANGE_REV, value: 1 })
+      })
+    this.use(changeTracking)
   }
 }
 

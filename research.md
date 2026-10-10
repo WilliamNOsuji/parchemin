@@ -3,8 +3,8 @@
 What writers struggle with, what helps, and what that means for Parchemin.
 
 - **Date:** 2026-10-03
-- **Status:** Round 1 complete (12 parallel researchers). Round 2 started on 2026-10-04 with **community voice** (note 13, summarized in section 11): what writers say in forums, threads, blogs and reviews about tools like Parchemin. Reddit was not reachable, so that part still needs a human pass. Understanding is **broad but not "pristine"**. Section 9 lists what is missing and how to close it.
-- **Detail lives in:** `research/notes/01` to `13` (about 83,000 words, every source URL, a quality note on each, and a per-note list of open questions). This file is the synthesis and the index. Nothing in the notes is deleted or overridden here.
+- **Status:** Round 1 complete (12 parallel researchers). Round 2 started on 2026-10-04 with **community voice** (note 13, summarized in section 11): what writers say in forums, threads, blogs and reviews about tools like Parchemin. Reddit was not reachable, so that part still needs a human pass. On 2026-10-09 the dialogue lesson from the video series was added (note 14, section 12). Understanding is **broad but not "pristine"**. Section 9 lists what is missing and how to close it.
+- **Detail lives in:** `research/notes/01` to `14` (about 85,000 words, every source URL, a quality note on each, and a per-note list of open questions). This file is the synthesis and the index. Nothing in the notes is deleted or overridden here.
 - **Rule used throughout:** `PHILOSOPHY.md` is the test. Anything that ghostwrites, guilt-trips, harvests data or overclaims is listed as a reject, not an idea.
 
 ## Contents
@@ -20,6 +20,7 @@ What writers struggle with, what helps, and what that means for Parchemin.
 9. [Gaps and the plan for round 2](#9-gaps-and-the-plan-for-round-2)
 10. [Method, tooling incident and source index](#10-method-tooling-incident-and-source-index)
 11. [Round 2: what writers say about tools like Parchemin](#11-round-2-what-writers-say-about-tools-like-parchemin)
+12. [The dialogue lesson (video series, part 8)](#12-the-dialogue-lesson-video-series-part-8)
 
 ---
 
@@ -426,6 +427,7 @@ Twelve researchers ran in parallel, each assigned one area and told to read `PHI
 | `research/notes/11-accessibility-neurodivergence-language.md` | WCAG, neurodivergence, languages | about 8,000 | Accessibility checklist, language foundations |
 | `research/notes/12-how-writers-learn-and-think.md` | Cognition, learning, professional process | about 7,900 | Evidence ledger; sparks; prompts |
 | `research/notes/13-community-voice.md` | Round 2: forums, threads, blogs and reviews on tools, trust, AI, pricing, segments | about 7,000 | Positioning, the AI pledge, import/export, sync decision |
+| `research/notes/14-dialogue.md` | The video series’ dialogue lesson (McKee, Sorkin, Tarantino as taught there) | about 2,000 | The Dialogue panel, the cover-the-names test, dialogue checks |
 
 ### Most load-bearing sources (all appear with full URLs and quality notes in the notes)
 - **Habit and starting:** Sword 2016 (a mantra dismantled); Steel 2007 (procrastination meta-analysis); Gollwitzer & Sheeran 2006; Masicampo & Baumeister 2011; Lally et al. 2010 (via BPS digest); Silverman et al. 2023 and Etkin 2016 (streaks and quantification); Rose 1980; Ahmed & Güss 2022.
@@ -529,3 +531,19 @@ Recorded from the team doc "What writers say about tools like Parchemin" and the
 | 19 | Calm, animated poem mode, maybe gamified (added by the team) | Parked: an idea to try with poets first |
 
 **Where these depart from the research.** Note 13 recommended a lasting "no generative AI" pledge, and round 1's reject list (section 7) excluded generated text. The team chose differently for an optional, limited guide. `AI-POLICY.md` keeps the parts of round 1's AI policy (note 10 §4.6) that still apply: off by default, labeled, nothing enters the manuscript unless the writer types it, no training for anyone but the writer, models named, and changes announced before they land. The team removed a "no imitating a named writer" rule, because the guide has to adapt to the writer's own style. That adaptation happens entirely on the writer's own server. The research's main warning stands: writers judge the generation limit by what the guide actually does, so the limit should be concrete and public before launch.
+
+---
+
+## 12. The dialogue lesson (video series, part 8)
+
+Added on 2026-10-09. Detail in `research/notes/14-dialogue.md`; the transcript is kept, git-ignored, in `research/sources/`.
+
+**What it is.** Part eight of the video series behind Parchemin's craft method: how to write dialogue, condensed from Robert McKee's *Dialogue* and the teacher's reading of Aaron Sorkin's and Quentin Tarantino's screenplays. Craft teaching from one practitioner: **low to medium** evidence, and none of its sources were read directly.
+
+**What it says, in one breath.** Nobody says what they mean. Each speaker wants something in this chapter, the wants are incompatible, and every line is a tactic you can name with an *-ing* verb. Underneath the said are the unsaid and the unsayable, often pushed into an object in the room. The scene turns from one named value to another. Make it an argument; answer questions with questions; interrupt; be specific; put silence before the line that matters; end on a picture. Keep the surface trivial and the real subject unnamed, with someone (often the reader) knowing more. On the page: "said", new speaker new paragraph, no phonetic accents. Draft the dialogue fast as a script, then cover the names, then read it aloud.
+
+**What it agrees with.** Note 04 (voices come from wants and fears; the no-names test), note 05 (§2.11, and the cover-the-names test planned in §5.8 with no scoring), note 12 (a scratchpad outside the manuscript), and step 8 of "The craft we teach" in `PHILOSOPHY.md`.
+
+**What it changed in Parchemin.** A Dialogue panel in the Write tab, built the same day: who wants what (per speaker, per chapter, with the voice card as a hint), a script draft outside the manuscript with tactics read back as beats, the cover-the-names test (planned since v1), and the lesson's checklists as the writer's own ticks with plain facts from the text beside them. No scores, no suggested lines (section 7).
+
+**Still to do.** Read-aloud with local voices only (§11.6 #11), the cast grid and setting sheets (roadmap), checks for languages other than English, and a human read of McKee's book.

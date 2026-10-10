@@ -76,7 +76,8 @@ marketing line or a motivational poster, rewrite it.
 
 The app builds in one coherent method, so writers learn it by using it. It is assembled from free teaching material and
 well-known craft books. Credit goes to Jessica Brody (*Save the Cat Writes a Novel*), John Truby (*The Anatomy of Story*)
-and Robert McKee (*Dialogue*), and to the teacher whose video series started it.
+and Robert McKee (*Dialogue*), to the screenplays of Aaron Sorkin and Quentin Tarantino, and to the teacher whose
+video series started it and read those screenplays for us.
 
 1. **Idea.** A story is a what-if. A person, what they want, and the wall in the way. The wall should be tied to the
    want. If nothing goes wrong, it is a situation, not a story.
@@ -95,8 +96,10 @@ and Robert McKee (*Dialogue*), and to the teacher whose video series started it.
    behind.
 7. **Chapters.** Every chapter has a goal, a conflict and a turn. Read across to check a chapter. Read down to check the
    book. Know the last line before you write the first.
-8. **Dialogue.** Characters argue toward different wants with different tactics, and nobody says what they fear. If you
-   cover the names, a stranger should still know who is speaking.
+8. **Dialogue.** Nobody says what they mean. In each chapter, each speaker wants something incompatible, and every line
+   is a tactic you could name with an *-ing* verb. What they won't say, and what they can't, goes into an object in the
+   room. Make it an argument, keep the surface small and the real subject unnamed, and end on a picture. Draft it fast
+   as a script, then cover the names: a stranger should still know who is speaking. Then read it aloud.
 9. **Habit.** A chapter a day. Compress travel and anything whose outcome is certain. Start the next day with a
    sentence already waiting.
 
@@ -133,7 +136,7 @@ When a feature idea comes up, run it through these questions. A "no" to the firs
 | Writing matters | `src/craft/why.ts` (epigraphs, milestones), `src/components/Why.tsx` |
 | Gentle habit | `src/components/Why.tsx` (today's words, streak), `logWords` in `src/db.ts` |
 | Finishing is learnable | Finish line in `src/components/OutlineTab.tsx`, `pace` in `src/craft/audit.ts` |
-| Craft without a cage | `src/craft/` (voices, hero check, audit), optional chapter plan |
+| Craft without a cage | `src/craft/` (voices, hero check, audit, dialogue), optional chapter plan, the Dialogue panel in `src/components/DialoguePanel.tsx` |
 | The writer owns the work | Local-first IndexedDB in `src/db.ts`, backup in `src/backup.ts`, safekeeping in `src/safekeeping.ts`, exports in `src/export.ts`, fonts bundled in `src/main.tsx`, `LICENSE` (AGPL-3.0-or-later) |
 | Safe to cut | The drawer: `setAside*` and `putBack` in `src/db.ts`, `src/components/DrawerSection.tsx` |
 | The story is never written for you | Prompts in `src/prompts.ts`; the AI guide's limits in `AI-POLICY.md` |
@@ -155,8 +158,8 @@ order yet.
    draft, a private challenge mode, and a ready-to-post queue.
 5. **The AI guide.** Self-hosted and optional, under `AI-POLICY.md`.
 
-Still planned from before: setting sheets (obstacle-first, with a prop list), a cast grid view, a dialogue test where
-you cover the names, and chapter guides. Not now: a first-run timing test and French-first work. Parked: an animated
+Still planned from before: setting sheets (obstacle-first, with a prop list), a cast grid view, and chapter guides.
+Done on 2026-10-09: the dialogue test where you cover the names, as part of the Dialogue panel (`research/notes/14-dialogue.md`). Not now: a first-run timing test and French-first work. Parked: an animated
 poem mode, an idea to try with poets first.
 
 ## One line to remember

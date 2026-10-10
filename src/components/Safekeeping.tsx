@@ -1,11 +1,16 @@
-import { useRef, useState, type ChangeEvent } from 'react'
-import { exportBackup, inspectBackup, restoreBackup } from '../backup'
-import { canPersist, dismissNudge, requestPersist, useBackupNudge, useSafekeeping, type Keeping } from '../safekeeping'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { exportBackup, inspectBackup, restoreBackup, type Saved } from '../backup'
+import { canPersist, dismissNudge, requestPersist, requestPersistOnce, useBackupNudge, useSafekeeping, type Keeping } from '../safekeeping'
 
 const num = (x: number) => x.toLocaleString()
 const plural = (x: number, one: string, many: string) => `${num(x)} ${x === 1 ? one : many}`
-const when = (t: number) => new Date(t).toLocaleString([], { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+const when = (t: number) => new Date(t).toLocaleString([], { year: 'numeric', month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
 const size = (b: number) => (b >= 1e9 ? `${(b / 1e9).toFixed(1)} GB` : b >= 1e6 ? `${Math.round(b / 1e6)} MB` : `${Math.max(1, Math.round(b / 1e3))} kB`)
+const failure = (e: unknown) => (e instanceof Error ? e.message : 'Something went wrong with this file.')
+
+/** What to tell the writer after a backup: saved, or handed to the browser and still to be checked. */
+const savedMessage = (s: Saved | null, check: string) =>
+  !s ? '' : s.sure ? `Saved ${s.name}.` : `Your browser is saving ${s.name}. Once it has saved, ${check}, so Parchemin can count it as your backup.`
 
 const onPick = (handle: (f: File) => void) => (e: ChangeEvent<HTMLInputElement>) => {
   const f = e.target.files?.[0]
@@ -13,45 +18,76 @@ const onPick = (handle: (f: File) => void) => (e: ChangeEvent<HTMLInputElement>)
   if (f) handle(f)
 }
 
-/** One quiet, dismissible line: enough new words have piled up since the last backup file. */
+/**
+ * One quiet, dismissible line: enough new words have piled up since the last backup file.
+ * Not a live region: the count moves with every save, and a screen reader would read it out each time.
+ */
 export function BackupNudge() {
   const { show, newWords, hasBackup } = useBackupNudge()
-  if (!show) return null
+  const [msg, setMsg] = useState('')
+  if (!show && !msg) return null
+  const onBackup = () =>
+    void exportBackup().then(
+      (s) => setMsg(savedMessage(s, 'pick it with "Check a backup file" under Safekeeping on the home screen')),
+      (e: unknown) => setMsg(failure(e)),
+    )
+  if (msg) {
+    return (
+      <div className="nudge">
+        <span role="status">{msg}</span>
+        <button className="btn small quiet" onClick={() => setMsg('')}>OK</button>
+      </div>
+    )
+  }
   return (
-    <div className="nudge" role="status">
+    <div className="nudge">
       <span>
-        About {num(newWords)} words are {hasBackup ? 'new since your last backup file' : 'here with no backup file yet'}. Save a copy of your stories?
+        About {num(Math.round(newWords / 100) * 100)} words are {hasBackup ? 'new since your last backup file' : 'new, with no backup file recorded on this device yet'}. Save a
+        copy of your stories?
       </span>
       <div className="row">
-        <button className="btn small" onClick={() => void exportBackup()}>Download backup</button>
+        <button className="btn small" onClick={onBackup}>Download backup</button>
         <button className="btn small quiet" onClick={() => void dismissNudge()}>Not now</button>
       </div>
     </div>
   )
 }
 
+const KINDS: [table: string, one: string, many: string][] = [
+  ['scenes', 'chapter', 'chapters'],
+  ['characters', 'character', 'characters'],
+  ['stories', 'story', 'stories'],
+  ['snapshots', 'snapshot', 'snapshots'],
+  ['folders', 'folder', 'folders'],
+  ['drawer', 'thing in the drawer', 'things in the drawer'],
+]
+
+function changesSince({ tables, words }: Keeping['changed']) {
+  const kinds = KINDS.filter(([t]) => tables[t])
+  if (!kinds.length) return 'Nothing has changed since.'
+  const parts = kinds.map(([t, one, many]) => plural(tables[t], one, many))
+  const list = parts.length === 1 ? parts[0] : `${parts.slice(0, -1).join(', ')} and ${parts.at(-1)}`
+  const verb = kinds.length === 1 && tables[kinds[0][0]] === 1 ? 'has' : 'have'
+  return `Since then, ${list} ${verb} changed${words > 0 ? ` (about ${plural(words, 'new word', 'new words')})` : ''}.`
+}
+
 function BackupLine({ k }: { k: Keeping }) {
-  const { lastBackupAt, changed } = k
-  if (!lastBackupAt) {
+  const { lastBackupAt, library } = k
+  if (lastBackupAt === null) {
     return (
       <li>
-        <strong>No backup file yet.</strong>{' '}
+        <strong>No backup file recorded on this device yet.</strong>{' '}
         <span className="muted">
-          {changed.words === 0
+          {!library || library.words === 0
             ? 'Nothing to back up yet.'
-            : `${plural(changed.chapters, 'chapter', 'chapters')} (${plural(changed.words, 'word', 'words')}) ${changed.chapters === 1 ? 'is' : 'are'} here with no copy anywhere else.`}
+            : `${plural(library.chapters, 'chapter', 'chapters')} (${plural(library.words, 'word', 'words')}) ${library.chapters === 1 ? 'is' : 'are'} here, in no backup file Parchemin knows of.`}
         </span>
       </li>
     )
   }
   return (
     <li>
-      <strong>Last backup file: {when(lastBackupAt)}.</strong>{' '}
-      <span className="muted">
-        {changed.chapters === 0
-          ? 'Nothing has changed since.'
-          : `Since then, ${plural(changed.chapters, 'chapter has', 'chapters have')} changed (${plural(changed.words, 'word', 'words')}).`}
-      </span>
+      <strong>Last backup file: {when(lastBackupAt)}.</strong> <span className="muted">{changesSince(k.changed)}</span>
     </li>
   )
 }
@@ -73,15 +109,23 @@ export function SafekeepingPanel() {
   const restoreInput = useRef<HTMLInputElement>(null)
   const checkInput = useRef<HTMLInputElement>(null)
 
-  const report = (p: Promise<string>) => void p.then(setMsg, (e: unknown) => setMsg(e instanceof Error ? e.message : 'Something went wrong with this file.'))
+  // Ask the browser to keep the data once there is writing to keep, here rather than mid-sentence in the editor.
+  const hasWork = !!k && (k.lastBackupAt !== null || (k.library?.words ?? 0) > 0)
+  const refresh = k?.refresh
+  useEffect(() => {
+    if (hasWork && k?.persisted === false) void requestPersistOnce().then((asked) => asked && refresh?.())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasWork, k?.persisted])
 
-  const onBackup = () => report(exportBackup().then((name) => `Your browser is saving ${name}. To be sure the file is whole, choose "Check a backup file".`))
+  const report = (p: Promise<string>) => void p.then(setMsg, (e: unknown) => setMsg(failure(e)))
+
+  const onBackup = () => report(exportBackup().then((s) => savedMessage(s, 'choose "Check a backup file" and pick it')))
   const onRestore = (file: File) => report(restoreBackup(file).then(({ stories }) => `Restored ${plural(stories, 'story', 'stories')} from ${file.name}.`))
   const onCheck = (file: File) =>
     report(
       inspectBackup(file).then(
         (c) =>
-          `${file.name} is whole: ${plural(c.stories, 'story', 'stories')}, ${plural(c.chapters, 'chapter', 'chapters')}, ${plural(c.characters, 'character', 'characters')} and ${plural(c.words, 'word', 'words')}, saved ${when(c.exportedAt)}. It can be restored here or on another device.`,
+          `${file.name} is whole: ${plural(c.stories, 'story', 'stories')}, ${plural(c.chapters, 'chapter', 'chapters')}, ${plural(c.characters, 'character', 'characters')} and ${plural(c.words, 'word', 'words')}, saved ${when(c.exportedAt)}. It can be restored here or on another device.${c.counted ? ' Parchemin now counts it as your latest backup file.' : ''}`,
       ),
     )
   const onKeep = () =>
@@ -101,12 +145,19 @@ export function SafekeepingPanel() {
       {k && (
         <ul className="keeping">
           <BackupLine k={k} />
+          {k.unchecked !== null && (
+            <li>
+              <span>
+                A backup file downloaded {when(k.unchecked)} has not been read back yet, so Parchemin can't tell whether it saved. Choose "Check a backup
+                file" and pick it to count it.
+              </span>
+            </li>
+          )}
           <StorageLine k={k} onKeep={onKeep} />
           {k.usage !== null && (
             <li>
               <span className="muted">
-                Your stories and snapshots take up {size(k.usage)}
-                {k.quota ? ` of the ${size(k.quota)} this browser allows` : ''}.
+                Parchemin takes up {size(k.usage)} on this device, the app itself included{k.quota ? `, of the ${size(k.quota)} this browser allows` : ''}.
               </span>
             </li>
           )}
@@ -127,7 +178,7 @@ export function SafekeepingPanel() {
         <input ref={checkInput} type="file" accept="application/json,.json" hidden onChange={onPick(onCheck)} />
       </div>
       <p role="status" className="muted">{msg}</p>
-      <p className="muted"><small>Restoring adds the backup's stories and overwrites any with the same id. Nothing else is removed. Checking a file reads it and stores nothing.</small></p>
+      <p className="muted"><small>Restoring adds the backup's stories and overwrites any with the same id. Nothing else is removed. Checking a file reads it back and changes nothing in your library.</small></p>
     </section>
   )
 }
