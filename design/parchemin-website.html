@@ -1,0 +1,326 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Parchemin Website</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,500;0,7..72,600;1,7..72,400&display=swap">
+<style>[hidden]{display:none!important}</style>
+</head>
+<body>
+<style>
+/* Layout: one left-aligned column, 1080px, set almost entirely in Literata. Two large objects only: the headline
+   and the app window, which bleeds past the column on wide screens. Everything else is running text with space,
+   no cards, no rules, one accent. Built to Impeccable's published rules: no italic serif hero, no eyebrow chips,
+   no numbered labels, no nested cards, no icon tiles, no gradient, specific CTAs, one element wins the eye. */
+:root {
+  --paper: #faf7f2; --ink: #2b2723; --muted: #6f675d; --line: #e4ddd0; --well: #f3eee6; --sheet: #ffffff;
+  --accent: #5b4bb7; --accent-ink: #ffffff; --accent-soft: #ece9fb;
+  --idea: #b8a99a; --draft: #d9a441; --revised: #4a8fc4; --done: #4f9d69;
+  --display: 'Literata', Georgia, 'Times New Roman', serif;
+  --body: 'Literata', Georgia, 'Times New Roman', serif;
+  --ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #1b1a1f; --ink: #ece8e1; --muted: #a09a90; --line: #3a3942; --well: #242329; --sheet: #242329;
+    --accent: #a99bff; --accent-ink: #17151f; --accent-soft: #34305a; --idea: #8d8478;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #1b1a1f; --ink: #ece8e1; --muted: #a09a90; --line: #3a3942; --well: #242329; --sheet: #242329;
+  --accent: #a99bff; --accent-ink: #17151f; --accent-soft: #34305a; --idea: #8d8478;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--paper); color: var(--ink); font-family: var(--body); font-size: 18px; line-height: 1.6; -webkit-font-smoothing: antialiased; padding-block: 0 64px; }
+a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+h1, h2, h3 { margin: 0; line-height: 1.15; text-wrap: balance; font-family: var(--display); font-weight: 600; letter-spacing: -.012em; }
+p { margin: 0; }
+ul { margin: 0; padding: 0; list-style: none; }
+button { font: inherit; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+
+.wrap { max-width: 1080px; margin: 0 auto; padding-inline: 20px; }
+section { padding-block: 72px 0; }
+.lead { font-size: 20px; max-width: 58ch; color: var(--ink); }
+.muted { color: var(--muted); }
+.small { font-size: 15px; }
+.measure { max-width: 62ch; }
+h2 { font-size: clamp(28px, 3.6vw, 38px); margin-bottom: 18px; max-width: 24ch; }
+h3 { font-size: 21px; margin-bottom: 8px; }
+
+/* nav */
+.nav { display: flex; align-items: center; justify-content: space-between; gap: 20px; padding-block: 22px; flex-wrap: wrap; }
+.wordmark { font-family: var(--display); font-weight: 600; font-size: 22px; color: var(--ink); text-decoration: none; display: inline-flex; align-items: center; gap: 8px; }
+.wordmark svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.nav ul { display: flex; gap: 26px; align-items: center; font-family: var(--ui); font-size: 15px; flex-wrap: wrap; }
+.nav a { color: var(--ink); text-decoration: none; }
+.nav a:hover { color: var(--accent); }
+
+/* buttons */
+.btn { font-family: var(--ui); font-weight: 500; font-size: 16px; display: inline-flex; align-items: center; gap: 8px; padding: 12px 20px; border-radius: 8px; border: 1px solid var(--line); background: var(--sheet); color: var(--ink); text-decoration: none; transition: transform .15s ease, background .15s ease; white-space: nowrap; }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(.99); transition-duration: .16s; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn.small { font-size: 14px; padding: 8px 14px; }
+
+/* hero */
+.hero { padding-block: 56px 0; }
+.hero h1 { font-size: clamp(42px, 7.2vw, 88px); max-width: 13ch; margin-bottom: 26px; }
+.hero .lead { margin-bottom: 30px; }
+.cta { display: flex; gap: 14px; align-items: center; flex-wrap: wrap; margin-bottom: 14px; }
+.cta-note { font-family: var(--ui); font-size: 14px; color: var(--muted); }
+
+/* the window */
+.preview { margin-top: 56px; }
+.shot { background: var(--sheet); border: 1px solid var(--line); border-radius: 12px; box-shadow: 0 30px 80px rgba(43, 39, 35, .16); overflow: hidden; font-family: var(--ui); font-size: 13px; line-height: 1.4; color: var(--ink); }
+@media (min-width: 1320px) { .shot { width: calc(100% + 120px); } }
+.shot .bar { height: 38px; background: var(--well); border-bottom: 1px solid var(--line); display: flex; align-items: center; gap: 8px; padding-inline: 12px; color: var(--muted); font-size: 12px; }
+.shot .bar .tab { background: var(--paper); border: 1px solid var(--line); border-bottom-color: var(--paper); border-radius: 7px 7px 0 0; padding: 7px 12px; color: var(--ink); align-self: flex-end; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 7px; }
+.shot .bar .dim { opacity: .7; padding: 7px 10px; }
+.shot .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; flex: none; }
+.dot.done { background: var(--done); } .dot.revised { background: var(--revised); } .dot.draft { background: var(--draft); } .dot.idea { background: var(--idea); }
+.shot .grid { display: grid; grid-template-columns: 240px 1fr 260px; min-height: 420px; }
+.shot .side { background: var(--well); border-right: 1px solid var(--line); padding: 10px; }
+.shot .side .h { font-size: 11px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); font-weight: 600; padding: 4px 6px 6px; }
+.shot .row { display: flex; align-items: center; gap: 7px; height: 26px; padding-inline: 6px; border-radius: 4px; white-space: nowrap; overflow: hidden; }
+.shot .row.story { font-weight: 500; }
+.shot .row.ch { padding-left: 20px; }
+.shot .row.on { background: var(--accent-soft); }
+.shot .row .n { color: var(--muted); width: 10px; text-align: right; font-size: 12px; }
+.shot .row .w { margin-left: auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.shot .page { background: var(--paper); padding: 30px 36px; font-family: var(--body); font-size: 15.5px; line-height: 1.7; }
+.shot .page h4 { font-family: var(--display); font-size: 22px; font-weight: 600; margin: 0 0 14px; }
+.shot .page p { margin: 0 0 .9em; text-indent: 1.4em; }
+.shot .page p:first-of-type { text-indent: 0; }
+.shot .caret { display: inline-block; width: 1.5px; height: 1em; background: var(--accent); vertical-align: -.15em; }
+.shot .panel { background: var(--well); border-left: 1px solid var(--line); padding: 12px; display: flex; flex-direction: column; gap: 12px; }
+.shot .panel .h { font-size: 12px; font-weight: 600; }
+.shot .f { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+.shot .f span { font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+.shot .status { height: 24px; background: var(--well); border-top: 1px solid var(--line); display: flex; align-items: center; justify-content: space-between; padding-inline: 12px; font-size: 11.5px; color: var(--muted); white-space: nowrap; overflow: hidden; }
+.shot .status div { display: flex; gap: 16px; }
+.shot .ok::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--done); margin-right: 6px; }
+.caption { font-family: var(--ui); font-size: 14px; color: var(--muted); margin-top: 14px; max-width: 70ch; }
+@media (max-width: 860px) {
+  .shot .grid { grid-template-columns: 1fr; }
+  .shot .side, .shot .panel { display: none; }
+  .shot .page { padding: 22px 20px; }
+}
+
+/* three jobs */
+.jobs { display: grid; grid-template-columns: repeat(3, 1fr); gap: 36px 40px; }
+.jobs h3 { color: var(--accent); }
+.jobs li { padding-block: 5px; font-size: 17px; }
+.jobs li b { font-weight: 500; }
+.jobs li span { color: var(--muted); }
+@media (max-width: 800px) { .jobs { grid-template-columns: 1fr; gap: 28px; } }
+
+/* craft */
+.craft { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 48px; counter-reset: step; }
+.craft li { display: grid; grid-template-columns: 110px 1fr; gap: 12px; padding-block: 12px; border-top: 1px solid var(--line); font-size: 17px; }
+.craft li b { font-weight: 600; font-family: var(--display); }
+.craft li span { color: var(--muted); }
+@media (max-width: 800px) { .craft { grid-template-columns: 1fr; } .craft li { grid-template-columns: 96px 1fr; } }
+
+/* refusals */
+.refuse { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 48px; max-width: 980px; }
+.refuse li { font-size: 17px; }
+.refuse li b { font-weight: 600; display: block; margin-bottom: 2px; }
+.refuse li span { color: var(--muted); }
+@media (max-width: 720px) { .refuse { grid-template-columns: 1fr; } }
+
+/* yours */
+.yours { display: grid; grid-template-columns: 1.1fr .9fr; gap: 40px 64px; }
+.yours p + p { margin-top: 14px; }
+.yours h3 { margin-top: 2px; }
+@media (max-width: 860px) { .yours { grid-template-columns: 1fr; } }
+
+/* download */
+.dl { max-width: 760px; }
+.dl li { display: grid; grid-template-columns: 1fr auto; gap: 14px 24px; align-items: center; padding-block: 16px; border-top: 1px solid var(--line); }
+.dl li:last-child { border-bottom: 1px solid var(--line); }
+.dl li b { font-weight: 600; display: block; }
+.dl li span { color: var(--muted); font-size: 15px; }
+.dl li .soon { font-family: var(--ui); font-size: 14px; color: var(--muted); white-space: nowrap; }
+@media (max-width: 520px) { .dl li { grid-template-columns: 1fr; } }
+
+/* footer */
+footer { margin-top: 80px; padding-top: 24px; border-top: 1px solid var(--line); display: flex; justify-content: space-between; gap: 16px 32px; flex-wrap: wrap; font-family: var(--ui); font-size: 14px; color: var(--muted); }
+footer ul { display: flex; gap: 22px; flex-wrap: wrap; }
+footer a { color: var(--muted); }
+
+@media (prefers-reduced-motion: reduce) { .btn { transition: none; } .btn:hover { transform: none; } }
+</style>
+
+<div class="wrap">
+
+<nav class="nav" aria-label="Site">
+  <a class="wordmark" href="#top"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4c-4 0-8 1-11 4S5 15 4 20c5-1 9-2 12-5s4-7 4-11z"/><path d="M4 20 15 9"/></svg>Parchemin</a>
+  <ul>
+    <li><a href="#craft">The craft</a></li>
+    <li><a href="#wont">What it won't do</a></li>
+    <li><a href="#yours">Your words</a></li>
+    <li><a href="https://github.com/" rel="noopener">Source</a></li>
+    <li><a class="btn small primary" href="#download">Download for Windows</a></li>
+  </ul>
+</nav>
+
+<header class="hero" id="top">
+  <h1>Finish the story only you can write.</h1>
+  <p class="lead">Parchemin is a calm, local-first writing app for stories and the people in them. It works offline, keeps every word on your own computer, and never writes a line for you.</p>
+  <div class="cta">
+    <a class="btn primary" href="#download">Download for Windows</a>
+    <a class="btn" href="#download">Write in the browser</a>
+  </div>
+  <p class="cta-note">Free and open source under the AGPL. No account, no server, nothing leaves your machine. macOS and Linux builds are planned.</p>
+
+  <div class="preview">
+    <div class="shot" aria-label="The Parchemin desktop window, showing a library of stories, a chapter being written, and its chapter plan">
+      <div class="bar"><span class="tab"><span class="dot draft"></span>7 · The storm glass</span><span class="dim">Outline</span><span class="dim">Cast</span><span class="dim">+</span></div>
+      <div class="grid">
+        <div class="side">
+          <div class="h">Library</div>
+          <div class="row story">The Lighthouse Keeper's Daughter<span class="w">31,420</span></div>
+          <div class="row ch"><span class="dot done"></span><span class="n">1</span>The lamp<span class="w">2,140</span></div>
+          <div class="row ch"><span class="dot done"></span><span class="n">2</span>Salt in the bread<span class="w">3,980</span></div>
+          <div class="row ch"><span class="dot done"></span><span class="n">3</span>What the tide brought<span class="w">4,210</span></div>
+          <div class="row ch"><span class="dot revised"></span><span class="n">4</span>Tobias<span class="w">3,655</span></div>
+          <div class="row ch"><span class="dot revised"></span><span class="n">5</span>The ledger<span class="w">5,002</span></div>
+          <div class="row ch"><span class="dot draft"></span><span class="n">6</span>A letter not sent<span class="w">4,118</span></div>
+          <div class="row ch on"><span class="dot draft"></span><span class="n">7</span>The storm glass<span class="w">1,845</span></div>
+          <div class="row ch"><span class="dot idea"></span><span class="n">8</span>The boat<span class="w">0</span></div>
+          <div class="row ch"><span class="dot idea"></span><span class="n">9</span>Landfall<span class="w">0</span></div>
+          <div class="row story" style="margin-top:6px">Salt and Iron<span class="w">12,300</span></div>
+          <div class="row story">What the River Took<span class="w">6,900</span></div>
+        </div>
+        <div class="page">
+          <h4>The storm glass</h4>
+          <p>The glass had been clear all morning, which was how Mara knew her father was lying. He kept it on the sill of the lamp room where the light could get at it, a sealed bulb of water and crystals that was meant to cloud before weather, and it sat there as clear as a held breath while the sea went the colour of slate.</p>
+          <p>“It's a toy,” he said, when she asked. “Your grandmother's toy.” He did not look at it. He looked at the wick he was trimming, and the wick did not need trimming.</p>
+          <p>She had learned to read him the way she read the water: not by what moved, but by what refused to.<span class="caret"></span></p>
+        </div>
+        <div class="panel">
+          <div class="h">Chapter plan</div>
+          <div class="f"><span>Goal</span>Get her father to say what the glass is for.</div>
+          <div class="f"><span>Conflict</span>He would rather trim a wick that doesn't need it.</div>
+          <div class="f"><span>Turn</span>She stops asking him and starts watching him.</div>
+          <div class="f"><span>Prop</span>The storm glass</div>
+          <div class="f"><span>Last line</span>“By four the glass had clouded, and he had not.”</div>
+        </div>
+      </div>
+      <div class="status"><div><span class="ok">Kept on this computer</span><span>Backup file: 2 days ago</span></div><div><span>412 words today</span><span>Chapter 7: 1,845 words</span></div></div>
+    </div>
+    <p class="caption">Chapter 7 of an example novel. On the left, your library. On the right, the chapter's plan: goal, conflict, turn, a prop, and the last line you already know. Along the bottom, where your words are kept and when they were last copied.</p>
+  </div>
+</header>
+
+<section id="jobs">
+  <h2>A place to start, a place to keep going, and a place to finish.</h2>
+  <p class="lead" style="margin-bottom:40px">Most people are not missing talent. They are missing a system, a quiet room and permission. Parchemin supplies the first two and says the third out loud.</p>
+  <div class="jobs">
+    <div>
+      <h3>Start</h3>
+      <ul>
+        <li><b>Blank page first.</b> <span>Structure is there when you want it, and never required.</span></li>
+        <li><b>Story spark.</b> <span>A person, what they want, and the wall in the way.</span></li>
+        <li><b>Templates.</b> <span>Short story, three acts, the Hero's Journey, Save the Cat.</span></li>
+        <li><b>A nudge when you need one.</b> <span>Prompts by what kind of stuck you are. Suggestions only.</span></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Keep going</h3>
+      <ul>
+        <li><b>A chapter plan.</b> <span>Goal, conflict, turn, point of view, setting, prop.</span></li>
+        <li><b>A cast with voices.</b> <span>Twenty-one voices in six families, cast against each other for friction.</span></li>
+        <li><b>The dialogue panel.</b> <span>Who wants what, a script draft, and the cover-the-names test.</span></li>
+        <li><b>Snapshots and a drawer.</b> <span>Save a draft before a rewrite. Nothing you cut is ever deleted.</span></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Finish</h3>
+      <ul>
+        <li><b>An outline that reads itself back.</b> <span>Across to check a chapter, down to check the book.</span></li>
+        <li><b>A finish line.</b> <span>A novella in fifteen chapters, a novel in thirty. A date is a kindness, and you can pause it.</span></li>
+        <li><b>Today's words, no streaks.</b> <span>Days you wrote are shown. Days you didn't are just quiet.</span></li>
+        <li><b>Export.</b> <span>Markdown and EPUB today. A manuscript .docx is next.</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<section id="craft">
+  <h2>The craft, built in.</h2>
+  <p class="lead" style="margin-bottom:28px">One coherent method, assembled from the best writing teachers, that you learn by using it. The app gives you questions, patterns and checks. The answers stay yours.</p>
+  <ol class="craft">
+    <li><b>Idea</b><span>A story is a what-if: a person, a want, and a wall tied to the want. If nothing goes wrong, it is a situation.</span></li>
+    <li><b>Hero</b><span>Wants one thing, needs another. A flaw that hurts them and someone else, which others see and they do not.</span></li>
+    <li><b>Plot</b><span>Fifteen beats as a skeleton. Beats are not chapters; several can share one, and one can span many.</span></li>
+    <li><b>Voice</b><span>A want, a fear and a way of seeing other people. Not an accent. Cast supporting characters against the hero.</span></li>
+    <li><b>Cast</b><span>Incompatible wants, not opposite ones. Everyone needs a function nobody else in the book can serve.</span></li>
+    <li><b>Setting</b><span>Don't ask what a room looks like. Ask what makes it hard, and end with objects someone can pick up.</span></li>
+    <li><b>Chapters</b><span>Each has a goal, a conflict and a turn. Know the last line before you write the first.</span></li>
+    <li><b>Dialogue</b><span>Nobody says what they mean. Every line is a tactic. Draft it as a script, cover the names, read it aloud.</span></li>
+    <li><b>Habit</b><span>A chapter a day. Start tomorrow with a sentence already waiting.</span></li>
+  </ol>
+  <p class="small muted" style="margin-top:22px;max-width:70ch">Credit goes to Jessica Brody (<i>Save the Cat Writes a Novel</i>), John Truby (<i>The Anatomy of Story</i>) and Robert McKee (<i>Dialogue</i>), to the screenplays of Aaron Sorkin and Quentin Tarantino, and to the teacher whose video series started it.</p>
+</section>
+
+<section id="wont">
+  <h2>What Parchemin will not do.</h2>
+  <p class="lead" style="margin-bottom:32px">The rules are short because they are meant to be kept.</p>
+  <ul class="refuse">
+    <li><b>Write the story for you.</b><span>No generated chapters, no “fix my prose” button. There is no AI in the app. If an optional guide ever comes, it will run on a server you control, be off by default, and never put a word in your manuscript.</span></li>
+    <li><b>Harvest your work.</b><span>No training on your text, no analytics on what you write, no selling of data. There is no server to send it to.</span></li>
+    <li><b>Gamify guilt.</b><span>No streaks to lose, no shame notifications, no leaderboards. Encouragement has to be true.</span></li>
+    <li><b>Lock you in.</b><span>Open export formats, a whole-library backup file, and a clean way out. The app keeps working with no account, no server and no internet.</span></li>
+    <li><b>Make structure mandatory.</b><span>Every craft tool can be ignored. Blank page first, always.</span></li>
+    <li><b>Overclaim.</b><span>We say what we believe, and we say it as a belief. No invented statistics, no inflated history.</span></li>
+  </ul>
+</section>
+
+<section id="yours">
+  <h2>Your words stay yours.</h2>
+  <div class="yours">
+    <div>
+      <p class="lead">Everything lives in a folder on your computer. Each chapter is a plain Markdown file you can open with anything. A backup is one file you hold yourself, and Parchemin tells you plainly when it was last made and what has changed since.</p>
+      <p>Put the folder in your own Dropbox, iCloud or OneDrive and it follows you between machines. Parchemin itself never sends anything anywhere.</p>
+      <p>The code is free software under the GNU Affero General Public License. Whoever hosts a changed copy has to offer you its source, so if this project ever stops, the app keeps working and the code keeps being yours to run.</p>
+    </div>
+    <div>
+      <h3>How it is built</h3>
+      <p>Parchemin is written and maintained with the help of AI coding tools, by one person, and we say so. The app you install contains no AI, and nothing you write ever reaches one. The founder's note on why explains the rest.</p>
+      <p style="margin-top:14px"><a href="#">Read the launch note</a></p>
+    </div>
+  </div>
+</section>
+
+<section id="download">
+  <h2>Get Parchemin.</h2>
+  <p class="lead" style="margin-bottom:28px">Pick the one that fits the desk you write at. They all open the same library.</p>
+  <ul class="dl">
+    <li><div><b>Windows</b><span>A signed installer. No account, no telemetry, updates off by default.</span></div><a class="btn primary" href="#">Download the .exe</a></li>
+    <li><div><b>In the browser</b><span>Installable, works offline after the first visit, keeps everything in the browser's own storage.</span></div><a class="btn" href="#">Open the web app</a></li>
+    <li><div><b>macOS and Linux</b><span>The same desktop app, once the Windows build has settled.</span></div><span class="soon">Planned</span></li>
+    <li><div><b>Source</b><span>AGPL-3.0-or-later. Fork it, build it, host it for your writing group.</span></div><a class="btn" href="https://github.com/" rel="noopener">View on GitHub</a></li>
+  </ul>
+</section>
+
+<footer>
+  <div>© 2026 William Osuji · AGPL-3.0-or-later</div>
+  <ul>
+    <li><a href="#craft">The craft</a></li>
+    <li><a href="#wont">What it won't do</a></li>
+    <li><a href="#yours">Your words</a></li>
+    <li><a href="#">Launch note</a></li>
+  </ul>
+  <div><i>Every person is a storyteller.</i></div>
+</footer>
+
+</div>
+
+</body>
+</html>

@@ -1,0 +1,1199 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Parchemin Desktop</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap">
+<style>[hidden]{display:none!important}</style>
+</head>
+<body>
+<style>
+/* Layout: an Electron window drawn at 1280×800 and scaled to fit the viewer, with Obsidian-style chrome
+   (ribbon, two collapsible sidebars, tabs in the title bar, command palette, status bar) around a Literata
+   manuscript pane. Tokens are Parchemin's own, from src/styles.css, with --muted darkened to pass 4.5:1. */
+:root {
+  --bg: #faf7f2; --surface: #ffffff; --surface-2: #f3eee6; --chrome: #f3eee6; --border: #e4ddd0;
+  --text: #2b2723; --muted: #6f675d;
+  --accent: #5b4bb7; --accent-contrast: #ffffff; --accent-soft: #ece9fb;
+  --idea: #b8a99a; --draft: #d9a441; --revised: #4a8fc4; --done: #4f9d69; --danger: #b3261e; --place: #2f8f86;
+  --page: #ebe5da; --shadow: 0 24px 60px rgba(43, 39, 35, .18);
+  --ui: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --serif: 'Literata', Georgia, 'Times New Roman', serif;
+  --mono: ui-monospace, 'Cascadia Mono', Consolas, 'Liberation Mono', monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b1a1f; --surface: #242329; --surface-2: #2d2c33; --chrome: #222128; --border: #3a3942;
+    --text: #ece8e1; --muted: #a09a90;
+    --accent: #a99bff; --accent-contrast: #17151f; --accent-soft: #34305a;
+    --idea: #8d8478; --danger: #ff8a80; --place: #6cc5bc;
+    --page: #111014; --shadow: 0 24px 60px rgba(0, 0, 0, .55);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b1a1f; --surface: #242329; --surface-2: #2d2c33; --chrome: #222128; --border: #3a3942;
+  --text: #ece8e1; --muted: #a09a90;
+  --accent: #a99bff; --accent-contrast: #17151f; --accent-soft: #34305a;
+  --idea: #8d8478; --danger: #ff8a80;
+  --page: #111014; --shadow: 0 24px 60px rgba(0, 0, 0, .55);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--page); color: var(--text); font-family: var(--ui); font-size: 15px; line-height: 1.5; -webkit-font-smoothing: antialiased; padding-block: 0 56px; }
+button { font: inherit; color: inherit; cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+h1, h2, h3, h4 { margin: 0; line-height: 1.25; text-wrap: balance; }
+p { margin: 0; }
+svg.i { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; flex: none; }
+kbd { font: inherit; font-size: 10.5px; border: 1px solid var(--border); border-radius: 4px; padding: 0 5px; background: var(--surface); color: var(--muted); white-space: nowrap; }
+
+/* ---------- mockup chrome (outside the window) ---------- */
+.mockbar { position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5; background: var(--page); border-bottom: 1px solid var(--border); padding: 10px 16px; display: flex; align-items: center; gap: 14px 24px; flex-wrap: wrap; }
+.mockbar .name { display: flex; align-items: baseline; gap: 10px; }
+.mockbar .name strong { font-family: var(--serif); font-size: 18px; font-weight: 600; }
+.mockbar .name span { font-size: 12.5px; color: var(--muted); }
+.screens { display: flex; gap: 4px; flex-wrap: wrap; }
+.screens button { background: transparent; border: 1px solid transparent; border-radius: 999px; padding: 4px 12px; font-size: 13px; color: var(--muted); transition: background .15s, color .15s; }
+.screens button:hover { background: var(--surface-2); color: var(--text); }
+.screens button[aria-selected="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--text); }
+.mockbar .theme { margin-left: auto; background: transparent; border: 1px solid var(--border); border-radius: 6px; padding: 4px 10px; font-size: 12.5px; color: var(--muted); }
+
+.frame { max-width: 1312px; margin: 0 auto; padding: 22px 16px 0; }
+.stage-wrap { position: relative; overflow: hidden; }
+.stage { width: 1280px; height: 800px; transform-origin: 0 0; }
+
+/* ---------- the window ---------- */
+.win { position: relative; width: 1280px; height: 800px; display: grid; grid-template-rows: 40px 1fr 24px; background: var(--bg); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; font-size: 13px; line-height: 1.4; }
+
+.titlebar { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 8px; background: var(--chrome); border-bottom: 1px solid var(--border); padding-left: 8px; }
+.tb-left { display: flex; gap: 2px; align-items: center; }
+.tb-btn { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 4px; color: var(--muted); }
+.tb-btn svg.i { width: 16px; height: 16px; }
+.tabs { display: flex; align-items: flex-end; gap: 2px; height: 40px; padding-top: 6px; overflow: hidden; min-width: 0; }
+.tab { display: flex; align-items: center; gap: 7px; padding: 0 10px 0 12px; height: 34px; border: 1px solid transparent; border-bottom: 0; border-radius: 7px 7px 0 0; color: var(--muted); white-space: nowrap; font-size: 12.5px; }
+.tab .x { color: var(--muted); font-size: 11px; margin-left: 2px; opacity: .7; }
+.tab.active { background: var(--bg); color: var(--text); border-color: var(--border); margin-bottom: -1px; }
+.tab-add { width: 28px; height: 28px; margin-bottom: 3px; display: grid; place-items: center; color: var(--muted); border-radius: 5px; }
+.tb-right { display: flex; }
+.wc { width: 46px; height: 40px; display: grid; place-items: center; color: var(--muted); font-size: 12px; }
+.wc svg.i { width: 14px; height: 14px; stroke-width: 1.3; }
+
+.body { display: grid; grid-template-columns: 44px 260px 1fr 300px; min-height: 0; }
+.win[data-screen="dialogue"] .body { grid-template-columns: 44px 260px 1fr 440px; }
+
+.ribbon { background: var(--chrome); border-right: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; padding: 8px 0; gap: 4px; }
+.rb { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 6px; color: var(--muted); }
+.rb.on { color: var(--accent); background: var(--accent-soft); }
+.ribbon .spacer { flex: 1; }
+
+.left { background: var(--chrome); border-right: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.side-head { display: flex; gap: 2px; padding: 8px 8px 4px; }
+.side-tab { padding: 4px 9px; border-radius: 5px; color: var(--muted); font-weight: 500; font-size: 12.5px; }
+.side-tab.on { color: var(--text); background: var(--surface); box-shadow: 0 1px 0 var(--border); }
+.tree { flex: 1; overflow: hidden; padding: 4px 8px; }
+.node { display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 6px; border-radius: 4px; color: var(--text); white-space: nowrap; overflow: hidden; }
+.node.folder { font-weight: 500; }
+.node .chev { width: 12px; color: var(--muted); font-size: 10px; flex: none; }
+.node.d1 { padding-left: 20px; }
+.node.d2 { padding-left: 36px; }
+.node.active { background: var(--accent-soft); }
+.node .n { color: var(--muted); width: 12px; text-align: right; font-variant-numeric: tabular-nums; font-size: 12px; flex: none; }
+.node .t { overflow: hidden; text-overflow: ellipsis; }
+.node .count, .node .words { margin-left: auto; color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; }
+.node.add { color: var(--muted); font-size: 12px; }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.dot.idea { background: var(--idea); } .dot.draft { background: var(--draft); } .dot.revised { background: var(--revised); } .dot.done { background: var(--done); }
+.tree-heading { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; padding: 10px 6px 2px; font-weight: 600; }
+.side-foot { padding: 8px; border-top: 1px solid var(--border); display: flex; gap: 6px; align-items: center; }
+.side-foot .drawer { margin-left: auto; color: var(--muted); font-size: 11.5px; }
+
+.btn { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 5px 10px; color: var(--text); font-weight: 500; display: inline-flex; align-items: center; gap: 6px; white-space: nowrap; font-size: 12.5px; }
+.btn.primary { background: var(--accent); color: var(--accent-contrast); border-color: var(--accent); }
+.btn.small { padding: 3px 8px; font-size: 12px; }
+.btn.quiet { background: transparent; }
+.chip { display: inline-flex; align-items: center; gap: 5px; border-radius: 999px; padding: 1px 8px; font-size: 11px; font-weight: 500; background: var(--surface-2); border: 1px solid var(--border); color: var(--text); }
+.chip .dot { width: 6px; height: 6px; }
+
+.pane { min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--bg); position: relative; }
+.pane-head { height: 36px; flex: none; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 0 18px; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 12px; }
+.crumbs { display: flex; align-items: center; gap: 8px; min-width: 0; white-space: nowrap; }
+.crumbs b { color: var(--text); font-weight: 500; }
+.fmt { display: flex; gap: 2px; align-items: center; }
+.fmt span { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 4px; color: var(--muted); font-size: 12px; font-family: var(--serif); }
+.fmt .sep { width: 1px; height: 16px; background: var(--border); margin: 0 4px; }
+.fmt .on { background: var(--accent-soft); color: var(--text); }
+
+.manuscript { flex: 1; overflow: hidden; padding: 40px 32px 0; }
+.sheet { max-width: 620px; margin: 0 auto; font-family: var(--serif); font-size: 18px; line-height: 1.7; color: var(--text); }
+.sheet h1 { font-size: 28px; font-weight: 600; margin: 0 0 22px; letter-spacing: -.01em; }
+.sheet p { margin: 0 0 1em; text-indent: 1.5em; }
+.sheet p.flush { text-indent: 0; }
+.sheet .break { text-align: center; color: var(--muted); letter-spacing: .6em; margin: 1.2em 0; text-indent: .6em; font-size: 16px; }
+.sheet .caret { display: inline-block; width: 1.5px; height: 1.05em; background: var(--accent); vertical-align: -.18em; margin-left: 1px; }
+
+.right { background: var(--chrome); border-left: 1px solid var(--border); display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+.rtabs { display: flex; gap: 2px; padding: 8px 8px 6px; border-bottom: 1px solid var(--border); }
+.rt { width: 28px; height: 28px; display: grid; place-items: center; border-radius: 5px; color: var(--muted); }
+.rt.on { color: var(--accent); background: var(--accent-soft); }
+.rbody { flex: 1; overflow: hidden; padding: 4px 10px; display: flex; flex-direction: column; }
+.sec { border-bottom: 1px solid var(--border); padding: 9px 4px; }
+.sec:last-child { border-bottom: 0; }
+.sec h4 { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; color: var(--text); }
+.sec h4 .chev { color: var(--muted); font-size: 10px; width: 10px; }
+.sec h4 small { color: var(--muted); font-weight: 400; margin-left: auto; font-size: 11.5px; }
+.sec .cnt { margin-top: 9px; display: flex; flex-direction: column; gap: 9px; font-size: 12.5px; }
+.f { display: flex; flex-direction: column; gap: 2px; }
+.f > span { font-size: 10.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; }
+.f > div { color: var(--text); }
+.f .empty { color: var(--muted); font-style: italic; }
+.snap { display: flex; justify-content: space-between; gap: 8px; padding: 6px 8px; background: var(--surface); border: 1px solid var(--border); border-radius: 5px; font-size: 12px; }
+.snap span { color: var(--muted); white-space: nowrap; }
+.hint { color: var(--muted); font-size: 11.5px; line-height: 1.45; }
+.rbody textarea, .rbody .ta { background: var(--surface); border: 1px solid var(--border); border-radius: 5px; padding: 6px 8px; font: inherit; font-size: 12.5px; color: var(--text); line-height: 1.45; }
+
+.statusbar { background: var(--chrome); border-top: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 10px; font-size: 11.5px; color: var(--muted); white-space: nowrap; }
+.statusbar > div { display: flex; gap: 16px; align-items: center; }
+.st.ok::before { content: ''; width: 7px; height: 7px; background: var(--done); border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 0; }
+
+/* ---------- library (home) ---------- */
+.home { padding: 30px 40px; overflow: hidden; }
+.epigraph { font-family: var(--serif); font-style: italic; font-size: 15px; color: var(--muted); margin: 0 0 8px; max-width: 64ch; }
+.home h1 { font-family: var(--serif); font-size: 26px; font-weight: 600; margin: 0 0 22px; }
+.home-grid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 26px 40px; }
+.home h2 { font-size: 11.5px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 10px; font-weight: 600; }
+.recent { display: flex; flex-direction: column; gap: 6px; }
+.recent > div > div:first-child { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.recent > div { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 9px 12px; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; }
+.recent .t { font-family: var(--serif); font-size: 15px; font-weight: 600; }
+.recent .c { font-size: 12px; color: var(--muted); }
+.recent .m { font-size: 12px; color: var(--muted); text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.waiting blockquote { font-family: var(--serif); font-size: 16px; line-height: 1.55; margin: 0 0 10px; padding-left: 12px; border-left: 2px solid var(--accent); }
+.waiting .lbl { font-size: 11.5px; color: var(--muted); margin-bottom: 3px; }
+.waiting .note { font-size: 13px; margin-bottom: 10px; }
+.today .big { font-family: var(--serif); font-size: 40px; font-weight: 600; line-height: 1; display: flex; align-items: baseline; gap: 8px; }
+.today .big small { font-family: var(--ui); font-size: 12.5px; font-weight: 400; color: var(--muted); }
+.bars { display: flex; gap: 6px; align-items: flex-end; height: 42px; margin: 12px 0 4px; }
+.bars i { flex: 1; background: var(--accent-soft); border-radius: 3px 3px 0 0; min-height: 2px; }
+.bars i.on { background: var(--accent); }
+.days { display: flex; gap: 6px; font-size: 10.5px; color: var(--muted); }
+.days span { flex: 1; text-align: center; }
+.nudge p { font-size: 14px; line-height: 1.5; margin-bottom: 10px; }
+.home .acts { display: flex; gap: 8px; align-items: center; }
+
+/* ---------- outline ---------- */
+.ol { padding: 24px 32px; overflow: hidden; }
+.ol-head { display: flex; justify-content: space-between; align-items: flex-end; gap: 20px; margin-bottom: 14px; }
+.ol h1 { font-family: var(--serif); font-size: 22px; margin: 0 0 6px; }
+.finish { font-size: 12.5px; color: var(--muted); }
+.bar { height: 6px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; overflow: hidden; width: 360px; margin: 6px 0; }
+.bar i { display: block; height: 100%; width: 52%; background: var(--accent); }
+.ol-rows { display: flex; flex-direction: column; gap: 4px; }
+.orow { display: grid; grid-template-columns: 14px 22px 1fr 96px 150px 56px; align-items: center; gap: 10px; padding: 7px 10px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; }
+.orow .h { color: var(--muted); letter-spacing: -2px; font-size: 14px; }
+.orow .n { color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+.orow .t { font-weight: 500; }
+.orow .s { font-size: 12px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.sel { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--border); border-radius: 5px; padding: 2px 8px; font-size: 12px; background: var(--surface-2); white-space: nowrap; }
+.sel::after { content: '⌄'; color: var(--muted); margin-left: 2px; }
+.marks { display: flex; gap: 10px; font-size: 11px; color: var(--muted); white-space: nowrap; }
+.marks b { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--done); margin-right: 4px; }
+.marks b.no { background: transparent; border: 1px solid var(--muted); }
+.orow .w { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; font-size: 12px; }
+.audit { display: flex; gap: 8px; font-size: 12.5px; line-height: 1.45; }
+.audit b { flex: none; width: 8px; height: 8px; border-radius: 50%; margin-top: 6px; background: var(--draft); }
+.audit b.ok { background: var(--done); }
+
+/* ---------- cast ---------- */
+.cast { padding: 24px 32px; overflow: hidden; }
+.cast-head { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 14px; }
+.cast h1 { font-family: var(--serif); font-size: 22px; }
+.cast-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+.card { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 14px; display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+.card.sel { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.card.add { border-style: dashed; background: transparent; align-items: center; justify-content: center; color: var(--muted); min-height: 150px; }
+.card .top { display: flex; align-items: center; gap: 10px; }
+.av { width: 38px; height: 38px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: grid; place-items: center; font-family: var(--serif); font-weight: 600; font-size: 15px; flex: none; }
+.card .nm { font-family: var(--serif); font-size: 16px; font-weight: 600; }
+.card .role { font-size: 12px; color: var(--muted); }
+.vc { display: inline-flex; align-items: center; gap: 6px; font-size: 11.5px; border: 1px solid var(--border); border-radius: 999px; padding: 2px 9px; background: var(--surface-2); align-self: flex-start; white-space: nowrap; }
+.card .ln { font-size: 12.5px; line-height: 1.45; }
+.card .ln span { color: var(--muted); }
+.against { margin-top: 14px; font-size: 12.5px; color: var(--muted); max-width: 70ch; line-height: 1.5; }
+.against b { color: var(--text); font-weight: 500; }
+.hc { display: flex; align-items: center; gap: 8px; font-size: 12px; }
+.hc .bar { width: 90px; margin: 0; }
+.hc .bar i { width: 70%; }
+
+/* ---------- dialogue ---------- */
+.spk { border: 1px solid var(--border); border-radius: 6px; padding: 8px 9px; background: var(--surface); display: grid; grid-template-columns: 72px 1fr; gap: 3px 8px; font-size: 12px; }
+.spk .nm { font-weight: 600; grid-column: 1 / -1; display: flex; gap: 6px; align-items: center; }
+.spk .nm span { font-weight: 400; color: var(--muted); }
+.spk .k { color: var(--muted); }
+.script { font-family: var(--mono); font-size: 11.5px; line-height: 1.55; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 9px 10px; white-space: pre-wrap; margin: 0; }
+.script b { font-weight: 600; }
+.script i { color: var(--muted); font-style: normal; }
+.check { display: flex; gap: 8px; align-items: flex-start; font-size: 12.5px; line-height: 1.4; }
+.box { width: 14px; height: 14px; border: 1.5px solid var(--muted); border-radius: 3px; flex: none; margin-top: 2px; display: grid; place-items: center; font-size: 10px; line-height: 1; }
+.box.on { background: var(--accent); border-color: var(--accent); color: var(--accent-contrast); }
+.check span { color: var(--muted); }
+.two { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.acts { display: flex; gap: 6px; flex-wrap: wrap; }
+
+/* ---------- command palette ---------- */
+.overlay { position: absolute; inset: 40px 0 24px; background: rgba(20, 16, 30, .32); display: flex; justify-content: center; align-items: flex-start; padding-top: 72px; z-index: 3; }
+.palette { width: 560px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; box-shadow: var(--shadow); overflow: hidden; }
+.palette .in { display: flex; align-items: center; gap: 10px; padding: 11px 14px; border-bottom: 1px solid var(--border); font-size: 14px; color: var(--muted); }
+.palette .in .caret { display: inline-block; width: 1.5px; height: 16px; background: var(--accent); }
+.palette ul { list-style: none; margin: 0; padding: 6px; }
+.palette li { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 7px 10px; border-radius: 6px; font-size: 13px; }
+.palette li.sel { background: var(--accent-soft); }
+.palette li small { color: var(--muted); font-size: 11.5px; }
+.palette .in small { margin-left: auto; font-size: 11px; }
+.palette footer { padding: 6px 12px; border-top: 1px solid var(--border); font-size: 11px; color: var(--muted); display: flex; gap: 14px; }
+
+/* ---------- safekeeping ---------- */
+.safe { padding: 28px 40px; max-width: 760px; overflow: hidden; }
+.safe h1 { font-family: var(--serif); font-size: 24px; margin: 0 0 6px; }
+.safe .lead { color: var(--muted); margin: 0 0 18px; max-width: 62ch; }
+.row { display: grid; grid-template-columns: 140px 1fr; gap: 14px; padding: 13px 0; border-top: 1px solid var(--border); font-size: 13px; line-height: 1.5; }
+.row .k { color: var(--muted); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; padding-top: 3px; }
+.row code { font-family: var(--mono); font-size: 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 4px; padding: 1px 6px; }
+.row .acts { margin-top: 8px; }
+.row .sub { color: var(--muted); margin-top: 4px; max-width: 62ch; }
+.chg { display: flex; justify-content: space-between; font-size: 12.5px; padding: 4px 0; }
+.chg span { color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ---------- canvas ---------- */
+.win[data-screen="canvas"] .body { grid-template-columns: 44px 1fr 300px; }
+.win[data-screen="canvas"] .left { display: none; }
+.canvas { flex: 1; position: relative; overflow: hidden; background: var(--bg); background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 20px 20px; }
+.board { position: absolute; left: 0; top: 0; width: 1100px; height: 780px; transform: scale(.85); transform-origin: 0 0; }
+.edges { position: absolute; left: 0; top: 0; width: 1100px; height: 780px; overflow: visible; }
+.edges path { fill: none; stroke: var(--muted); stroke-width: 1.5; marker-end: url(#arr); }
+.edges marker path { fill: var(--muted); stroke: none; }
+.edges text { font-family: var(--ui); font-size: 11px; font-weight: 500; fill: var(--text); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; }
+.cc { position: absolute; background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 12px; line-height: 1.4; color: var(--text); overflow: hidden; box-shadow: 0 1px 2px rgba(0, 0, 0, .05); }
+.cc p { margin: 0; }
+.cc p + p { margin-top: 4px; }
+.cc p span { color: var(--muted); }
+.cc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; min-width: 0; }
+.cc-head b { font-weight: 600; display: block; font-size: 12.5px; white-space: nowrap; }
+.cc-head small { display: block; color: var(--muted); font-size: 11px; }
+.cc .av { width: 28px; height: 28px; font-size: 12px; }
+.cc.char { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.cc.chapter.draft { border-color: var(--draft); }
+.cc.chapter.idea { border-color: var(--idea); }
+.cc.setting { border-color: var(--place); background: color-mix(in srgb, var(--place) 5%, var(--surface)); }
+.cc.question { border-color: var(--draft); background: color-mix(in srgb, var(--draft) 8%, var(--surface)); }
+.cc.group { background: color-mix(in srgb, var(--accent) 6%, transparent); border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, transparent); box-shadow: none; overflow: visible; }
+.g-label { position: absolute; left: 10px; top: -10px; background: var(--bg); padding: 0 6px; font-size: 11.5px; font-weight: 600; color: var(--accent); white-space: nowrap; }
+.cc.image { padding: 0; }
+.cc.image svg { display: block; width: 100%; height: 100px; }
+.cc.image small { display: block; padding: 6px 10px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); }
+.cc.picked { outline: 2px solid var(--accent); outline-offset: 2px; overflow: visible; }
+.hd { position: absolute; width: 8px; height: 8px; background: var(--surface); border: 1.5px solid var(--accent); border-radius: 2px; }
+.hd.tl { left: -6px; top: -6px; } .hd.tr { right: -6px; top: -6px; } .hd.bl { left: -6px; bottom: -6px; } .hd.br { right: -6px; bottom: -6px; }
+.cc-bar { position: absolute; display: flex; gap: 2px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 3px; box-shadow: 0 4px 14px rgba(0, 0, 0, .1); font-size: 11.5px; color: var(--muted); }
+.cc-bar span { padding: 3px 7px; border-radius: 5px; display: inline-flex; align-items: center; gap: 5px; }
+.cc-bar .sw { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); padding: 0; }
+.cv-tools { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); white-space: nowrap; }
+.cv-tools span { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 7px; font-size: 11.5px; color: var(--muted); }
+.cv-tools span:first-child { color: var(--text); background: var(--surface-2); }
+.cv-tools svg.i { width: 15px; height: 15px; }
+.cv-zoom { position: absolute; right: 14px; bottom: 14px; display: flex; align-items: center; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 3px; font-size: 11.5px; color: var(--muted); }
+.cv-zoom span { padding: 3px 7px; font-variant-numeric: tabular-nums; }
+.cv-zoom .sep { width: 1px; height: 14px; background: var(--border); padding: 0; }
+
+/* ---------- web (graph view) ---------- */
+.win[data-screen="web"] .body { grid-template-columns: 44px 1fr 300px; }
+.win[data-screen="web"] .left { display: none; }
+.web { flex: 1; position: relative; overflow: hidden; background: var(--bg); }
+svg.graph { position: absolute; inset: 0; width: 100%; height: 100%; }
+.graph .e { stroke: var(--muted); opacity: .22; }
+.graph .e.t { stroke: var(--accent); opacity: .4; }
+.graph .e.p { stroke: var(--accent); opacity: .55; stroke-dasharray: 4 4; }
+.graph .e.hot { stroke: var(--accent); opacity: .95; }
+.graph .n circle { fill: var(--muted); stroke: var(--bg); stroke-width: 2; }
+.graph .n.core circle { fill: var(--accent); }
+.graph .n.char circle { fill: var(--revised); }
+.graph .n.set circle { fill: var(--place); }
+.graph .n.sym circle { fill: var(--draft); }
+.graph .n.board circle { fill: var(--text); }
+.graph .n.prop circle { fill: color-mix(in srgb, var(--accent) 18%, var(--bg)); stroke: var(--accent); stroke-dasharray: 3 3; stroke-width: 1.5; }
+.graph .n.orphan circle { fill: var(--surface-2); stroke: var(--border); }
+.graph .n .ring { fill: none; stroke: var(--draft); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.graph .n text { font-family: var(--ui); font-size: 11px; fill: var(--text); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+.graph .n.core text { font-weight: 600; font-size: 12px; }
+.graph .n.far { opacity: .45; }
+.graph .n.sel circle { stroke: var(--text); stroke-width: 2.5; }
+.gpanel { position: absolute; right: 14px; top: 14px; width: 226px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); font-size: 11.5px; overflow: hidden; }
+.gsec { padding: 8px 10px; border-bottom: 1px solid var(--border); }
+.gsec:last-child { border-bottom: 0; }
+.gsec h5 { margin: 0 0 5px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+.grow { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2.5px 0; }
+.grow > span:first-child { display: inline-flex; align-items: center; gap: 6px; }
+.grow.hint { padding-top: 5px; }
+.gk { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.gk.dashed { background: transparent; border: 1.5px dashed var(--accent); }
+.sw { width: 26px; height: 14px; border-radius: 7px; background: var(--border); position: relative; flex: none; }
+.sw::after { content: ''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, .25); }
+.sw.on { background: var(--accent); }
+.sw.on::after { left: 14px; }
+.core-doc { font-family: var(--serif); font-size: 13px; line-height: 1.5; }
+
+/* ---------- focus ---------- */
+.win[data-screen="focus"] .body { grid-template-columns: 1fr; }
+.win[data-screen="focus"] .ribbon, .win[data-screen="focus"] .left, .win[data-screen="focus"] .right, .win[data-screen="focus"] .pane-head { display: none; }
+.win[data-screen="focus"] .manuscript { padding-top: 150px; }
+.win[data-screen="focus"] .sheet h1, .win[data-screen="focus"] .sheet p:not(.current), .win[data-screen="focus"] .sheet .break { opacity: .2; }
+.win[data-screen="focus"] .statusbar > div:first-child { visibility: hidden; }
+.focus-hint { position: absolute; right: 18px; bottom: 12px; font-size: 11.5px; color: var(--muted); }
+
+/* ---------- notes under the window ---------- */
+.notes { max-width: 1312px; margin: 0 auto; padding: 30px 16px 0; }
+.notes h2 { font-family: var(--serif); font-size: 20px; font-weight: 600; margin: 0 0 6px; }
+.notes .sub { color: var(--muted); margin: 0 0 16px; max-width: 70ch; }
+.callouts { display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr)); gap: 16px 32px; }
+.co { font-size: 14px; line-height: 1.5; min-width: 0; }
+.co b { font-weight: 600; display: block; margin-bottom: 2px; }
+.co span { color: var(--muted); }
+.cols { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px 40px; }
+.cols h3 { font-size: 13px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); margin: 0 0 8px; font-weight: 600; }
+.cols ul { margin: 0; padding-left: 18px; font-size: 14px; line-height: 1.5; }
+.cols li { margin-bottom: 6px; }
+.cols li b { font-weight: 600; }
+.cols li span { color: var(--muted); }
+hr.rule { border: 0; border-top: 1px solid var(--border); margin: 28px 0 24px; }
+
+@media (max-width: 720px) {
+  .mockbar { gap: 10px; }
+  .mockbar .theme { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-back" viewBox="0 0 24 24"><path d="m14 6-6 6 6 6"/></symbol>
+  <symbol id="i-fwd" viewBox="0 0 24 24"><path d="m10 6 6 6-6 6"/></symbol>
+  <symbol id="i-lib" viewBox="0 0 24 24"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></symbol>
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+  <symbol id="i-cast" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M15.5 14.5a5 5 0 0 1 6 4.5"/></symbol>
+  <symbol id="i-outline" viewBox="0 0 24 24"><path d="M9 6h11M9 12h11M9 18h11"/><circle cx="4.5" cy="6" r="1.2"/><circle cx="4.5" cy="12" r="1.2"/><circle cx="4.5" cy="18" r="1.2"/></symbol>
+  <symbol id="i-drawer" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="5" rx="1"/><path d="M4 9v10a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1V9M10 13h4"/></symbol>
+  <symbol id="i-safe" viewBox="0 0 24 24"><path d="M12 3l7 3v5c0 5-3.5 8.5-7 10-3.5-1.5-7-5-7-10V6l7-3z"/><path d="m9.5 12 1.8 1.8L15 10"/></symbol>
+  <symbol id="i-settings" viewBox="0 0 24 24"><path d="M4 6h9M18 6h2M4 12h3M11 12h9M4 18h11M19 18h1"/><circle cx="15.5" cy="6" r="2"/><circle cx="9" cy="12" r="2"/><circle cx="17" cy="18" r="2"/></symbol>
+  <symbol id="i-plan" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4"/><circle cx="12" cy="12" r="1"/></symbol>
+  <symbol id="i-dialogue" viewBox="0 0 24 24"><path d="M4 5h12v8H9l-4 3v-3H4z"/><path d="M20 9v8h-2v3l-4-3h-3"/></symbol>
+  <symbol id="i-snap" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></symbol>
+  <symbol id="i-notes" viewBox="0 0 24 24"><path d="M5 3h10l4 4v14H5z"/><path d="M15 3v4h4M8 12h8M8 16h6"/></symbol>
+  <symbol id="i-bulb" viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M8.5 14a6 6 0 1 1 7 0c-.8.6-1.2 1.3-1.3 2h-4.4c-.1-.7-.5-1.4-1.3-2z"/></symbol>
+  <symbol id="i-focus" viewBox="0 0 24 24"><path d="M4 9V5a1 1 0 0 1 1-1h4M15 4h4a1 1 0 0 1 1 1v4M20 15v4a1 1 0 0 1-1 1h-4M9 20H5a1 1 0 0 1-1-1v-4"/></symbol>
+  <symbol id="i-min" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+  <symbol id="i-max" viewBox="0 0 24 24"><rect x="5" y="5" width="14" height="14"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+  <symbol id="i-moon" viewBox="0 0 24 24"><path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/></symbol>
+  <symbol id="i-canvas" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="6" rx="1.2"/><rect x="14" y="3" width="7" height="6" rx="1.2"/><rect x="8.5" y="15" width="7" height="6" rx="1.2"/><path d="M6.5 9v3h11V9M12 12v3"/></symbol>
+  <symbol id="i-place" viewBox="0 0 24 24"><path d="M12 21s-6-5.3-6-10a6 6 0 0 1 12 0c0 4.7-6 10-6 10z"/><circle cx="12" cy="11" r="2"/></symbol>
+  <symbol id="i-group" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" stroke-dasharray="3 2.5"/></symbol>
+  <symbol id="i-web" viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="18" cy="8" r="2.5"/><circle cx="12" cy="18" r="2.5"/><path d="M8.4 6.6 15.6 7.7M7.2 8.2l3.7 7.6M16.9 10.2l-3.8 5.7"/></symbol>
+  <symbol id="i-lock" viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></symbol>
+  <symbol id="i-image" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><circle cx="8.5" cy="9" r="1.5"/><path d="m21 16-5-5-8 8"/></symbol>
+</svg>
+
+<header class="mockbar">
+  <div class="name"><strong>Parchemin Desktop</strong><span>Electron mockup · 1280 × 800</span></div>
+  <nav class="screens" role="tablist" aria-label="Screens">
+    <button role="tab" data-screen="library" aria-selected="false">Library</button>
+    <button role="tab" data-screen="write" aria-selected="true">Write</button>
+    <button role="tab" data-screen="dialogue" aria-selected="false">Dialogue</button>
+    <button role="tab" data-screen="outline" aria-selected="false">Outline</button>
+    <button role="tab" data-screen="cast" aria-selected="false">Cast</button>
+    <button role="tab" data-screen="canvas" aria-selected="false">Canvas</button>
+    <button role="tab" data-screen="web" aria-selected="false">Web</button>
+    <button role="tab" data-screen="focus" aria-selected="false">Focus mode</button>
+    <button role="tab" data-screen="palette" aria-selected="false">Command palette</button>
+    <button role="tab" data-screen="safekeeping" aria-selected="false">Safekeeping</button>
+  </nav>
+  <button class="theme" id="theme" type="button">Theme: system</button>
+</header>
+
+<div class="frame">
+<div class="stage-wrap" id="stageWrap">
+<div class="stage" id="stage">
+<div class="win" id="win" data-screen="write" inert aria-label="Mockup of the Parchemin desktop window. Each screen is described in the notes below.">
+
+  <div class="titlebar">
+    <div class="tb-left">
+      <span class="tb-btn"><svg class="i"><use href="#i-menu"/></svg></span>
+      <span class="tb-btn"><svg class="i"><use href="#i-back"/></svg></span>
+      <span class="tb-btn"><svg class="i"><use href="#i-fwd"/></svg></span>
+    </div>
+    <div class="tabs">
+      <div class="tab" id="t-lib"><svg class="i" style="width:14px;height:14px"><use href="#i-lib"/></svg>Library</div>
+      <div class="tab" id="t-ch"><span class="dot draft"></span>7 · The storm glass <span class="x">✕</span></div>
+      <div class="tab" id="t-ol"><svg class="i" style="width:14px;height:14px"><use href="#i-outline"/></svg>Outline <span class="x">✕</span></div>
+      <div class="tab" id="t-cast"><svg class="i" style="width:14px;height:14px"><use href="#i-cast"/></svg>Cast <span class="x">✕</span></div>
+      <div class="tab" id="t-canvas"><svg class="i" style="width:14px;height:14px"><use href="#i-canvas"/></svg>Who knows what <span class="x">✕</span></div>
+      <div class="tab" id="t-web"><svg class="i" style="width:14px;height:14px"><use href="#i-web"/></svg>Web <span class="x">✕</span></div>
+      <div class="tab" id="t-safe"><svg class="i" style="width:14px;height:14px"><use href="#i-safe"/></svg>Safekeeping <span class="x">✕</span></div>
+      <div class="tab-add">+</div>
+    </div>
+    <div class="tb-right">
+      <span class="wc"><svg class="i"><use href="#i-min"/></svg></span>
+      <span class="wc"><svg class="i"><use href="#i-max"/></svg></span>
+      <span class="wc"><svg class="i"><use href="#i-close"/></svg></span>
+    </div>
+  </div>
+
+  <div class="body">
+    <div class="ribbon">
+      <span class="rb" id="r-lib" title="Library"><svg class="i"><use href="#i-lib"/></svg></span>
+      <span class="rb" title="Search"><svg class="i"><use href="#i-search"/></svg></span>
+      <span class="rb" id="r-ol" title="Outline"><svg class="i"><use href="#i-outline"/></svg></span>
+      <span class="rb" id="r-cast" title="Cast"><svg class="i"><use href="#i-cast"/></svg></span>
+      <span class="rb" id="r-canvas" title="Boards"><svg class="i"><use href="#i-canvas"/></svg></span>
+      <span class="rb" id="r-web" title="Web"><svg class="i"><use href="#i-web"/></svg></span>
+      <span class="rb" title="Drawer"><svg class="i"><use href="#i-drawer"/></svg></span>
+      <span class="rb" id="r-safe" title="Safekeeping"><svg class="i"><use href="#i-safe"/></svg></span>
+      <span class="spacer"></span>
+      <span class="rb" title="Theme"><svg class="i"><use href="#i-moon"/></svg></span>
+      <span class="rb" title="Settings"><svg class="i"><use href="#i-settings"/></svg></span>
+    </div>
+
+    <aside class="left">
+      <div class="side-head"><span class="side-tab on">Library</span><span class="side-tab">Tags</span><span class="side-tab">Search</span></div>
+      <div class="tree">
+        <div class="node folder"><span class="chev">▾</span><span class="t">Novels</span><span class="count">2</span></div>
+        <div class="node d1 folder"><span class="chev">▾</span><span class="t">The Lighthouse Keeper's Daughter</span><span class="count">31,420</span></div>
+        <div class="node d2"><span class="dot done"></span><span class="n">1</span><span class="t">The lamp</span><span class="words">2,140</span></div>
+        <div class="node d2"><span class="dot done"></span><span class="n">2</span><span class="t">Salt in the bread</span><span class="words">3,980</span></div>
+        <div class="node d2"><span class="dot done"></span><span class="n">3</span><span class="t">What the tide brought</span><span class="words">4,210</span></div>
+        <div class="node d2"><span class="dot revised"></span><span class="n">4</span><span class="t">Tobias</span><span class="words">3,655</span></div>
+        <div class="node d2"><span class="dot revised"></span><span class="n">5</span><span class="t">The ledger</span><span class="words">5,002</span></div>
+        <div class="node d2"><span class="dot draft"></span><span class="n">6</span><span class="t">A letter not sent</span><span class="words">4,118</span></div>
+        <div class="node d2 active"><span class="dot draft"></span><span class="n">7</span><span class="t">The storm glass</span><span class="words">1,845</span></div>
+        <div class="node d2"><span class="dot idea"></span><span class="n">8</span><span class="t">The boat</span><span class="words">0</span></div>
+        <div class="node d2"><span class="dot idea"></span><span class="n">9</span><span class="t">Landfall</span><span class="words">0</span></div>
+        <div class="node d2 add"><span class="n">+</span><span class="t">Add a chapter</span></div>
+        <div class="node d1 folder"><span class="chev">▸</span><span class="t">Salt and Iron</span><span class="count">12,300</span></div>
+        <div class="node folder"><span class="chev">▾</span><span class="t">Short stories</span><span class="count">2</span></div>
+        <div class="node d1 folder"><span class="chev">▸</span><span class="t">What the River Took</span><span class="count">6,900</span></div>
+        <div class="node d1 folder"><span class="chev">▸</span><span class="t">Tuesday, Twice</span><span class="count">2,280</span></div>
+        <div class="tree-heading">Unfiled</div>
+        <div class="node folder"><span class="chev">▸</span><span class="t">Untitled story</span><span class="count">140</span></div>
+      </div>
+      <div class="side-foot">
+        <span class="btn primary small">＋ New story</span>
+        <span class="btn small quiet">New folder</span>
+        <span class="drawer">Drawer · 2 set aside</span>
+      </div>
+    </aside>
+
+    <main class="pane">
+
+      <!-- WRITE / DIALOGUE / FOCUS / PALETTE -->
+      <div class="pane-head" data-for="write dialogue focus palette">
+        <div class="crumbs"><b>The Lighthouse Keeper's Daughter</b><span>›</span><span>Chapter 7</span><span class="chip"><span class="dot draft"></span>Draft</span></div>
+        <div class="fmt">
+          <span><b>B</b></span><span><i>I</i></span><span style="text-decoration:underline">U</span><span style="text-decoration:line-through">S</span>
+          <span class="sep"></span><span>H2</span><span>“</span><span>•</span><span>⁂</span>
+          <span class="sep"></span><span title="Focus mode"><svg class="i" style="width:15px;height:15px"><use href="#i-focus"/></svg></span>
+        </div>
+      </div>
+      <div class="manuscript" data-for="write dialogue focus palette">
+        <div class="sheet">
+          <h1>The storm glass</h1>
+          <p class="flush">The glass had been clear all morning, which was how Mara knew her father was lying. He kept it on the sill of the lamp room where the light could get at it, a sealed bulb of water and crystals that was meant to cloud before weather, and it sat there as clear as a held breath while the sea went the colour of slate.</p>
+          <p>“It's a toy,” he said, when she asked. “Your grandmother's toy.” He did not look at it. He looked at the wick he was trimming, and the wick did not need trimming.</p>
+          <p class="current">She had learned to read him the way she read the water: not by what moved, but by what refused to.<span class="caret"></span></p>
+          <p>“Tobias saw a boat,” she said.</p>
+          <p>“Tobias sees a great many things.” The shears closed on nothing. “Go down and see to the bread.”</p>
+          <p class="break">⁂</p>
+          <p class="flush">By four the glass had clouded, and he had not.</p>
+        </div>
+        <div class="focus-hint" data-for="focus">Esc leaves focus · typewriter scrolling on · 412 words today</div>
+      </div>
+
+      <!-- LIBRARY -->
+      <div class="home" data-for="library">
+        <p class="epigraph">“Every person is a storyteller. Most just have not been given a system and a quiet room.”</p>
+        <h1>What will you write today?</h1>
+        <div class="home-grid">
+          <section>
+            <h2>Pick up where you left off</h2>
+            <div class="recent">
+              <div><div><div class="t">The Lighthouse Keeper's Daughter</div><div class="c">Chapter 7 · The storm glass</div></div><div class="m">Edited Oct 9<br>31,420 words</div></div>
+              <div><div><div class="t">What the River Took</div><div class="c">Chapter 3 · The second bridge</div></div><div class="m">Edited Oct 4<br>6,900 words</div></div>
+              <div><div><div class="t">Salt and Iron</div><div class="c">Chapter 2 · Forge</div></div><div class="m">Edited Sep 28<br>12,300 words</div></div>
+            </div>
+          </section>
+          <section class="today">
+            <h2>Today</h2>
+            <div class="big">412 <small>words · about a quarter of a chapter</small></div>
+            <div class="bars"><i style="height:4%"></i><i class="on" style="height:72%"></i><i class="on" style="height:100%"></i><i style="height:4%"></i><i class="on" style="height:56%"></i><i class="on" style="height:87%"></i><i class="on" style="height:36%"></i></div>
+            <div class="days"><span>Sat</span><span>Sun</span><span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span></div>
+            <p class="hint" style="margin-top:8px">Days you wrote are shown. Days you didn't are just quiet. Nothing is counted against you.</p>
+          </section>
+          <section class="waiting">
+            <h2>A sentence waiting</h2>
+            <blockquote>She had learned to read him the way she read the water: not by what moved, but by what refused to.</blockquote>
+            <div class="lbl">What happens next, in your words from last night</div>
+            <div class="note">Tobias comes up the stairs with the ledger. He has seen the boat too, and he wants to be paid not to say so.</div>
+            <div class="acts"><span class="btn primary">Open Chapter 7</span><span class="hint">Chapter 7 · 1,845 words</span></div>
+          </section>
+          <section class="nudge">
+            <h2>A nudge, if you need one</h2>
+            <p>Write the worst thing that could happen next. Then decide whether to use it.</p>
+            <div class="acts"><span class="btn">Another one</span><span class="hint">Prompts are suggestions only. Nothing is written for you.</span></div>
+          </section>
+        </div>
+      </div>
+
+      <!-- OUTLINE -->
+      <div class="ol" data-for="outline">
+        <div class="ol-head">
+          <div>
+            <h1>Outline</h1>
+            <div class="finish">31,420 of 60,000 words · Finish by Nov 9 · 29 days left · about 990 words a day from here</div>
+            <div class="bar"><i></i></div>
+            <div class="finish">A finish date is a kindness, not a threat. Pause it or move it whenever life does.</div>
+          </div>
+          <div class="acts"><span class="btn small">Novella · 15 days</span><span class="btn small">Novel · 30 days</span><span class="btn small quiet">Pause the finish line</span><span class="btn small primary">Read the whole outline</span></div>
+        </div>
+        <div class="ol-rows">
+          <div class="orow"><span class="h">⋮⋮</span><span class="n">1</span><span><div class="t">The lamp</div><div class="s">Mara in the lamp room at dawn. The glass on the sill, clear. One hint that her father is not sleeping.</div></span><span class="sel"><span class="dot done"></span>Done</span><span class="marks"><span><b></b>Goal</span><span><b></b>Conflict</span><span><b></b>Turn</span></span><span class="w">2,140</span></div>
+          <div class="orow"><span class="h">⋮⋮</span><span class="n">2</span><span><div class="t">Salt in the bread</div><div class="s">The village. Nan Pell's letters found in the flour tin. What the last wreck cost.</div></span><span class="sel"><span class="dot done"></span>Done</span><span class="marks"><span><b></b>Goal</span><span><b></b>Conflict</span><span><b></b>Turn</span></span><span class="w">3,980</span></div>
+          <div class="orow"><span class="h">⋮⋮</span><span class="n">3</span><span><div class="t">What the tide brought</div><div class="s">A crate, a name on it. Mara hides it. Her father finds the hiding place but not the crate.</div></span><span class="sel"><span class="dot done"></span>Done</span><span class="marks"><span><b></b>Goal</span><span><b></b>Conflict</span><span><b></b>Turn</span></span><span class="w">4,210</span></div>
+          <div class="orow"><span class="h">⋮⋮</span><span class="n">4</span><span><div class="t">Tobias</div><div class="s">The clerk rows out with the quarter's pay. He has a question about 1887 and a way of not asking it.</div></span><span class="sel"><span class="dot revised"></span>Revised</span><span class="marks"><span><b></b>Goal</span><span><b></b>Conflict</span><span><b></b>Turn</span></span><span class="w">3,655</span></div>
+          <div class="orow"><span class="h">⋮⋮</span><span class="n">5</span><span><div class="t">The ledger</div><div class="s">Pages torn from the keeper's log. Mara reads the dates against the letters. They do not match.</div></span><span class="sel"><span class="dot revised"></span>Revised</span><span class="marks"><span><b></b>Goal</span><span><b></b>Conflict</span><span><b class="no"></b>Turn</span></span><span class="w">5,002</span></div>
+          <div class="orow"><span class="h">⋮⋮</span><span class="n">6</span><span><div class="t">A letter not sent</div><div class="s">Mara writes to the Board and burns it. Her father watches the smoke from the gallery.</div></span><span class="sel"><span class="dot draft"></span>Draft</span><span class="marks"><span><b></b>Goal</span><span><b></b>Conflict</span><span><b></b>Turn</span></span><span class="w">4,118</span></div>
+          <div class="orow"><span class="h">⋮⋮</span><span class="n">7</span><span><div class="t">The storm glass</div><div class="s">The glass stays clear while the sea turns. She stops asking him and starts watching him.</div></span><span class="sel"><span class="dot draft"></span>Draft</span><span class="marks"><span><b></b>Goal</span><span><b></b>Conflict</span><span><b></b>Turn</span></span><span class="w">1,845</span></div>
+          <div class="orow"><span class="h">⋮⋮</span><span class="n">8</span><span><div class="t">The boat</div><div class="s">The boat Tobias saw. Who is in it, and why the light must not be lit tonight.</div></span><span class="sel"><span class="dot idea"></span>Idea</span><span class="marks"><span><b></b>Goal</span><span><b class="no"></b>Conflict</span><span><b class="no"></b>Turn</span></span><span class="w">0</span></div>
+          <div class="orow"><span class="h">⋮⋮</span><span class="n">9</span><span><div class="t">Landfall</div><div class="s">Last line, known already: “She lit it anyway.”</div></span><span class="sel"><span class="dot idea"></span>Idea</span><span class="marks"><span><b class="no"></b>Goal</span><span><b class="no"></b>Conflict</span><span><b class="no"></b>Turn</span></span><span class="w">0</span></div>
+        </div>
+      </div>
+
+      <!-- CAST -->
+      <div class="cast" data-for="cast">
+        <div class="cast-head"><h1>Cast</h1><div class="acts"><span class="btn small">Grid</span><span class="btn small quiet">Friction</span><span class="btn small primary">＋ New character</span></div></div>
+        <div class="cast-grid">
+          <div class="card sel"><div class="top"><span class="av">M</span><div><div class="nm">Mara Quill</div><div class="role">Hero · 19 · keeper's daughter</div></div></div><span class="vc">The Stoic <span class="hint">· Avoiders · withholding</span></span><div class="ln"><span>Wants in a room:</span> to be told the truth without having to ask.</div><div class="ln"><span>Function:</span> the only one who can read the water.</div><div class="hc"><span class="bar"><i></i></span>Hero check 7 of 10</div></div>
+          <div class="card"><div class="top"><span class="av">E</span><div><div class="nm">Elias Quill</div><div class="role">Father · the keeper</div></div></div><span class="vc">The Stonewaller <span class="hint">· Avoiders · freezing out</span></span><div class="ln"><span>Wants in a room:</span> to keep the lamp lit and the subject closed.</div><div class="ln"><span>Function:</span> the only one who knows what the glass did in 1887.</div></div>
+          <div class="card"><div class="top"><span class="av">T</span><div><div class="nm">Tobias Hale</div><div class="role">Clerk from the village</div></div></div><span class="vc">The Wit <span class="hint">· Charmers · deflecting</span></span><div class="ln"><span>Wants in a room:</span> to be paid for what he saw, by whoever pays first.</div><div class="ln"><span>Function:</span> the only one who can leave the island.</div></div>
+          <div class="card"><div class="top"><span class="av">N</span><div><div class="nm">Nan Pell</div><div class="role">Grandmother · dead · in letters</div></div></div><span class="vc">The Sage <span class="hint">· Thinkers · guiding</span></span><div class="ln"><span>Wants in a room:</span> to be believed, forty years late.</div><div class="ln"><span>Function:</span> wrote the only account of the last wreck.</div></div>
+          <div class="card"><div class="top"><span class="av">B</span><div><div class="nm">The Board</div><div class="role">Antagonist · an institution with one face</div></div></div><span class="vc">The Pedant <span class="hint">· Thinkers · lecturing</span></span><div class="ln"><span>Wants in a room:</span> a tidy log and no questions.</div><div class="ln"><span>Function:</span> can take the lighthouse away.</div></div>
+          <div class="card add">＋ Add a character</div>
+        </div>
+        <p class="against"><b>Cast against each other.</b> Mara (Stoic) and Tobias (Wit) pull in opposite directions: he fills the silence she keeps, so every scene they share has friction built in. Elias (Stonewaller) and Mara share a family: two Avoiders in one lamp room can go a whole chapter without a turn. Give one of them a dash of another voice, and let it drop away under pressure.</p>
+      </div>
+
+      <!-- SAFEKEEPING -->
+      <div class="safe" data-for="safekeeping">
+        <h1>Safekeeping</h1>
+        <p class="lead">Your stories live on this computer, in a folder you chose. A backup file is a copy you hold yourself. Nothing here leaves the machine unless you carry it.</p>
+        <div class="row"><div class="k">Library folder</div><div><code>D:\Writing\Parchemin</code><div class="sub">Everything is in <code>library.json</code>, and each chapter is also a Markdown file beside it, so you can read your book with any text editor. Put this folder in Dropbox, iCloud or OneDrive and your own account carries it between devices.</div><div class="acts"><span class="btn small">Open the folder</span><span class="btn small quiet">Move the library…</span></div></div></div>
+        <div class="row"><div class="k">Last backup file</div><div>Oct 8, 9:14 pm · <code>parchemin-backup-2026-10-08.json</code><div class="sub">1,240 words have been written since, in chapters 7, 6 and 2. Parchemin will suggest a backup at about 2,000.</div><div class="acts"><span class="btn small primary">Save a backup file</span><span class="btn small">Check a backup file…</span><span class="btn small quiet">Restore from a backup…</span></div></div></div>
+        <div class="row"><div class="k">Kept where</div><div>This computer only. Four stories, 23 chapters and 11 characters take 3.2 MB.<div class="sub">The web app has to ask the browser to keep data. The desktop app does not: the folder is yours and ordinary.</div></div></div>
+        <div class="row"><div class="k">Export</div><div class="acts" style="margin-top:0"><span class="btn small">Markdown</span><span class="btn small">EPUB</span><span class="btn small">Manuscript .docx</span><span class="btn small quiet">Copy for AO3</span></div></div>
+        <div class="row"><div class="k">Writing suggestions</div><div>Windows text suggestions and Copilot's Rewrite are kept out of this window. Grammar extensions cannot reach it, because there is no browser.</div></div>
+      </div>
+
+      <!-- CANVAS -->
+      <div class="pane-head" data-for="canvas" hidden>
+        <div class="crumbs"><b>The Lighthouse Keeper's Daughter</b><span>›</span><span>Boards</span><span>›</span><b>Who knows what</b></div>
+        <div class="acts"><span class="btn small quiet">Add from the story ⌄</span><span class="btn small quiet">Zoom to fit</span></div>
+      </div>
+      <div class="canvas" data-for="canvas" hidden>
+        <div class="board">
+          <svg class="edges" viewBox="0 0 1100 780" aria-hidden="true">
+            <defs><marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 z"/></marker></defs>
+            <path d="M270 130 C320 130 320 315 370 315"/><text x="330" y="206">POV</text>
+            <path d="M495 170 L495 260"/><text x="503" y="220">setting</text>
+            <path d="M495 370 L495 450"/><text x="503" y="400">the glass clouds</text>
+            <path d="M210 180 L210 290"/><text x="218" y="240">won't ask</text>
+            <path d="M120 290 L120 180"/><text x="112" y="240" text-anchor="end">won't tell</text>
+            <path d="M270 550 C320 550 320 505 370 505"/><text x="284" y="572">saw it</text>
+            <path d="M270 345 C330 345 330 432 420 432 L560 432 C640 432 640 400 690 400"/><text x="436" y="426">keeps</text>
+            <path d="M690 520 C660 520 650 505 620 505"/><text x="628" y="544">reveals</text>
+            <path d="M700 75 C660 75 660 105 620 105"/><text x="628" y="68">lit here</text>
+          </svg>
+
+          <div class="cc-bar" style="left:60px;top:44px"><span class="sw"></span><span>Open profile</span><span>Colour</span><span>⋯</span></div>
+          <div class="cc char picked" style="left:60px;top:80px;width:210px;height:100px"><span class="hd tl"></span><span class="hd tr"></span><span class="hd bl"></span><span class="hd br"></span><div class="cc-head"><span class="av">M</span><div><b>Mara Quill</b><small>Hero · The Stoic</small></div></div><p>Wants to be told the truth without having to ask.</p></div>
+          <div class="cc char" style="left:60px;top:290px;width:210px;height:100px"><div class="cc-head"><span class="av">E</span><div><b>Elias Quill</b><small>Father · The Stonewaller</small></div></div><p>Wants the lamp lit and the subject closed.</p></div>
+          <div class="cc char" style="left:60px;top:500px;width:210px;height:100px"><div class="cc-head"><span class="av">T</span><div><b>Tobias Hale</b><small>Clerk · The Wit</small></div></div><p>Wants to be paid for what he saw.</p></div>
+
+          <div class="cc setting" style="left:370px;top:40px;width:250px;height:130px"><div class="cc-head"><svg class="i" style="width:16px;height:16px;color:var(--place)"><use href="#i-place"/></svg><div><b>The lamp room</b><small>setting</small></div></div><p><span>Hard because:</span> one way up, and he is at the top of it.</p><p><span>Props:</span> the storm glass, the shears, the wick.</p></div>
+          <div class="cc chapter draft" style="left:370px;top:260px;width:250px;height:110px"><div class="cc-head"><span class="dot draft"></span><div><b>7 · The storm glass</b><small>Draft · 1,845 words</small></div></div><p>The glass stays clear while the sea turns. She stops asking him and starts watching him.</p></div>
+          <div class="cc chapter idea" style="left:370px;top:450px;width:250px;height:110px"><div class="cc-head"><span class="dot idea"></span><div><b>8 · The boat</b><small>Idea · 0 words</small></div></div><p>Who is in the boat Tobias saw, and why the light must not be lit tonight.</p></div>
+          <div class="cc image" style="left:370px;top:610px;width:250px;height:136px">
+            <svg viewBox="0 0 250 100" aria-hidden="true">
+              <rect width="250" height="100" fill="color-mix(in srgb, var(--revised) 10%, var(--surface))"/>
+              <path d="M30 62 C45 32 85 24 115 40 S168 72 198 48 S238 46 236 66 C226 88 178 94 128 86 S48 94 30 62z" fill="color-mix(in srgb, var(--done) 22%, var(--surface))" stroke="var(--muted)" stroke-width="1"/>
+              <path d="M152 44 l4 -18 h6 l4 18z" fill="var(--surface)" stroke="var(--text)" stroke-width="1"/>
+              <circle cx="159" cy="24" r="2.5" fill="var(--draft)"/>
+              <path d="M58 76 Q88 68 112 78" fill="none" stroke="var(--text)" stroke-width="1" stroke-dasharray="3 3"/>
+              <path d="M186 90 Q212 80 240 92" fill="none" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2 3"/>
+              <text x="50" y="58" font-size="9" fill="var(--muted)" font-family="Inter, sans-serif">village</text>
+              <text x="167" y="30" font-size="9" fill="var(--muted)" font-family="Inter, sans-serif">lamp</text>
+              <text x="200" y="80" font-size="9" fill="var(--muted)" font-family="Inter, sans-serif">the boat?</text>
+            </svg>
+            <small>The island, sketched · island.png</small>
+          </div>
+
+          <div class="cc" style="left:700px;top:40px;width:300px;height:70px"><p><span>Last line, already known:</span> “She lit it anyway.”</p></div>
+          <div class="cc group" style="left:690px;top:180px;width:340px;height:420px"><span class="g-label">What Mara doesn't know</span></div>
+          <div class="cc" style="left:710px;top:225px;width:300px;height:60px"><p>The boat is Nan's. It has been for forty years.</p></div>
+          <div class="cc" style="left:710px;top:305px;width:300px;height:60px"><p>Elias let the 1887 boat go, and logged a calm night.</p></div>
+          <div class="cc" style="left:710px;top:385px;width:300px;height:60px"><p>Tobias has been paid once already, by the Board.</p></div>
+          <div class="cc" style="left:710px;top:465px;width:300px;height:60px"><p>The ledger is missing pages, and the Board knows which.</p></div>
+          <div class="cc question" style="left:700px;top:640px;width:300px;height:80px"><p><span>Decide before chapter 8:</span> why does the glass clear when he lies?</p></div>
+        </div>
+        <div class="cv-tools">
+          <span><svg class="i"><use href="#i-notes"/></svg>Note</span>
+          <span><svg class="i"><use href="#i-outline"/></svg>Chapter</span>
+          <span><svg class="i"><use href="#i-cast"/></svg>Character</span>
+          <span><svg class="i"><use href="#i-place"/></svg>Setting</span>
+          <span><svg class="i"><use href="#i-group"/></svg>Group</span>
+          <span><svg class="i"><use href="#i-image"/></svg>Image</span>
+        </div>
+        <div class="cv-zoom"><span>−</span><span>85%</span><span>+</span><span class="sep"></span><span>Fit</span></div>
+      </div>
+
+      <!-- WEB -->
+      <div class="pane-head" data-for="web" hidden>
+        <div class="crumbs"><b>The Lighthouse Keeper's Daughter</b><span>›</span><b>Web</b><span class="chip"><svg class="i" style="width:12px;height:12px"><use href="#i-lock"/></svg>For you only · never exported</span></div>
+        <div class="acts"><span class="hint">Read on every save · last read 2 min ago</span><span class="btn small quiet">Read now</span></div>
+      </div>
+      <div class="web" data-for="web" hidden>
+        <svg class="graph" id="graph" viewBox="0 0 936 664" preserveAspectRatio="xMidYMid meet" aria-hidden="true"></svg>
+        <div class="gpanel">
+          <div class="gsec"><h5>Show</h5>
+            <div class="grow"><span><i class="gk" style="background:var(--accent)"></i>Core ideas · 3</span><span class="sw on"></span></div>
+            <div class="grow"><span><i class="gk" style="background:var(--revised)"></i>Characters · 5</span><span class="sw on"></span></div>
+            <div class="grow"><span><i class="gk" style="background:var(--place)"></i>Settings · 2</span><span class="sw on"></span></div>
+            <div class="grow"><span><i class="gk" style="background:var(--draft)"></i>Symbols · 4</span><span class="sw on"></span></div>
+            <div class="grow"><span><i class="gk" style="background:var(--muted)"></i>Chapters · 9</span><span class="sw on"></span></div>
+            <div class="grow"><span><i class="gk" style="background:var(--text)"></i>Boards · 1</span><span class="sw on"></span></div>
+            <div class="grow"><span><i class="gk dashed"></i>Proposals · 1</span><span class="sw on"></span></div>
+          </div>
+          <div class="gsec"><h5>Threads</h5>
+            <div class="grow"><span>Thickness is passages found</span></div>
+            <div class="grow"><span>Hide threads under 2 passages</span><span class="sw"></span></div>
+            <div class="grow"><span>Grey lines: appear together in the text</span></div>
+          </div>
+          <div class="gsec"><h5>Reading</h5>
+            <div class="grow"><span>Read on every save</span><span class="sw on"></span></div>
+            <div class="grow"><span>Only when I ask</span><span class="sw"></span></div>
+            <div class="grow hint"><span>Last read 2 min ago · chapter 7 only · on your server</span></div>
+          </div>
+        </div>
+        <div class="cv-zoom"><span>−</span><span>100%</span><span>+</span><span class="sep"></span><span>Fit</span></div>
+      </div>
+
+      <!-- COMMAND PALETTE -->
+      <div class="overlay" data-for="palette">
+        <div class="palette">
+          <div class="in"><svg class="i" style="width:16px;height:16px"><use href="#i-search"/></svg><span class="caret"></span>Type a command…<small>Ctrl+P</small></div>
+          <ul>
+            <li class="sel">Focus mode <small><kbd>Ctrl+Shift+F</kbd></small></li>
+            <li>Snapshot this draft <small><kbd>Ctrl+Shift+S</kbd></small></li>
+            <li>Cover the names in this chapter <small>Dialogue</small></li>
+            <li>Open the Dialogue panel <small><kbd>Ctrl+D</kbd></small></li>
+            <li>A nudge, if you need one <small>Unblock</small></li>
+            <li>Leave a sentence waiting <small>Note for tomorrow</small></li>
+            <li>Save a backup file <small>Safekeeping</small></li>
+            <li>Read the whole outline <small>Outline</small></li>
+            <li>Export as EPUB <small>Export</small></li>
+            <li>Set this chapter aside <small>Drawer</small></li>
+          </ul>
+          <footer><span>↑↓ to move</span><span>Enter to run</span><span>Esc to close</span></footer>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- RIGHT SIDEBAR: WRITE / PALETTE -->
+    <aside class="right" data-for="write palette focus">
+      <div class="rtabs">
+        <span class="rt on" title="Chapter plan"><svg class="i"><use href="#i-plan"/></svg></span>
+        <span class="rt" title="Dialogue"><svg class="i"><use href="#i-dialogue"/></svg></span>
+        <span class="rt" title="Snapshots"><svg class="i"><use href="#i-snap"/></svg></span>
+        <span class="rt" title="Notes"><svg class="i"><use href="#i-notes"/></svg></span>
+        <span class="rt" title="Unblock"><svg class="i"><use href="#i-bulb"/></svg></span>
+      </div>
+      <div class="rbody">
+        <div class="sec"><h4><span class="chev">▾</span>Chapter plan</h4>
+          <div class="cnt">
+            <div class="two"><div class="f"><span>POV</span><div>Mara</div></div><div class="f"><span>Setting</span><div>The lamp room, afternoon</div></div></div>
+            <div class="f"><span>Goal</span><div>Get her father to say what the glass is for.</div></div>
+            <div class="f"><span>Conflict</span><div>He would rather trim a wick that doesn't need it.</div></div>
+            <div class="f"><span>Turn</span><div>She stops asking him and starts watching him.</div></div>
+            <div class="two"><div class="f"><span>Prop</span><div>The storm glass</div></div><div class="f"><span>Last line</span><div>“…and he had not.”</div></div></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>Snapshots<small>3</small></h4>
+          <div class="cnt">
+            <div class="snap">Before the rewrite<span>Oct 8 · 1,602</span></div>
+            <div class="snap">First draft<span>Oct 6 · 1,180</span></div>
+            <div class="snap">Scrap of the opening<span>Oct 5 · 410</span></div>
+            <div class="acts"><span class="btn small">Snapshot now</span><span class="hint">Save one before a big rewrite. You can always come back.</span></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>Notes</h4>
+          <div class="cnt"><div class="f"><span>What happens in this chapter?</span><div class="ta">The glass stays clear while the sea turns. Mara stops asking her father and starts watching him. Tobias is on the stairs by the end.</div></div></div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT SIDEBAR: DIALOGUE -->
+    <aside class="right" data-for="dialogue" hidden>
+      <div class="rtabs">
+        <span class="rt" title="Chapter plan"><svg class="i"><use href="#i-plan"/></svg></span>
+        <span class="rt on" title="Dialogue"><svg class="i"><use href="#i-dialogue"/></svg></span>
+        <span class="rt" title="Snapshots"><svg class="i"><use href="#i-snap"/></svg></span>
+        <span class="rt" title="Notes"><svg class="i"><use href="#i-notes"/></svg></span>
+        <span class="rt" title="Unblock"><svg class="i"><use href="#i-bulb"/></svg></span>
+      </div>
+      <div class="rbody">
+        <div class="sec"><h4><span class="chev">▾</span>Who wants what<small>Chapter 7</small></h4>
+          <div class="cnt">
+            <div class="spk"><div class="nm">MARA <span>· The Stoic</span></div><span class="k">Wants</span><span>to hear him admit the glass is clear because he needs it to be</span><span class="k">Won't say</span><span>that she thinks he is afraid</span><span class="k">Can't say</span><span>that she is, too</span></div>
+            <div class="spk"><div class="nm">ELIAS <span>· The Stonewaller</span></div><span class="k">Wants</span><span>to get her out of the lamp room before four</span><span class="k">Won't say</span><span>that he has seen the boat</span><span class="k">Can't say</span><span>that he let the last one go</span></div>
+            <div class="two"><div class="f"><span>The object in the room</span><div>The storm glass</div></div><div class="f"><span>Underneath</span><div>Who is to blame for 1887</div></div></div>
+            <div class="two"><div class="f"><span>Opens on</span><div>Trust</div></div><div class="f"><span>Closes on</span><div>Suspicion</div></div></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>Script draft<small>outside the manuscript</small></h4>
+          <div class="cnt">
+<pre class="script"><b>MARA</b> <i>(pressing)</i>: It's clear.
+<b>ELIAS</b> <i>(correcting)</i>: It's a toy.
+<b>MARA</b> <i>(pressing)</i>: It was clear in March, too.
+<b>ELIAS</b> <i>(deflecting)</i>: Pass me the shears.
+<b>MARA</b> <i>(naming)</i>: You don't need the shears.
+<b>ELIAS</b> <i>(freezing out)</i>: …
+<b>MARA</b> <i>(retreating)</i>: Tobias saw a boat.</pre>
+            <div class="acts"><span class="btn small">Cover the names</span><span class="btn small">Read back as beats</span><span class="btn small quiet">Test the chapter instead</span></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>Dialogue pass<small>your ticks, plain facts</small></h4>
+          <div class="cnt">
+            <div class="check"><span class="box on">✓</span><div>Nobody says what they feel out loud <span>· 0 lines in this chapter</span></div></div>
+            <div class="check"><span class="box"></span><div>Questions answered with questions <span>· 1 so far</span></div></div>
+            <div class="check"><span class="box on">✓</span><div>Tags other than “said” <span>· 0</span></div></div>
+            <div class="check"><span class="box"></span><div>Ends on a picture <span>· last paragraph: “By four the glass had clouded, and he had not.”</span></div></div>
+            <div class="check"><span class="box"></span><div>Read it aloud</div></div>
+            <p class="hint">Nothing here is scored. The facts are counted from your text. The ticks are yours.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT SIDEBAR: LIBRARY -->
+    <aside class="right" data-for="library" hidden>
+      <div class="rtabs"><span class="rt on" title="Safekeeping"><svg class="i"><use href="#i-safe"/></svg></span><span class="rt" title="Drawer"><svg class="i"><use href="#i-drawer"/></svg></span></div>
+      <div class="rbody">
+        <div class="sec"><h4><span class="chev">▾</span>Safekeeping</h4>
+          <div class="cnt">
+            <div class="f"><span>Kept where</span><div>This computer · <span class="hint">D:\Writing\Parchemin</span></div></div>
+            <div class="f"><span>Last backup file</span><div>2 days ago · 1,240 words since</div></div>
+            <div class="acts"><span class="btn small">Save a backup file</span><span class="btn small quiet">Open the folder</span></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>The drawer<small>2 set aside</small></h4>
+          <div class="cnt">
+            <div class="snap">Chapter 4, first version<span>3,100 words</span></div>
+            <div class="snap">Old prologue<span>890 words</span></div>
+            <p class="hint">Nothing in the drawer is deleted. Put it back, or delete it for good yourself.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT SIDEBAR: OUTLINE -->
+    <aside class="right" data-for="outline" hidden>
+      <div class="rtabs"><span class="rt on" title="Outline audit"><svg class="i"><use href="#i-outline"/></svg></span><span class="rt" title="Chapter plan"><svg class="i"><use href="#i-plan"/></svg></span></div>
+      <div class="rbody">
+        <div class="sec"><h4><span class="chev">▾</span>Read the whole outline</h4>
+          <div class="cnt">
+            <p class="hint">Reading across tells you if a chapter works. Reading down tells you if the book does.</p>
+            <div class="audit"><b></b><div>2 of 9 chapters have no turn: 8 and 9. A chapter that ends where it began is a scene, not a chapter yet.</div></div>
+            <div class="audit"><b></b><div>Chapter 5 has no turn either, and 5,002 words. The longest chapter is the one that doesn't move.</div></div>
+            <div class="audit"><b></b><div>The lamp room is the setting in 7 of 9 chapters. Fine for a siege. Check that chapter 2 earns the village.</div></div>
+            <div class="audit"><b class="ok"></b><div>POV is Mara throughout. Nothing stands out.</div></div>
+            <div class="audit"><b class="ok"></b><div>The last line is known: “She lit it anyway.” Chapters 1 to 7 all point at it.</div></div>
+            <div class="audit"><b></b><div>Pace: 990 words a day from here. The last seven days averaged 570. Moving the date to Nov 24 would make it 560.</div></div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT SIDEBAR: CAST -->
+    <aside class="right" data-for="cast" hidden>
+      <div class="rtabs"><span class="rt on" title="Voice"><svg class="i"><use href="#i-cast"/></svg></span><span class="rt" title="Hero check"><svg class="i"><use href="#i-plan"/></svg></span><span class="rt" title="Biography"><svg class="i"><use href="#i-notes"/></svg></span></div>
+      <div class="rbody">
+        <div class="sec"><h4><span class="chev">▾</span>Mara Quill<small>voice</small></h4>
+          <div class="cnt">
+            <div class="two"><div class="f"><span>Main voice</span><div>The Stoic · withholding</div></div><div class="f"><span>A dash of</span><div>The Pedant · drops under pressure</div></div></div>
+            <div class="f"><span>Fear</span><div>That asking is the same as needing.</div></div>
+            <div class="f"><span>Sees others as</span><div>Weather. Something to read, not to answer.</div></div>
+            <div class="f"><span>One line only she would say</span><div>“You don't need the shears.”</div></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>Flaw and need</h4>
+          <div class="cnt">
+            <div class="f"><span>Hurts herself</span><div>Mistakes silence for strength.</div></div>
+            <div class="f"><span>Hurts others</span><div>Lets Tobias carry the blame for what she won't say.</div></div>
+            <div class="f"><span>Needs</span><div>To ask.</div></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>Hero check<small>7 of 10</small></h4>
+          <div class="cnt">
+            <div class="check"><span class="box"></span><div>Does the flaw hurt the hero and also hurt someone else?</div></div>
+            <div class="check"><span class="box"></span><div>Will the hero prove the change with an action, not by saying they learned something?</div></div>
+            <div class="check"><span class="box"></span><div>Does the opposition attack the hero's greatest strength?</div></div>
+            <p class="hint">Three left. Each one unticked says what tomorrow's work is.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT SIDEBAR: CANVAS -->
+    <aside class="right" data-for="canvas" hidden>
+      <div class="rtabs"><span class="rt on" title="Boards"><svg class="i"><use href="#i-canvas"/></svg></span><span class="rt" title="Selected card"><svg class="i"><use href="#i-plan"/></svg></span></div>
+      <div class="rbody">
+        <div class="sec"><h4><span class="chev">▾</span>Boards<small>this story · 3</small></h4>
+          <div class="cnt">
+            <div class="snap" style="border-color:var(--accent)">Who knows what<span>13 cards</span></div>
+            <div class="snap">The island<span>sketch · 6 cards</span></div>
+            <div class="snap">Beats to chapters<span>15 beats · 9 chapters</span></div>
+            <div class="acts"><span class="btn small">＋ New board</span></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>Selected<small>Mara Quill · character</small></h4>
+          <div class="cnt">
+            <p class="hint">A character card is the live profile. Change it here or on the Cast page, and both change.</p>
+            <div class="two"><div class="f"><span>Voice</span><div>The Stoic</div></div><div class="f"><span>Knows</span><div>Tobias saw a boat</div></div></div>
+            <div class="f"><span>Doesn't know</span><div>The four cards in the group to the right</div></div>
+            <div class="acts"><span class="btn small">Open on the Cast page</span><span class="btn small quiet">Card colour</span></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>On this board</h4>
+          <div class="cnt">
+            <div class="chg">From the story<span>3 characters · 2 chapters · 1 setting</span></div>
+            <div class="chg">Only here<span>5 notes · 1 group · 1 sketch</span></div>
+            <div class="chg">Saved as<span>boards/who-knows-what.canvas</span></div>
+            <p class="hint">Nothing on a board touches the manuscript. Delete a card here and the chapter or character it came from stays where it was.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT SIDEBAR: WEB -->
+    <aside class="right" data-for="web" hidden>
+      <div class="rtabs"><span class="rt on" title="Core idea"><svg class="i"><use href="#i-notes"/></svg></span><span class="rt" title="What the guide read"><svg class="i"><use href="#i-web"/></svg></span><span class="rt" title="Proposals"><svg class="i"><use href="#i-bulb"/></svg></span></div>
+      <div class="rbody">
+        <div class="sec"><h4><span class="chev">▾</span>Silence as care<small>core idea</small></h4>
+          <div class="cnt">
+            <div class="ta core-doc">Truth withheld can be a kind of care, and it still costs. Nobody in this book lies to hurt.</div>
+            <div class="f"><span>Carried by</span><div>the storm glass (6 passages), Elias (5), Mara (4), the lamp room (2), chapters 1, 3 and 7</div></div>
+            <div class="acts"><span class="btn small">Open the document</span><span class="btn small quiet">Show the passages</span></div>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>What the guide read<small>chapter 7 · 2 min ago</small></h4>
+          <div class="cnt">
+            <div class="audit"><b></b><div><strong>Chapter 6, A letter not sent,</strong> has no thread to any core idea. The letter is about the Board's money, and nobody in it withholds anything.</div></div>
+            <div class="audit"><b></b><div><strong>The lamp</strong> (duty) is shown in chapter 1 only. Nothing since has lit it.</div></div>
+            <div class="audit"><b class="ok"></b><div><strong>Chapter 7</strong> strengthened “Silence as care”: three new passages around the glass.</div></div>
+            <p class="hint">Plain readings of your text against your own words. Nothing is scored, and nothing here changes a line of the book.</p>
+          </div>
+        </div>
+        <div class="sec"><h4><span class="chev">▾</span>Proposals<small>1</small></h4>
+          <div class="cnt">
+            <div class="spk" style="grid-template-columns:1fr"><div class="nm">What is owed to the dead <span>· proposed core idea</span></div><span>The text returns to this in chapters 2, 5 and 6, in Nan's letters and the ledger, without naming it. Make it a core idea?</span></div>
+            <div class="acts"><span class="btn small primary">Accept</span><span class="btn small">Not this</span><span class="btn small quiet">Edit first</span></div>
+            <p class="hint">A proposal is the guide's. It becomes yours only when you accept it, and it never touches the manuscript.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT SIDEBAR: SAFEKEEPING -->
+    <aside class="right" data-for="safekeeping" hidden>
+      <div class="rtabs"><span class="rt on" title="Changes"><svg class="i"><use href="#i-snap"/></svg></span></div>
+      <div class="rbody">
+        <div class="sec"><h4><span class="chev">▾</span>Since the last backup file</h4>
+          <div class="cnt">
+            <div class="chg">Chapter 7 · The storm glass<span>+812 words</span></div>
+            <div class="chg">Chapter 6 · A letter not sent<span>+390 words</span></div>
+            <div class="chg">Chapter 2 · Salt in the bread<span>+38 words</span></div>
+            <div class="chg">Mara Quill<span>voice edited</span></div>
+            <div class="chg">Outline<span>reordered</span></div>
+            <p class="hint">Every write to a table that goes into a backup is noted, so this list is exact.</p>
+          </div>
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  <div class="statusbar">
+    <div><span class="st ok">Kept on this computer</span><span>D:\Writing\Parchemin</span><span>Backup file: 2 days ago · 1,240 words since</span></div>
+    <div><span>412 words today</span><span>Chapter 7: 1,845 words</span><span><kbd>Ctrl+Shift+F</kbd> focus</span><span><kbd>Ctrl+P</kbd> commands</span></div>
+  </div>
+
+</div>
+</div>
+</div>
+</div>
+
+<section class="notes">
+  <div data-for="library">
+    <h2>Library</h2>
+    <p class="sub">The home screen keeps the web app's blocks and adds the one the research ranked first.</p>
+    <div class="callouts">
+      <div class="co"><b>A sentence waiting</b><span>New. The last paragraph you wrote, plus the note you left about what happens next. Roadmap Tier 1 #1, the best-evidenced idea in the research and the only one not yet built.</span></div>
+      <div class="co"><b>Today, as a rhythm</b><span>Seven bars replace “N days in a row”. Quiet days are shown as quiet. No streak is counted anywhere, which is what the README already promises.</span></div>
+      <div class="co"><b>Pick up where you left off</b><span>Three stories, with the chapter you were in. One click reopens the chapter, not the story's front page.</span></div>
+      <div class="co"><b>Right sidebar</b><span>Safekeeping at a glance and the drawer. Both exist in the web app; here they are always one glance away instead of a scroll down the home page.</span></div>
+    </div>
+  </div>
+  <div data-for="write">
+    <h2>Write</h2>
+    <p class="sub">The chapter in the middle, everything else at the edges and collapsible to nothing.</p>
+    <div class="callouts">
+      <div class="co"><b>Tabs in the title bar</b><span>As Obsidian does on Windows. A tab can be a chapter, a character, the outline or safekeeping. The dot on a chapter tab is its status.</span></div>
+      <div class="co"><b>The library tree</b><span>Folders, stories, chapters: the whole library is one tree, with status dots and word counts. Drag a story onto a folder or a chapter into a new order here.</span></div>
+      <div class="co"><b>The ribbon</b><span>Six views and settings in a 44 px strip. Search is a view, not a box in the sidebar, so the sidebar stays a tree.</span></div>
+      <div class="co"><b>The manuscript</b><span>Literata at 18 px on a 620 px measure, about 65 characters. The formatting bar shrinks to the pane header. The scene break stays a glyph.</span></div>
+      <div class="co"><b>The right sidebar</b><span>The web app's four panels become five tabs: Chapter plan, Dialogue, Snapshots, Notes, Unblock. Sections collapse like Obsidian's Outline and Backlinks.</span></div>
+      <div class="co"><b>The status bar</b><span>Says plainly where the words are and when they were last copied. Words today and the chapter's count sit on the right, with the two shortcuts a writer needs most.</span></div>
+    </div>
+  </div>
+  <div data-for="dialogue" hidden>
+    <h2>Dialogue</h2>
+    <p class="sub">The Dialogue panel built on Oct 10, in a sidebar wide enough for a script.</p>
+    <div class="callouts">
+      <div class="co"><b>Who wants what</b><span>Per speaker and per chapter: the want, what they won't say and what they can't. The voice card is the hint beside the name.</span></div>
+      <div class="co"><b>The script draft</b><span>Outside the manuscript. Tactics in brackets read back as beats. “Cover the names” hides the speakers so a stranger could still tell them apart.</span></div>
+      <div class="co"><b>The dialogue pass</b><span>The writer's own ticks, with plain facts counted from the text beside each. Nothing scored, nothing suggested.</span></div>
+      <div class="co"><b>Width</b><span>The sidebar grows from 300 to 440 px for this panel only, so the script keeps its line breaks.</span></div>
+    </div>
+  </div>
+  <div data-for="outline" hidden>
+    <h2>Outline</h2>
+    <p class="sub">The board, the finish line and the audit on one screen instead of three scrolls.</p>
+    <div class="callouts">
+      <div class="co"><b>Rows, not cards</b><span>Drag handle, number, title and summary, status, the three plan marks (goal, conflict, turn), words. Reading across one row is the chapter check.</span></div>
+      <div class="co"><b>The finish line</b><span>Progress, the date, the daily figure from here, and “Pause the finish line”. The research warns about quotas, so the copy says it is a kindness and the pause is one click.</span></div>
+      <div class="co"><b>Read the whole outline</b><span>The audit moves to the right sidebar, so the findings sit beside the rows they point at. Reading down is the book check.</span></div>
+      <div class="co"><b>Pace, honestly</b><span>The last finding compares the needed pace with the last seven days and offers a later date with the number. It never says “behind”.</span></div>
+    </div>
+  </div>
+  <div data-for="cast" hidden>
+    <h2>Cast</h2>
+    <p class="sub">The cast grid from the roadmap, with the voice card and the hero check beside it.</p>
+    <div class="callouts">
+      <div class="co"><b>One card per person</b><span>Name, role, voice with its family and tactic, what they want in a room, and their function: the thing nobody else in the book can do. A character with no function is a card you can see is empty.</span></div>
+      <div class="co"><b>Cast against each other</b><span>The line under the grid reads the voices across the cast and names the pairs with built-in friction, and the pairs without.</span></div>
+      <div class="co"><b>The right sidebar</b><span>Voice, flaw and need, and the hero check for the selected character. Unticked questions are listed first, because they are tomorrow's work.</span></div>
+      <div class="co"><b>Friction view</b><span>A second view (the quiet button) would draw the cast as a grid of who wants what against whom. Not drawn here; it needs a real cast to design against.</span></div>
+    </div>
+  </div>
+  <div data-for="focus" hidden>
+    <h2>Focus mode</h2>
+    <p class="sub">Ctrl+Shift+F. Everything but the current paragraph goes quiet.</p>
+    <div class="callouts">
+      <div class="co"><b>What hides</b><span>Ribbon, both sidebars, the pane header and the left half of the status bar. The title bar stays, because it is the window's.</span></div>
+      <div class="co"><b>What dims</b><span>Every paragraph but the one with the caret, to 20%. Typewriter scrolling keeps the caret at the same height; it respects reduced motion.</span></div>
+      <div class="co"><b>The hint</b><span>One line, bottom right: how to leave, that typewriter scrolling is on, and today's words. Nothing else.</span></div>
+    </div>
+  </div>
+  <div data-for="palette" hidden>
+    <h2>Command palette</h2>
+    <p class="sub">Ctrl+P, as in Obsidian. Every action in the app, in the writer's own words.</p>
+    <div class="callouts">
+      <div class="co"><b>Named like the buttons</b><span>“A nudge, if you need one”, “Set this chapter aside”, “Cover the names”. The palette uses the same copy as the panels, so there is nothing new to learn.</span></div>
+      <div class="co"><b>Shortcuts shown, not required</b><span>The right column teaches the keys. Only the four most-used actions have one by default; writers can add more in settings.</span></div>
+      <div class="co"><b>Recent first</b><span>With nothing typed, the list is the last ten commands used. Typing filters by any word in the name.</span></div>
+    </div>
+  </div>
+  <div data-for="canvas" hidden>
+    <h2>Canvas</h2>
+    <p class="sub">Obsidian's canvas, with the story's own pieces as the cards.</p>
+    <div class="callouts">
+      <div class="co"><b>Cards from the story</b><span>Chapters, characters and settings are added from the story and stay live: a chapter card shows its current status, words and summary, and editing the summary here edits the outline. Notes, groups and sketches exist only on the board.</span></div>
+      <div class="co"><b>Named arrows</b><span>“Won't ask”, “won't tell”, “saw it”, “keeps”. The arrows carry what the dialogue lesson calls the unsaid: who wants what from whom, and who knows what. The writer names every one. Nothing is drawn for them.</span></div>
+      <div class="co"><b>One surface for four ideas</b><span>The research's Tier 3 list has a who-knows-what grid, a threads grid, a promises ledger and a timeline. A board does all four without four features, and a board can be about anything.</span></div>
+      <div class="co"><b>Groups</b><span>A dashed region with a name. “What Mara doesn't know” is the whole chapter 8 plan in one box. Drag a card in and it moves with the group.</span></div>
+      <div class="co"><b>An open file</b><span>Each board is saved in the library folder as JSON Canvas, the open format Obsidian published for its own canvas. A Parchemin board opens in Obsidian, and the other way round.</span></div>
+      <div class="co"><b>Room to think</b><span>The library sidebar is collapsed here, because boards want width. The menu icon in the title bar brings it back. The toolbar at the bottom adds cards, and zoom sits where Obsidian keeps it.</span></div>
+    </div>
+  </div>
+  <div data-for="web" hidden>
+    <h2>Web</h2>
+    <p class="sub">Obsidian's graph view, where the nodes are the writer's core ideas and the story's parts, and the threads are what the guide found in the text. Decided on Oct 10 (research.md, section 13).</p>
+    <div class="callouts">
+      <div class="co"><b>Core ideas are documents</b><span>“Silence as care”, “Inherited debt” and “The lamp” are three documents dropped into the Web, the way a note is dropped into Obsidian's graph. Each holds the writer's own words about what the story believes. The selected one is open in the sidebar.</span></div>
+      <div class="co"><b>Threads are evidence</b><span>A thread from a core idea to a character, symbol, setting, chapter or board means the guide found passages carrying it. Thickness is the count. Grey lines are plain co-occurrence from the text, no guide needed.</span></div>
+      <div class="co"><b>Deviation is thin</b><span>Chapter 6 has no thread to any core idea, so it sits at the edge with a dashed ring. “The lamp” has one thin thread, so the belief the story began with has gone quiet. The guide says so in words. No score anywhere.</span></div>
+      <div class="co"><b>Proposals are dashed</b><span>“What is owed to the dead” is the guide's reading of chapters 2, 5 and 6. Accept it and it becomes yours. Refuse it and it is gone. Either way it never touches the manuscript.</span></div>
+      <div class="co"><b>Reading on save</b><span>On by default once the guide is on, with “only when I ask” in the panel. Each read covers the chapter that changed, on the writer's own server. Without the guide, the Web still draws what is declared.</span></div>
+      <div class="co"><b>For you only</b><span>The Web and the core idea documents stay out of every export of the story. A rich story lets the reader build this web in their own head; this page is what they are trying to decipher.</span></div>
+    </div>
+  </div>
+  <div data-for="safekeeping" hidden>
+    <h2>Safekeeping</h2>
+    <p class="sub">The biggest change the desktop app makes: the library is a folder.</p>
+    <div class="callouts">
+      <div class="co"><b>Library folder</b><span>Obsidian's vault idea. One library.json holds everything, and each chapter is also a Markdown file beside it, so the book is readable without Parchemin. Roadmap Tier 2 #17 and decision 11.6 #5.</span></div>
+      <div class="co"><b>Between devices, for free</b><span>Put the folder in the writer's own Dropbox, iCloud or OneDrive. That is roadmap group 3's “move my library” without building sync, and it stays true to “nothing leaves unless you carry it”.</span></div>
+      <div class="co"><b>No persistence prompt</b><span>The web app has to ask the browser to keep data and explain Safari's seven-day rule. The desktop app does not, so that whole block disappears.</span></div>
+      <div class="co"><b>Export grows</b><span>Manuscript .docx and “Copy for AO3” from roadmap group 2 appear here as buttons, so the import/export work has a home.</span></div>
+    </div>
+  </div>
+
+  <hr class="rule">
+  <h2>What the desktop app changes</h2>
+  <p class="sub">The web app stays as it is. The Electron build wraps the same code and adds what only a desktop can give.</p>
+  <div class="cols">
+    <div>
+      <h3>Borrowed from Obsidian</h3>
+      <ul>
+        <li><b>The vault, renamed the library.</b> <span>A folder of plain files the writer can see, move and back up.</span></li>
+        <li><b>Ribbon, two sidebars, tabs, status bar.</b> <span>The same four regions, each collapsible, so the editor can take the whole window.</span></li>
+        <li><b>Command palette.</b> <span>Every action by name, with the shortcut taught beside it.</span></li>
+        <li><b>The canvas.</b> <span>Cards, groups and named arrows on a dotted board, saved as JSON Canvas. Here the cards are chapters, characters and settings.</span></li>
+        <li><b>Calm density.</b> <span>13 px UI, 1 px borders, 6 px radii, one accent. Chrome is a shade darker than the page in both themes.</span></li>
+        <li><b>Follows the system theme.</b> <span>Obsidian defaults to dark. Parchemin follows the OS, with a toggle in the ribbon.</span></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Left out on purpose</h3>
+      <ul>
+        <li><b>The graph of files and links.</b> <span>Parchemin's Web keeps the layout and changes the nodes: the writer's core ideas as documents, read by the guide against the text and the canvas so the story does not drift from its own beliefs. See the Web screen.</span></li>
+        <li><b>Plugin marketplace.</b> <span>No third-party code touches a manuscript. The licence lets anyone fork instead.</span></li>
+        <li><b>Markdown source mode.</b> <span>Markdown is the file format, never the view. Writers get a rich editor with smart quotes and scene breaks.</span></li>
+        <li><b>Sync as a subscription.</b> <span>The folder syncs through the writer's own account. Self-hosted sync can come later, as decided.</span></li>
+        <li><b>Properties and frontmatter.</b> <span>Chapter plans and status live in library.json; the Markdown files stay clean prose.</span></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Only a desktop can do</h3>
+      <ul>
+        <li><b>Import by dropping files.</b> <span>Drop .docx, .md or .txt on the tree and get chapters. Roadmap group 2.</span></li>
+        <li><b>Native save dialogs.</b> <span>A backup always lands in a real folder, so “a backup counts once the file exists” is always true.</span></li>
+        <li><b>Keyboard first.</b> <span>Ctrl+P commands, Ctrl+Shift+F focus, Ctrl+Shift+S snapshot, Ctrl+D dialogue, Ctrl+N new chapter.</span></li>
+        <li><b>A quiet installer.</b> <span>One signed .exe, no account, no telemetry, updates off by default, and the “Your words” page on first run.</span></li>
+        <li><b>No browser to fight.</b> <span>No writing suggestions, no grammar extensions, no seven-day rule.</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <hr class="rule">
+  <h2>Open questions for the team</h2>
+  <div class="cols">
+    <div><ul>
+      <li><b>Chapters in the tree, or a chapter list inside the Write pane?</b> <span>The mockup puts them in the tree, as Obsidian would. The web app keeps a list beside the editor. Writers with 40 chapters and 6 stories will tell us.</span></li>
+      <li><b>What opens by default in the right sidebar?</b> <span>Chapter plan here. “Nothing” is the calmer answer, and the panel remembers its last state either way.</span></li>
+    </ul></div>
+    <div><ul>
+      <li><b>Markdown files: one per chapter, or one per story?</b> <span>One per chapter matches the tree and makes diffs readable in Dropbox's history.</span></li>
+      <li><b>Which shortcuts ship on, and which stay in the palette only?</b> <span>Four here. Obsidian ships almost none and lets people bind their own.</span></li>
+    </ul></div>
+  </div>
+</section>
+
+<script>
+(function () {
+  var screens = ['library', 'write', 'dialogue', 'outline', 'cast', 'canvas', 'web', 'focus', 'palette', 'safekeeping'];
+  var tabMap = { library: 't-lib', write: 't-ch', dialogue: 't-ch', focus: 't-ch', palette: 't-ch', outline: 't-ol', cast: 't-cast', canvas: 't-canvas', web: 't-web', safekeeping: 't-safe' };
+  var ribbonMap = { library: 'r-lib', write: 'r-lib', dialogue: 'r-lib', focus: 'r-lib', palette: 'r-lib', outline: 'r-ol', cast: 'r-cast', canvas: 'r-canvas', web: 'r-web', safekeeping: 'r-safe' };
+
+  // The Web: nodes and threads for the example story. Thread weight is passages found; 'x' lines are co-occurrence.
+  (function drawWeb() {
+    var svg = document.getElementById('graph'); if (!svg) return;
+    var N = {
+      c1: { l: 'Silence as care', x: 400, y: 310, r: 22, t: 'core' },
+      c2: { l: 'Inherited debt', x: 600, y: 460, r: 20, t: 'core' },
+      c3: { l: 'The lamp', x: 220, y: 170, r: 16, t: 'core' },
+      p1: { l: 'What is owed to the dead', x: 790, y: 605, r: 16, t: 'prop' },
+      mara: { l: 'Mara', x: 300, y: 400, r: 11, t: 'char' }, elias: { l: 'Elias', x: 500, y: 220, r: 11, t: 'char' },
+      tobias: { l: 'Tobias', x: 800, y: 480, r: 10, t: 'char' }, nan: { l: 'Nan Pell', x: 680, y: 585, r: 10, t: 'char' }, board: { l: 'The Board', x: 500, y: 610, r: 10, t: 'char' },
+      glass: { l: 'the storm glass', x: 470, y: 380, r: 9, t: 'sym' }, ledger: { l: 'the ledger', x: 650, y: 400, r: 9, t: 'sym' },
+      boat: { l: 'the boat', x: 870, y: 540, r: 9, t: 'sym' }, letters: { l: "Nan's letters", x: 750, y: 540, r: 9, t: 'sym' },
+      lamp: { l: 'the lamp room', x: 300, y: 250, r: 9, t: 'set' }, village: { l: 'the village', x: 610, y: 290, r: 9, t: 'set' },
+      wkw: { l: 'Who knows what (board)', x: 560, y: 120, r: 10, t: 'board' },
+      ch1: { l: 'ch. 1', x: 160, y: 280, r: 7, t: 'ch' }, ch2: { l: 'ch. 2', x: 620, y: 620, r: 7, t: 'ch' }, ch3: { l: 'ch. 3', x: 330, y: 500, r: 7, t: 'ch' },
+      ch4: { l: 'ch. 4', x: 730, y: 470, r: 7, t: 'ch' }, ch5: { l: 'ch. 5', x: 540, y: 530, r: 7, t: 'ch' }, ch6: { l: 'ch. 6 · no thread', x: 140, y: 470, r: 7, t: 'ch', warn: 1 },
+      ch7: { l: 'ch. 7', x: 420, y: 180, r: 7, t: 'ch' }, ch8: { l: 'ch. 8', x: 880, y: 470, r: 7, t: 'ch' }, ch9: { l: 'ch. 9 · not written', x: 120, y: 600, r: 7, t: 'ch', orphan: 1 }
+    };
+    var E = [
+      ['c1', 'glass', 4, 't'], ['c1', 'elias', 4, 't'], ['c1', 'mara', 3, 't'], ['c1', 'ch7', 3, 't'], ['c1', 'ch3', 2, 't'], ['c1', 'ch1', 1, 't'], ['c1', 'lamp', 2, 't'], ['c1', 'wkw', 2, 't'],
+      ['c2', 'ledger', 3, 't'], ['c2', 'nan', 3, 't'], ['c2', 'board', 2, 't'], ['c2', 'ch5', 3, 't'], ['c2', 'ch2', 2, 't'], ['c2', 'letters', 2, 't'],
+      ['c3', 'ch1', 1, 't'], ['c3', 'lamp', 1, 't'],
+      ['p1', 'ch2', 1, 'p'], ['p1', 'ch5', 1, 'p'], ['p1', 'ch6', 1, 'p'], ['p1', 'nan', 1, 'p'], ['p1', 'letters', 1, 'p'],
+      ['mara', 'elias', 1, 'x'], ['mara', 'ch6', 1, 'x'], ['elias', 'ch7', 1, 'x'], ['elias', 'ch1', 1, 'x'], ['mara', 'ch7', 1, 'x'], ['mara', 'ch3', 1, 'x'],
+      ['tobias', 'ch4', 1, 'x'], ['tobias', 'ch8', 1, 'x'], ['tobias', 'boat', 1, 'x'], ['boat', 'ch8', 1, 'x'], ['board', 'ch6', 1, 'x'], ['nan', 'letters', 1, 'x'],
+      ['village', 'ch2', 1, 'x'], ['village', 'tobias', 1, 'x'], ['lamp', 'ch1', 1, 'x'], ['lamp', 'ch7', 1, 'x'], ['glass', 'ch7', 1, 'x'], ['glass', 'ch1', 1, 'x'],
+      ['ledger', 'ch5', 1, 'x'], ['board', 'ledger', 1, 'x']
+    ];
+    var sel = 'c1', near = {};
+    E.forEach(function (e) { if (e[0] === sel) near[e[1]] = 1; if (e[1] === sel) near[e[0]] = 1; });
+    function esc(s) { return s.replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
+    var out = '';
+    E.forEach(function (e) {
+      var a = N[e[0]], b = N[e[1]], hot = e[0] === sel || e[1] === sel;
+      out += '<line class="e ' + e[3] + (hot ? ' hot' : '') + '" x1="' + a.x + '" y1="' + a.y + '" x2="' + b.x + '" y2="' + b.y + '" stroke-width="' + (e[2] * 0.9 + 0.6).toFixed(1) + '"/>';
+    });
+    Object.keys(N).forEach(function (k) {
+      var n = N[k], cls = 'n ' + n.t + (k === sel ? ' sel' : '') + (near[k] || k === sel ? ' near' : ' far') + (n.warn ? ' warn' : '') + (n.orphan ? ' orphan' : '');
+      out += '<g class="' + cls + '"><circle cx="' + n.x + '" cy="' + n.y + '" r="' + n.r + '"/>' +
+        (n.warn ? '<circle class="ring" cx="' + n.x + '" cy="' + n.y + '" r="' + (n.r + 5) + '"/>' : '') +
+        '<text x="' + n.x + '" y="' + (n.y + n.r + 13) + '" text-anchor="middle">' + esc(n.l) + '</text></g>';
+    });
+    svg.innerHTML = out;
+  })();
+  var win = document.getElementById('win');
+  var buttons = Array.prototype.slice.call(document.querySelectorAll('.screens button'));
+
+  function show(id) {
+    if (screens.indexOf(id) < 0) id = 'write';
+    win.setAttribute('data-screen', id);
+    Array.prototype.forEach.call(document.querySelectorAll('[data-for]'), function (el) {
+      el.hidden = el.getAttribute('data-for').split(' ').indexOf(id) < 0;
+    });
+    buttons.forEach(function (b) { b.setAttribute('aria-selected', b.getAttribute('data-screen') === id ? 'true' : 'false'); });
+    Array.prototype.forEach.call(document.querySelectorAll('.tab'), function (t) { t.classList.toggle('active', t.id === tabMap[id]); });
+    Array.prototype.forEach.call(document.querySelectorAll('.rb'), function (r) { r.classList.toggle('on', r.id === ribbonMap[id]); });
+    try { history.replaceState(null, '', '#' + id); } catch (e) {}
+  }
+  buttons.forEach(function (b) { b.addEventListener('click', function () { show(b.getAttribute('data-screen')); }); });
+
+  var wrap = document.getElementById('stageWrap'), stage = document.getElementById('stage');
+  function fit() {
+    var s = Math.min(1, wrap.clientWidth / 1280);
+    stage.style.transform = 'scale(' + s + ')';
+    wrap.style.height = Math.round(800 * s) + 'px';
+  }
+  if (window.ResizeObserver) new ResizeObserver(fit).observe(wrap); else window.addEventListener('resize', fit);
+  fit();
+
+  var themeBtn = document.getElementById('theme'), order = ['system', 'light', 'dark'], cur = 0;
+  themeBtn.addEventListener('click', function () {
+    cur = (cur + 1) % order.length;
+    var root = document.documentElement;
+    if (order[cur] === 'system') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', order[cur]);
+    themeBtn.textContent = 'Theme: ' + order[cur];
+  });
+
+  var hash = (location.hash || '').replace('#', '');
+  show(screens.indexOf(hash) >= 0 ? hash : 'write');
+})();
+</script>
+
+</body>
+</html>
