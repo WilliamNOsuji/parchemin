@@ -6,3 +6,16 @@ research/sources/
 research/.cache/
 research/interviews/W*.md
 research/.fetch-*
+# Impeccable (design skill): the engine binary is fetched per machine, not committed
+.claude/skills/impeccable/scripts/bin/
+.claude/settings.local.json
+.impeccable/config.local.json
+.impeccable/build/
+.impeccable/hook.cache.json
+.impeccable/hook.pending.json
+.impeccable/live/server.json
+.impeccable/live/*.log
+.impeccable/live/sessions/
+.impeccable/live/previews/
+.impeccable/live/annotations/
+.impeccable/live/artifacts/

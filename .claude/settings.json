@@ -1,0 +1,47 @@
+{
+  "description": "Impeccable 4.5.2 (engine 0.1.14), project-local. Hooks run the design detector after Edit/Write on UI files and a deeper pass on Stop. Telemetry, update checks and tracking are switched off here and in .impeccable/config.json.",
+  "env": {
+    "IMPECCABLE_NO_TELEMETRY": "1",
+    "DO_NOT_TRACK": "1",
+    "IMPECCABLE_NO_UPDATE_CHECK": "1"
+  },
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || IMPECCABLE_NO_TELEMETRY=1 DO_NOT_TRACK=1 IMPECCABLE_NO_UPDATE_CHECK=1 \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 5,
+            "statusMessage": "Preparing build session"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || IMPECCABLE_NO_TELEMETRY=1 DO_NOT_TRACK=1 IMPECCABLE_NO_UPDATE_CHECK=1 \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 5,
+            "statusMessage": "Checking UI changes"
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "[ ! -f \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" ] || IMPECCABLE_NO_TELEMETRY=1 DO_NOT_TRACK=1 IMPECCABLE_NO_UPDATE_CHECK=1 \"${CLAUDE_PROJECT_DIR}/.claude/skills/impeccable/scripts/impeccable\" hook",
+            "timeout": 30,
+            "statusMessage": "Design deep pass"
+          }
+        ]
+      }
+    ]
+  }
+}
