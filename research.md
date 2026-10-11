@@ -21,6 +21,7 @@ What writers struggle with, what helps, and what that means for Parchemin.
 10. [Method, tooling incident and source index](#10-method-tooling-incident-and-source-index)
 11. [Round 2: what writers say about tools like Parchemin](#11-round-2-what-writers-say-about-tools-like-parchemin)
 12. [The dialogue lesson (video series, part 8)](#12-the-dialogue-lesson-video-series-part-8)
+13. [The desktop app, the canvas and the Web (decisions taken 2026-10-10)](#13-the-desktop-app-the-canvas-and-the-web-decisions-taken-2026-10-10)
 
 ---
 
@@ -289,7 +290,7 @@ Own-app fixes first, because two are safety issues and the rest are cheap. All *
 - Fan-fiction kit (per-chapter notes, metadata block, "copy for posting").
 - Fountain export; hand-off bundle for co-authors; accessible EPUB metadata; footnotes and a sources list.
 - Concordance search by name and alias (plain text, no AI); a names helper that never generates names.
-- Series support (a universe or series container). Requires changing `Character.storyId`; do this **before** building more entities that hang off a single story.
+- Series support (a universe or series container). Requires changing `Character.storyId`; do this **before** building more entities that hang off a single story. Logged 2026-10-10: once series exist, the Web (the graph view of themes, symbols and characters, decided per story for now) should be able to span the whole library.
 - Imitation studio ("copy, hint, rewrite, compare") with a small public-domain corpus; constraint cards.
 - UI translation, French first; RTL text support; vertical writing.
 - An opt-in questions-only assistant (only after everything above and a clear trust page; policy in note 10).
@@ -547,3 +548,42 @@ Added on 2026-10-09. Detail in `research/notes/14-dialogue.md`; the transcript i
 **What it changed in Parchemin.** A Dialogue panel in the Write tab, built the same day: who wants what (per speaker, per chapter, with the voice card as a hint), a script draft outside the manuscript with tactics read back as beats, the cover-the-names test (planned since v1), and the lesson's checklists as the writer's own ticks with plain facts from the text beside them. No scores, no suggested lines (section 7).
 
 **Still to do.** Read-aloud with local voices only (§11.6 #11), the cast grid and setting sheets (roadmap), checks for languages other than English, and a human read of McKee's book.
+
+---
+
+## 13. The desktop app, the canvas and the Web (decisions taken 2026-10-10)
+
+Recorded from the mockup conversation on 2026-10-10. The mockups were published the same day as two private artifacts, "Parchemin Desktop" and "Parchemin Website".
+
+### 13.1 Desktop and website
+
+- **An Electron desktop app** (.exe first; macOS and Linux later) styled after Obsidian's desktop app: ribbon, two collapsible sidebars, tabs in the title bar, a command palette, a status bar, and the library as a folder of plain files (`library.json` plus one Markdown file per chapter, so the writer's own Dropbox or iCloud can carry it between devices). The web app stays as it is; the desktop build wraps the same code.
+- **A website** designed to the Impeccable skill's published rules. The skill itself is not installed; the rules were applied by hand.
+- **The canvas** (Obsidian's canvas, saved as JSON Canvas, the open format Obsidian published) is in the desktop mockup, with chapters, characters and settings as live cards and the writer's own named arrows. In the team's view, threads between chapters are the canvas's job, not the Web's.
+
+### 13.2 The Web (the graphical view)
+
+**What it is.** A graph where the writer's philosophy, deep meaning and implicit messaging live. The AI guide reads the written text and the canvas against them. Its purpose is to keep the story from drifting away from the beliefs that are implicit in it. It is a mirror, never a generator.
+
+| Question | Decision |
+|---|---|
+| Automation | Fully automated by default. Anything it draws can be changed by hand |
+| Layout | A relationship web (Obsidian's graph layout), not chapter-by-chapter threads |
+| Scope | Per story. A Web across the whole library is logged in section 6, Tier 3, under series support |
+| How the philosophy is entered | As a document, dropped into the Web like any note in Obsidian's graph. One or several "core idea" documents |
+| Who argues for and against | Not declared separately. The guide deduces it from the content of the core idea documents |
+| What counts as deviation | Logical inconsistency with the core ideas; something irrelevant to the plot; a sudden break in the story's flow that is not placed on purpose or reasoned |
+| How deviation shows | As threads. Few or no threads between the core idea(s) and the rest of the Web means drift. No score |
+| Unit of evidence, and the canvas | Open. The proposals (chapter, scene or passage as the unit; click a node to land on the passage; the canvas checked against the philosophy, and the text against the canvas) were new to the team and are still to be decided |
+| When it reads | On every save by default, with a setting that switches it to "only when I ask" |
+| Proposing meaning | The guide may propose meaning the writer has not declared. Each proposal is accepted or rejected by the writer |
+| Whose philosophy | The writer's own and the story's are treated as one, for the story's sake. No separate layers |
+| Privacy | For the writer only, never for the reader. Showing it would break immersion by revealing what the writer thinks the story means. A rich story lets readers build their own web as they read; the Web is what they are trying to decipher. It stays out of every export of the story |
+
+**What this implies, to be reflected in the app and the policy.**
+
+- The Web's reading needs the AI guide, which is optional, self-hosted and off by default (`AI-POLICY.md`). "On every save" therefore means on every save once the guide is switched on. Without the guide, the Web still draws what is declared: the core idea documents, canvas arrows, chapter plans and the cast. Reading should be incremental (the chapter that changed), not the whole book each time.
+- `AI-POLICY.md` should gain a paragraph: in the Web, the guide may propose a meaning or a thread; it appears as a proposal, labeled, until the writer accepts it, and a proposal never changes the manuscript. Click-to-accept applies to prep, not to the story's text, which stays typed-only.
+- The Web's way of showing deviation (thin threads, plain evidence) keeps the no-scores rule of section 7 and of the dialogue pass.
+- The desktop mockup's note that the graph view was "left out on purpose" is withdrawn. The Web is drawn in the mockup as its own screen: core idea documents as nodes, threads with thickness by passages found, a chapter with no thread ringed, a dashed proposal with accept and refuse, and the read-on-save switch.
+- Still open: the unit of evidence and the canvas's role (row above); whether core idea documents go into backups (they are the writer's own data, so presumably yes) and into critique-partner packets (presumably no); and what the first mockup of the Web should show.

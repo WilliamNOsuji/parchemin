@@ -156,7 +156,11 @@ order yet.
    host themselves, with a very simple setup guide. How sync works is still open.
 4. **Writing support.** A rhythm view with other units and a CSV of daily counts, read-aloud, a notes pane beside the
    draft, a private challenge mode, and a ready-to-post queue.
-5. **The AI guide.** Self-hosted and optional, under `AI-POLICY.md`.
+5. **The AI guide.** Self-hosted and optional, under `AI-POLICY.md`. Its first use, decided on 2026-10-10, is the Web: the
+   writer's core ideas as documents in a graph, read by the guide against the text and the canvas so the story does not drift
+   from its own beliefs. For the writer only, never exported with the story (`research.md`, section 13).
+6. **The desktop app.** An Electron build styled after Obsidian, with the library as a folder of plain files and a canvas
+   saved as JSON Canvas. Decided on 2026-10-10 from the mockups (`research.md`, section 13).
 
 Still planned from before: setting sheets (obstacle-first, with a prop list), a cast grid view, and chapter guides.
 Done on 2026-10-09: the dialogue test where you cover the names, as part of the Dialogue panel (`research/notes/14-dialogue.md`). Not now: a first-run timing test and French-first work. Parked: an animated
