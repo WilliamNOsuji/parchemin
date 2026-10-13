@@ -1,18 +1,26 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from '../db'
 import type { Tab } from '../route'
-import type { Character, Scene } from '../types'
+import type { Character, Scene, Story } from '../types'
 import { AuditPanel } from './AuditPanel'
 import { CharacterSidebar } from './CharacterSidebar'
 import { DialoguePanel } from './DialoguePanel'
 import { NotesPanel, PlanPanel, PromptsPanel, SnapshotsPanel } from './Panels'
 
+interface Props {
+  storyId: string
+  /** From useOpenStory, the same rows the pane shows. */
+  story: Story | null | undefined
+  scenes: Scene[] | undefined
+  tab: Tab
+  itemId?: string
+  rightTab: string
+}
+
 /** The right sidebar for a story: the panels beside the chapter, the outline's audit and plan, the selected character. */
-export function StorySidebar({ storyId, tab, itemId, rightTab }: { storyId: string; tab: Tab; itemId?: string; rightTab: string }) {
-  const story = useLiveQuery(() => db.stories.get(storyId), [storyId])
-  const scenes = useLiveQuery(() => db.scenes.where('storyId').equals(storyId).sortBy('order'), [storyId], [] as Scene[])
+export function StorySidebar({ storyId, story, scenes, tab, itemId, rightTab }: Props) {
   const characters = useLiveQuery(() => db.characters.where('storyId').equals(storyId).sortBy('createdAt'), [storyId], [] as Character[])
-  if (!story) return null
+  if (!story || !scenes) return null
 
   if (tab === 'write') {
     const current = scenes.find((s) => s.id === itemId) ?? scenes[0]

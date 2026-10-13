@@ -1,8 +1,7 @@
-import { useLiveQuery } from 'dexie-react-hooks'
 import { lazy, Suspense, useEffect } from 'react'
-import { addScene, db } from '../db'
+import { addScene } from '../db'
 import { navigate, replaceRoute, type Tab } from '../route'
-import type { Scene } from '../types'
+import type { Scene, Story } from '../types'
 import { SceneEditor } from './SceneEditor'
 
 // the outline and the cast pull in dnd-kit and a second editor, so they load on demand
@@ -11,6 +10,9 @@ const CastPane = lazy(() => import('./CastPane').then((m) => ({ default: m.CastP
 
 interface Props {
   storyId: string
+  /** From useOpenStory: undefined while loading, null when the story is not here (App then lands on the library). */
+  story: Story | null | undefined
+  scenes: Scene[] | undefined
   tab: Tab
   itemId?: string
   focus: boolean
@@ -19,26 +21,14 @@ interface Props {
 }
 
 /** The pane for one story: the chapter being written, its outline, or its cast. */
-export function StoryView({ storyId, tab, itemId, focus, onToggleFocus, onOpenRight }: Props) {
-  const story = useLiveQuery(() => db.stories.get(storyId), [storyId])
-  const scenes = useLiveQuery(() => db.scenes.where('storyId').equals(storyId).sortBy('order'), [storyId], undefined as Scene[] | undefined)
-
+export function StoryView({ storyId, story, scenes, tab, itemId, focus, onToggleFocus, onOpenRight }: Props) {
   // a chapter's address names the chapter, so the tab strip and the tree can find it; an address whose chapter
   // went to the drawer falls back to the first chapter
   useEffect(() => {
     if (tab === 'write' && scenes?.length && (!itemId || !scenes.some((s) => s.id === itemId))) replaceRoute({ name: 'story', storyId, tab: 'write', itemId: scenes[0].id })
   }, [tab, itemId, scenes, storyId])
 
-  if (story === undefined || scenes === undefined) return null
-  if (!story) {
-    return (
-      <div className="pane-empty">
-        <h2>Story not found</h2>
-        <p>It may be in the drawer, with its chapters and characters.</p>
-        <p style={{ marginTop: 12 }}><a className="btn" href="#/drawer">Open the drawer</a></p>
-      </div>
-    )
-  }
+  if (!story || scenes === undefined) return null
 
   if (tab === 'write') {
     const current = scenes.find((s) => s.id === itemId) ?? scenes[0]

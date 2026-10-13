@@ -15,6 +15,7 @@ import { StatusBar } from './components/StatusBar'
 import { TabStrip } from './components/TabStrip'
 import { addScene, createCharacter, db, setAsideScene, takeSnapshot } from './db'
 import { exportEpub, exportMarkdown } from './export'
+import { useOpenStory } from './openStory'
 import { navigate, useRoute, type Route } from './route'
 import { chaptersOf, useSceneIndex } from './sceneIndex'
 import { useOpenTabs } from './tabs'
@@ -83,6 +84,7 @@ export function App() {
   const folders = useLiveQuery(() => db.folders.toArray(), [], [] as Folder[])
   const index = useSceneIndex()
   const drawerCount = useLiveQuery(() => db.drawer.count(), [], 0)
+  const open = useOpenStory(route.name === 'story' ? route.storyId : undefined)
   const { tabs, active, close, prune } = useOpenTabs(route)
   const [theme, setTheme] = useTheme()
 
@@ -192,6 +194,11 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [palette, focusOn, writing, commands, rightTab, rightOpen, openRight, setRightOpen])
 
+  // a story moved to the drawer leaves the screen, and a link to one that is not here lands the same way: on the library
+  useEffect(() => {
+    if (open.story === null) navigate({ name: 'home' })
+  }, [open.story])
+
   // the window's title names the page, so the tab in the browser and the taskbar read right
   useEffect(() => {
     const story = route.name === 'story' ? stories?.find((s) => s.id === route.storyId) : undefined
@@ -266,7 +273,7 @@ export function App() {
           {route.name === 'drawer' && <DrawerPage />}
           {route.name === 'story' && (
             <Suspense fallback={<p className="hint pad" role="status">Loading…</p>}>
-              <StoryView storyId={route.storyId} tab={route.tab} itemId={route.itemId} focus={focus} onToggleFocus={toggleFocus} onOpenRight={openRight} />
+              <StoryView storyId={route.storyId} story={open.story} scenes={open.scenes} tab={route.tab} itemId={route.itemId} focus={focus} onToggleFocus={toggleFocus} onOpenRight={openRight} />
             </Suspense>
           )}
         </main>
@@ -277,7 +284,7 @@ export function App() {
             {route.name === 'safekeeping' && <ChangesSidebar />}
             {route.name === 'story' && (
               <Suspense fallback={<p className="hint" role="status">Loading…</p>}>
-                <StorySidebar storyId={route.storyId} tab={route.tab} itemId={route.itemId} rightTab={rightTab} />
+                <StorySidebar storyId={route.storyId} story={open.story} scenes={open.scenes} tab={route.tab} itemId={route.itemId} rightTab={rightTab} />
               </Suspense>
             )}
           </RightSidebar>

@@ -1,4 +1,3 @@
-import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { addScene, db, deleteFolder, setAsideStory, uid } from '../db'
 import { navigate } from '../route'
@@ -37,16 +36,11 @@ export function LibraryTree({ stories, folders, index, drawerCount, activeStoryI
   const [query, setQuery] = useState('')
   const [tag, setTag] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null | undefined>(undefined)
-  const openStory = useLiveQuery(() => (activeStoryId ? db.stories.get(activeStoryId) : undefined), [activeStoryId])
 
   // the story on screen opens in the tree when it becomes active; the chevron can close it again
   useEffect(() => {
     if (activeStoryId) setOpenStories((s) => (s.has(activeStoryId) ? s : new Set([...s, activeStoryId])))
   }, [activeStoryId])
-  // a story moved to the drawer leaves the tree; the writer lands on the library
-  useEffect(() => {
-    if (activeStoryId && openStory === null) navigate({ name: 'home' })
-  }, [activeStoryId, openStory])
 
   const allTags = useMemo(() => [...new Set(stories.flatMap((s) => s.tags))].sort(), [stories])
 
