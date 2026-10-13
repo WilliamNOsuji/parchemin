@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { dayKey } from '../craft/why'
 import { db } from '../db'
 import { useEditorState } from '../editorState'
@@ -8,6 +8,16 @@ import { requestPersistOnce, useSafekeeping } from '../safekeeping'
 import { numberOf, type SceneRef } from '../sceneIndex'
 
 const num = (n: number) => n.toLocaleString()
+
+/** Today's key, checked every minute so the figure rolls over at midnight without a write. */
+function useDayKey(): string {
+  const [key, setKey] = useState(() => dayKey())
+  useEffect(() => {
+    const id = window.setInterval(() => setKey((k) => (dayKey() === k ? k : dayKey())), 60_000)
+    return () => window.clearInterval(id)
+  }, [])
+  return key
+}
 
 /** "2 days ago", "yesterday", "today", or the date when it is older than a week. */
 export function ago(t: number, now = Date.now()): string {
@@ -24,7 +34,8 @@ export function ago(t: number, now = Date.now()): string {
  */
 export function StatusBar({ route, index, notice }: { route: Route; index: SceneRef[]; notice?: string }) {
   const k = useSafekeeping()
-  const today = useLiveQuery(() => db.days.get(dayKey()), [])
+  const day = useDayKey()
+  const today = useLiveQuery(() => db.days.get(day), [day])
   const ed = useEditorState()
   const writing = route.name === 'story' && route.tab === 'write'
   const scene = writing && route.itemId ? index.find((s) => s.id === route.itemId) : undefined
