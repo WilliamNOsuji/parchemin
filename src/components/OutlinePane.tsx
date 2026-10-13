@@ -4,7 +4,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { pace } from '../craft/audit'
 import { inDays } from '../craft/why'
 import { addScene, db, reorderScenes, setAsideScene } from '../db'
-import { navigate } from '../route'
+import { navigate, replaceRoute } from '../route'
 import { STATUSES, type Scene, type SceneStatus, type Story } from '../types'
 import { GrowingText } from './GrowingText'
 import { Icon } from './Icons'
@@ -85,7 +85,8 @@ export function OutlinePane({ story, scenes, selectedId, onOpenRight }: { story:
     const to = scenes.findIndex((s) => s.id === over.id)
     void reorderScenes(arrayMove(scenes, from, to).map((s) => s.id))
   }
-  const select = (id?: string) => navigate({ name: 'story', storyId: story.id, tab: 'outline', itemId: id })
+  // selection within the page, so Back leaves the outline instead of stepping through rows
+  const select = (id?: string) => replaceRoute({ name: 'story', storyId: story.id, tab: 'outline', itemId: id })
   const set = (patch: Pick<Story, 'targetWords' | 'finishBy'>) => void db.stories.update(story.id, patch)
 
   const written = scenes.reduce((n, s) => n + s.words, 0)

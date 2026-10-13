@@ -3,7 +3,7 @@ import { castAgainst } from '../craft/cast'
 import { HERO_QUESTIONS } from '../craft/heroCheck'
 import { FAMILIES, voiceById } from '../craft/voices'
 import { createCharacter, db } from '../db'
-import { navigate } from '../route'
+import { replaceRoute } from '../route'
 import type { Character, Story } from '../types'
 import { Avatar } from './Avatar'
 import { Icon } from './Icons'
@@ -11,7 +11,8 @@ import { Icon } from './Icons'
 /** One card per person: name, role, voice, what they want in a room, and their function. A character with no function is a card you can see is empty. */
 export function CastPane({ story, selectedId }: { story: Story; selectedId?: string }) {
   const characters = useLiveQuery(() => db.characters.where('storyId').equals(story.id).sortBy('createdAt'), [story.id], [] as Character[])
-  const select = (id?: string) => navigate({ name: 'story', storyId: story.id, tab: 'cast', itemId: id })
+  // selection within the page, so Back leaves the cast instead of stepping through cards
+  const select = (id?: string) => replaceRoute({ name: 'story', storyId: story.id, tab: 'cast', itemId: id })
   const readings = castAgainst(characters)
 
   return (
