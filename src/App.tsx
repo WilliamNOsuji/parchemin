@@ -107,9 +107,13 @@ export function App() {
   const rightTab = rightTabs[screen] ?? RIGHT_TABS[screen][0]?.id ?? ''
   const hasRight = RIGHT_TABS[screen].length > 0 && rightOpen
 
+  // a command may change screen and open a tab in the same breath ("Read the whole outline" while writing), before the
+  // route has caught up, so the tab is stored under the screen that owns it
   const openRight = useCallback(
     (tab: string) => {
-      setRightTabs((t) => ({ ...t, [screen]: tab }))
+      const owner = RIGHT_TABS[screen].some((t) => t.id === tab) ? screen : (Object.keys(RIGHT_TABS) as Screen[]).find((s) => RIGHT_TABS[s].some((t) => t.id === tab))
+      if (!owner) return
+      setRightTabs((t) => ({ ...t, [owner]: tab }))
       setRightOpen(true)
     },
     [screen, setRightOpen],
