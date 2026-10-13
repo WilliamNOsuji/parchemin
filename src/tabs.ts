@@ -38,11 +38,16 @@ export function useOpenTabs(route: Route) {
 
   useEffect(() => {
     setTabs((ts) => {
+      // a chapter opened by story alone has a placeholder tab until the route names the chapter
+      const placeholder = route.name === 'story' && route.tab === 'write' && route.itemId ? `write:${route.storyId}:first` : null
       const i = ts.findIndex((t) => t.key === active)
-      // a tab for a story's outline or cast keeps the selected item, so reopening it lands where the writer was
-      if (i >= 0) return hrefFor(ts[i].route) === hrefFor(route) ? ts : ts.map((t, j) => (j === i ? { key: t.key, route } : t))
-      // a chapter opened by story alone becomes that chapter's tab once the route names it
-      const first = route.name === 'story' && route.tab === 'write' ? ts.findIndex((t) => t.key === `write:${route.storyId}:first`) : -1
+      if (i >= 0) {
+        // a tab for a story's outline or cast keeps the selected item, so reopening it lands where the writer was
+        const next = hrefFor(ts[i].route) === hrefFor(route) ? ts : ts.map((t, j) => (j === i ? { key: t.key, route } : t))
+        // the chapter already had a tab of its own, so the placeholder has nothing to become
+        return placeholder && next.some((t) => t.key === placeholder) ? next.filter((t) => t.key !== placeholder) : next
+      }
+      const first = placeholder ? ts.findIndex((t) => t.key === placeholder) : -1
       if (first >= 0) return ts.map((t, j) => (j === first ? { key: active, route } : t))
       return [...ts, { key: active, route }]
     })
