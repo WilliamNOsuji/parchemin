@@ -60,8 +60,9 @@ We do not preach. The mindset is carried by small, repeated, honest things, so t
 
 - **Language.** Writer, never user. "Your story", never "your content". "A blank page is an invitation, not a debt."
 - **Presence.** A line on why we write shows on the home screen. It is short, true, and different on each visit.
-- **Gentleness about the habit.** We show words written, never shame for words not written. A streak that survives an
-  unfinished day. No guilt notifications, no lost-streak panic, no leaderboards.
+- **Gentleness about the habit.** We show words written, never shame for words not written. Seven bars show the
+  rhythm of the week: days you wrote are shown, days you didn't are just quiet, and no streak is counted anywhere. No
+  guilt notifications, no lost-streak panic, no leaderboards.
 - **Celebration of size.** Milestones honor small wins: the first word, a thousand words, a chapter.
 - **Defaults that assume you will finish.** New stories offer structure and a finish line. Chapters have goals and
   turns. The outline audit reads the whole book back to you.
@@ -134,9 +135,11 @@ When a feature idea comes up, run it through these questions. A "no" to the firs
 | Belief | Where it shows up |
 |---|---|
 | Writing matters | `src/craft/why.ts` (epigraphs, milestones), `src/components/Why.tsx` |
-| Gentle habit | `src/components/Why.tsx` (today's words, streak), `logWords` in `src/db.ts` |
-| Finishing is learnable | Finish line in `src/components/OutlineTab.tsx`, `pace` in `src/craft/audit.ts` |
-| Craft without a cage | `src/craft/` (voices, hero check, audit, dialogue), optional chapter plan, the Dialogue panel in `src/components/DialoguePanel.tsx` |
+| Gentle habit | `src/components/Why.tsx` (today's words as seven bars, no streak), `logWords` in `src/db.ts` |
+| Tomorrow starts with a sentence waiting | `waiting` on a chapter (`src/types.ts`), shown by `src/components/Home.tsx`, written in the Notes panel |
+| Finishing is learnable | Finish line in `src/components/OutlinePane.tsx`, the audit in `src/components/AuditPanel.tsx`, `pace` in `src/craft/audit.ts` |
+| Craft without a cage | `src/craft/` (voices, hero check, audit, dialogue, cast), the optional chapter plan in `src/components/Panels.tsx`, the Dialogue panel in `src/components/DialoguePanel.tsx`, the cast read against itself in `src/components/CastPane.tsx` |
+| Calm | The shell in `src/App.tsx` and `src/styles.css`: one accent, chrome a shade darker than the page, both sidebars collapsible, focus mode |
 | The writer owns the work | Local-first IndexedDB in `src/db.ts`, backup in `src/backup.ts`, safekeeping in `src/safekeeping.ts`, exports in `src/export.ts`, fonts bundled in `src/main.tsx`, `LICENSE` (AGPL-3.0-or-later) |
 | Safe to cut | The drawer: `setAside*` and `putBack` in `src/db.ts`, `src/components/DrawerSection.tsx` |
 | The story is never written for you | Prompts in `src/prompts.ts`; the AI guide's limits in `AI-POLICY.md` |
@@ -161,8 +164,12 @@ order yet.
    from its own beliefs. For the writer only, never exported with the story (`research.md`, section 13).
 6. **The desktop app.** An Electron build styled after Obsidian, with the library as a folder of plain files and a canvas
    saved as JSON Canvas. Decided on 2026-10-10 from the mockups (`research.md`, section 13).
+   Done on 2026-10-12: the mockup's shell in the web app the Electron build will wrap (ribbon, library tree, tabs in
+   the title bar, right sidebar, status bar, command palette, theme toggle, the cast grid, the outline as rows), and
+   the website under `site/`. Still to do: the Electron wrapper, the library folder, the canvas, and the Web.
 
-Still planned from before: setting sheets (obstacle-first, with a prop list), a cast grid view, and chapter guides.
+Still planned from before: setting sheets (obstacle-first, with a prop list) and chapter guides. The cast grid view was
+done on 2026-10-12 with the shell.
 Done on 2026-10-09: the dialogue test where you cover the names, as part of the Dialogue panel (`research/notes/14-dialogue.md`). Not now: a first-run timing test and French-first work. Parked: an animated
 poem mode, an idea to try with poets first.
 

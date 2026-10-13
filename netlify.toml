@@ -1,0 +1,9 @@
+# Netlify builds the site and the app from this repository (a private one is fine) and publishes dist-pages/:
+# the site at the root, the app under app/. Connect the repository once in the Netlify dashboard; it reads this
+# file for the rest. See site/README.md. $URL is the site's main address, which Netlify sets at build time.
+[build]
+  command = "SITE_URL=$URL/ npm run build:pages"
+  publish = "dist-pages"
+
+[build.environment]
+  NODE_VERSION = "24"

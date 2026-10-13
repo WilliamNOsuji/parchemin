@@ -2,12 +2,19 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="theme-color" content="#faf7f2" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#f3eee6" />
     <title>Parchemin — a calm place to write</title>
     <link rel="icon" href="/icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/icon-192.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Parchemin follows the system theme unless the writer pinned one; applied before paint, so there is no flash. -->
+    <script>
+      try {
+        var t = localStorage.getItem('parchemin.theme')
+        if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t)
+      } catch (e) {}
+    </script>
   </head>
   <!-- Parchemin has no AI. This asks the browser to keep its own writing suggestions out of the page too. -->
   <body writingsuggestions="false">

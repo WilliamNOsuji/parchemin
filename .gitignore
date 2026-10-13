@@ -19,3 +19,6 @@ research/.fetch-*
 .impeccable/live/previews/
 .impeccable/live/annotations/
 .impeccable/live/artifacts/
+dist-site
+dist-pages
+.impeccable/review/

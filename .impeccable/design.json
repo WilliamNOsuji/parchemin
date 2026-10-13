@@ -1,0 +1,581 @@
+{
+ "schemaVersion": 2,
+ "generatedAt": "2026-10-12T00:00:00Z",
+ "title": "Design System: Parchemin",
+ "extensions": {
+  "colorMeta": {
+   "accent": {
+    "role": "primary",
+    "displayName": "Violet",
+    "canonical": "oklch(48.9% 0.164 285)",
+    "tonalRamp": [
+     "oklch(15% 0.066 285)",
+     "oklch(26% 0.116 285)",
+     "oklch(38% 0.164 285)",
+     "oklch(49% 0.164 285)",
+     "oklch(61% 0.164 285)",
+     "oklch(72% 0.164 285)",
+     "oklch(84% 0.159 285)",
+     "oklch(95% 0.109 285)"
+    ]
+   },
+   "accent-dark": {
+    "role": "primary",
+    "displayName": "Violet, dark",
+    "canonical": "oklch(74.2% 0.142 289)",
+    "tonalRamp": [
+     "oklch(15% 0.057 289)",
+     "oklch(26% 0.100 289)",
+     "oklch(38% 0.142 289)",
+     "oklch(49% 0.142 289)",
+     "oklch(61% 0.142 289)",
+     "oklch(72% 0.142 289)",
+     "oklch(84% 0.138 289)",
+     "oklch(95% 0.095 289)"
+    ]
+   },
+   "accent-soft": {
+    "role": "primary",
+    "displayName": "Violet wash",
+    "canonical": "oklch(93.5% 0.030 285)",
+    "tonalRamp": [
+     "oklch(15% 0.066 285)",
+     "oklch(26% 0.116 285)",
+     "oklch(38% 0.164 285)",
+     "oklch(49% 0.164 285)",
+     "oklch(61% 0.164 285)",
+     "oklch(72% 0.164 285)",
+     "oklch(84% 0.159 285)",
+     "oklch(95% 0.109 285)"
+    ]
+   },
+   "accent-soft-dark": {
+    "role": "primary",
+    "displayName": "Violet wash, dark",
+    "canonical": "oklch(33.5% 0.080 289)",
+    "tonalRamp": [
+     "oklch(15% 0.057 289)",
+     "oklch(26% 0.100 289)",
+     "oklch(38% 0.142 289)",
+     "oklch(49% 0.142 289)",
+     "oklch(61% 0.142 289)",
+     "oklch(72% 0.142 289)",
+     "oklch(84% 0.138 289)",
+     "oklch(95% 0.095 289)"
+    ]
+   },
+   "page": {
+    "role": "neutral",
+    "displayName": "Paper",
+    "canonical": "oklch(97.7% 0.007 81)",
+    "tonalRamp": [
+     "oklch(15% 0.004 81)",
+     "oklch(26% 0.005 81)",
+     "oklch(38% 0.007 81)",
+     "oklch(49% 0.007 81)",
+     "oklch(61% 0.007 81)",
+     "oklch(72% 0.007 81)",
+     "oklch(84% 0.007 81)",
+     "oklch(95% 0.005 81)"
+    ]
+   },
+   "sheet": {
+    "role": "neutral",
+    "displayName": "Sheet",
+    "canonical": "oklch(100% 0 0)",
+    "tonalRamp": [
+     "oklch(15% 0.004 81)",
+     "oklch(26% 0.005 81)",
+     "oklch(38% 0.007 81)",
+     "oklch(49% 0.007 81)",
+     "oklch(61% 0.007 81)",
+     "oklch(72% 0.007 81)",
+     "oklch(84% 0.007 81)",
+     "oklch(95% 0.005 81)"
+    ]
+   },
+   "chrome": {
+    "role": "neutral",
+    "displayName": "Chrome",
+    "canonical": "oklch(95.1% 0.012 80)",
+    "tonalRamp": [
+     "oklch(15% 0.005 80)",
+     "oklch(26% 0.008 80)",
+     "oklch(38% 0.012 80)",
+     "oklch(49% 0.012 80)",
+     "oklch(61% 0.012 80)",
+     "oklch(72% 0.012 80)",
+     "oklch(84% 0.012 80)",
+     "oklch(95% 0.008 80)"
+    ]
+   },
+   "line": {
+    "role": "neutral",
+    "displayName": "Line",
+    "canonical": "oklch(90.0% 0.019 83)",
+    "tonalRamp": [
+     "oklch(15% 0.008 83)",
+     "oklch(26% 0.013 83)",
+     "oklch(38% 0.019 83)",
+     "oklch(49% 0.019 83)",
+     "oklch(61% 0.019 83)",
+     "oklch(72% 0.019 83)",
+     "oklch(84% 0.019 83)",
+     "oklch(95% 0.013 83)"
+    ]
+   },
+   "ink": {
+    "role": "neutral",
+    "displayName": "Ink",
+    "canonical": "oklch(27.6% 0.009 67)",
+    "tonalRamp": [
+     "oklch(15% 0.004 67)",
+     "oklch(26% 0.007 67)",
+     "oklch(38% 0.009 67)",
+     "oklch(49% 0.009 67)",
+     "oklch(61% 0.009 67)",
+     "oklch(72% 0.009 67)",
+     "oklch(84% 0.009 67)",
+     "oklch(95% 0.006 67)"
+    ]
+   },
+   "muted": {
+    "role": "neutral",
+    "displayName": "Muted ink",
+    "canonical": "oklch(51.8% 0.018 74)",
+    "tonalRamp": [
+     "oklch(15% 0.007 74)",
+     "oklch(26% 0.013 74)",
+     "oklch(38% 0.018 74)",
+     "oklch(49% 0.018 74)",
+     "oklch(61% 0.018 74)",
+     "oklch(72% 0.018 74)",
+     "oklch(84% 0.018 74)",
+     "oklch(95% 0.012 74)"
+    ]
+   },
+   "page-dark": {
+    "role": "neutral",
+    "displayName": "Paper, dark",
+    "canonical": "oklch(22.1% 0.010 295)",
+    "tonalRamp": [
+     "oklch(15% 0.004 295)",
+     "oklch(26% 0.007 295)",
+     "oklch(38% 0.010 295)",
+     "oklch(49% 0.010 295)",
+     "oklch(61% 0.010 295)",
+     "oklch(72% 0.010 295)",
+     "oklch(84% 0.009 295)",
+     "oklch(95% 0.006 295)"
+    ]
+   },
+   "ink-dark": {
+    "role": "neutral",
+    "displayName": "Ink, dark",
+    "canonical": "oklch(93.2% 0.010 82)",
+    "tonalRamp": [
+     "oklch(15% 0.004 82)",
+     "oklch(26% 0.007 82)",
+     "oklch(38% 0.010 82)",
+     "oklch(49% 0.010 82)",
+     "oklch(61% 0.010 82)",
+     "oklch(72% 0.010 82)",
+     "oklch(84% 0.010 82)",
+     "oklch(95% 0.007 82)"
+    ]
+   },
+   "danger": {
+    "role": "semantic",
+    "displayName": "Danger",
+    "canonical": "oklch(50.1% 0.178 29)",
+    "tonalRamp": [
+     "oklch(15% 0.071 29)",
+     "oklch(26% 0.126 29)",
+     "oklch(38% 0.178 29)",
+     "oklch(49% 0.178 29)",
+     "oklch(61% 0.178 29)",
+     "oklch(72% 0.178 29)",
+     "oklch(84% 0.173 29)",
+     "oklch(95% 0.119 29)"
+    ]
+   },
+   "place": {
+    "role": "status",
+    "displayName": "Place",
+    "canonical": "oklch(59.2% 0.089 186)",
+    "tonalRamp": [
+     "oklch(15% 0.036 186)",
+     "oklch(26% 0.063 186)",
+     "oklch(38% 0.089 186)",
+     "oklch(49% 0.089 186)",
+     "oklch(61% 0.089 186)",
+     "oklch(72% 0.089 186)",
+     "oklch(84% 0.086 186)",
+     "oklch(95% 0.059 186)"
+    ]
+   },
+   "idea": {
+    "role": "status",
+    "displayName": "Idea",
+    "canonical": "oklch(74.3% 0.027 67)",
+    "tonalRamp": [
+     "oklch(15% 0.011 67)",
+     "oklch(26% 0.019 67)",
+     "oklch(38% 0.027 67)",
+     "oklch(49% 0.027 67)",
+     "oklch(61% 0.027 67)",
+     "oklch(72% 0.027 67)",
+     "oklch(84% 0.027 67)",
+     "oklch(95% 0.018 67)"
+    ]
+   },
+   "draft": {
+    "role": "status",
+    "displayName": "Draft",
+    "canonical": "oklch(75.1% 0.130 80)",
+    "tonalRamp": [
+     "oklch(15% 0.052 80)",
+     "oklch(26% 0.091 80)",
+     "oklch(38% 0.130 80)",
+     "oklch(49% 0.130 80)",
+     "oklch(61% 0.130 80)",
+     "oklch(72% 0.130 80)",
+     "oklch(84% 0.126 80)",
+     "oklch(95% 0.086 80)"
+    ]
+   },
+   "revised": {
+    "role": "status",
+    "displayName": "Revised",
+    "canonical": "oklch(62.8% 0.106 244)",
+    "tonalRamp": [
+     "oklch(15% 0.043 244)",
+     "oklch(26% 0.075 244)",
+     "oklch(38% 0.106 244)",
+     "oklch(49% 0.106 244)",
+     "oklch(61% 0.106 244)",
+     "oklch(72% 0.106 244)",
+     "oklch(84% 0.103 244)",
+     "oklch(95% 0.071 244)"
+    ]
+   },
+   "done": {
+    "role": "status",
+    "displayName": "Done",
+    "canonical": "oklch(63.2% 0.111 153)",
+    "tonalRamp": [
+     "oklch(15% 0.044 153)",
+     "oklch(26% 0.078 153)",
+     "oklch(38% 0.111 153)",
+     "oklch(49% 0.111 153)",
+     "oklch(61% 0.111 153)",
+     "oklch(72% 0.111 153)",
+     "oklch(84% 0.107 153)",
+     "oklch(95% 0.074 153)"
+    ]
+   }
+  },
+  "typographyMeta": {
+   "display": {
+    "displayName": "Display",
+    "purpose": "The website headline only, at most 13ch wide. Literata Variable with the opsz axis."
+   },
+   "headline": {
+    "displayName": "Headline",
+    "purpose": "Website section headings, at most 24ch."
+   },
+   "title": {
+    "displayName": "Title",
+    "purpose": "Page titles in the app; the library home at 26px, the chapter title at 28px, modal titles at 20px."
+   },
+   "manuscript": {
+    "displayName": "Manuscript",
+    "purpose": "The chapter text on a 620px measure; 17px on a phone; paragraphs indent 1.5em."
+   },
+   "reading": {
+    "displayName": "Reading",
+    "purpose": "Website running text; lead at 20px, lists at 17px, small print at 15px."
+   },
+   "body": {
+    "displayName": "Body",
+    "purpose": "The app's chrome; controls at 12.5px, counts at 11 to 12px, hints at 11.5px. Tabular numerals."
+   },
+   "label": {
+    "displayName": "Label",
+    "purpose": "A field's name above its value, uppercase, muted. Section headings use the same voice at 11 to 11.5px with 0.06em."
+   }
+  },
+  "shadows": [
+   {
+    "name": "floating",
+    "value": "0 8px 24px rgb(43 39 35 / .14)",
+    "dark": "0 8px 24px rgb(0 0 0 / .5)",
+    "purpose": "Command palette, menus, modals, a dragged outline row, the open mobile drawer."
+   },
+   {
+    "name": "bottom-sheet",
+    "value": "0 -8px 30px rgb(0 0 0 / .2)",
+    "purpose": "The right sidebar as a bottom sheet on a phone."
+   },
+   {
+    "name": "ring",
+    "value": "0 0 0 2px var(--accent-soft)",
+    "purpose": "A focused input, a selected outline row or cast card. Paired with an accent border."
+   },
+   {
+    "name": "app-window",
+    "value": "0 30px 80px rgba(43, 39, 35, .16)",
+    "purpose": "The website's app window, the only lifted object on the site."
+   },
+   {
+    "name": "side-tab",
+    "value": "0 1px 0 var(--border)",
+    "purpose": "Hairline under the active Library / Tags / Search tab."
+   }
+  ],
+  "motion": [
+   {
+    "name": "state",
+    "value": "150ms",
+    "purpose": "Background and border changes on buttons, cards, the avatar hint."
+   },
+   {
+    "name": "site-lift",
+    "value": "transform .15s ease, background .15s ease",
+    "purpose": "Website buttons lift 1px on hover and settle on press; off under prefers-reduced-motion."
+   },
+   {
+    "name": "slide",
+    "value": "transform .2s",
+    "purpose": "The mobile drawer; the focus-mode dim; the progress bar width."
+   },
+   {
+    "name": "reduced",
+    "value": "transition: none",
+    "purpose": "Every transition is removed under prefers-reduced-motion."
+   }
+  ],
+  "breakpoints": [
+   {
+    "name": "app-narrow-sidebars",
+    "value": "900px"
+   },
+   {
+    "name": "app-phone",
+    "value": "720px"
+   },
+   {
+    "name": "app-pane-container",
+    "value": "640px (container width)"
+   },
+   {
+    "name": "site-bleed",
+    "value": "1320px (min)"
+   },
+   {
+    "name": "site-two-col",
+    "value": "860px"
+   },
+   {
+    "name": "site-three-col",
+    "value": "800px"
+   },
+   {
+    "name": "site-refusals",
+    "value": "720px"
+   },
+   {
+    "name": "site-download",
+    "value": "520px"
+   }
+  ],
+  "provenance": {
+   "contract": null,
+   "mockups": [
+    "design/parchemin-desktop.html",
+    "design/parchemin-website.html"
+   ],
+   "approved": "2026-10-10",
+   "built": "2026-10-12",
+   "sources": [
+    "src/styles.css",
+    "site/site.css"
+   ],
+   "tokenAliases": {
+    "site": {
+     "--paper": "page",
+     "--ink": "ink",
+     "--muted": "muted",
+     "--line": "line",
+     "--well": "chrome (light) / sheet-dark (dark)",
+     "--sheet": "sheet",
+     "--accent": "accent",
+     "--accent-ink": "accent-ink",
+     "--accent-soft": "accent-soft"
+    },
+    "app": {
+     "--bg": "page",
+     "--surface": "sheet",
+     "--surface-2": "chrome (light) / well-dark (dark)",
+     "--chrome": "chrome",
+     "--border": "line",
+     "--text": "ink",
+     "--muted": "muted",
+     "--accent-contrast": "accent-ink"
+    }
+   },
+   "darkTheme": "Dark values apply under prefers-color-scheme: dark unless html[data-theme='light'], and always under html[data-theme='dark']. The app follows the system theme and can be pinned; the choice lives in localStorage as parchemin.theme."
+  }
+ },
+ "components": [
+  {
+   "name": "Button",
+   "kind": "button",
+   "refersTo": "button",
+   "description": "The app's bordered button; sheet on page, second tone on hover.",
+   "html": "<button class=\"ds-btn\">New folder</button>",
+   "css": ".ds-btn{font-family:Inter,system-ui,sans-serif;font-size:12.5px;font-weight:500;color:#2b2723;background:#fff;border:1px solid #e4ddd0;border-radius:6px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:background .15s,border-color .15s}.ds-btn:hover{background:#f3eee6}.ds-btn:focus-visible{outline:2px solid #5b4bb7;outline-offset:2px}.ds-btn:disabled{opacity:.45;cursor:default}"
+  },
+  {
+   "name": "Primary button",
+   "kind": "button",
+   "refersTo": "button-primary",
+   "description": "The one filled button in a view.",
+   "html": "<button class=\"ds-btn-primary\"><svg width=\"14\" height=\"14\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"1.6\" stroke-linecap=\"round\"><path d=\"M12 5v14M5 12h14\"/></svg>New story</button>",
+   "css": ".ds-btn-primary{font-family:Inter,system-ui,sans-serif;font-size:12.5px;font-weight:500;color:#fff;background:#5b4bb7;border:1px solid #5b4bb7;border-radius:6px;padding:5px 10px;display:inline-flex;align-items:center;gap:6px;cursor:pointer;transition:filter .15s}.ds-btn-primary:hover{filter:brightness(1.08)}.ds-btn-primary:focus-visible{outline:2px solid #5b4bb7;outline-offset:2px}"
+  },
+  {
+   "name": "Site button",
+   "kind": "button",
+   "refersTo": "button-site",
+   "description": "The website's bordered and primary buttons; they lift 1px on hover.",
+   "html": "<a class=\"ds-site-btn ds-site-btn--primary\" href=\"#\">Download for Windows</a> <a class=\"ds-site-btn\" href=\"#\">Write in the browser</a>",
+   "css": ".ds-site-btn{font-family:Inter,system-ui,sans-serif;font-weight:500;font-size:16px;display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:8px;border:1px solid #e4ddd0;background:#fff;color:#2b2723;text-decoration:none;white-space:nowrap;transition:transform .15s ease,background .15s ease}.ds-site-btn:hover{transform:translateY(-1px)}.ds-site-btn:active{transform:translateY(0) scale(.99)}.ds-site-btn--primary{background:#5b4bb7;color:#fff;border-color:#5b4bb7}.ds-site-btn:focus-visible{outline:2px solid #5b4bb7;outline-offset:3px}"
+  },
+  {
+   "name": "Input",
+   "kind": "input",
+   "refersTo": "input",
+   "description": "A field with its uppercase label; accent border and wash ring on focus.",
+   "html": "<label class=\"ds-field\"><span>Goal</span><input class=\"ds-input\" placeholder=\"What does the chapter set out to do?\"></label>",
+   "css": ".ds-field{display:flex;flex-direction:column;gap:3px;font-family:Inter,system-ui,sans-serif;max-width:320px}.ds-field>span{font-size:10.5px;font-weight:600;color:#6f675d;text-transform:uppercase;letter-spacing:.05em}.ds-input{font:inherit;font-size:12.5px;line-height:1.45;color:#2b2723;background:#fff;border:1px solid #e4ddd0;border-radius:5px;padding:6px 8px;width:100%}.ds-input::placeholder{color:#6f675d;opacity:1}.ds-input:hover{border-color:#a8a094}.ds-input:focus{outline:none;border-color:#5b4bb7;box-shadow:0 0 0 2px #ece9fb}"
+  },
+  {
+   "name": "Chip",
+   "kind": "chip",
+   "refersTo": "chip",
+   "description": "A pill tag; the on state takes the violet wash.",
+   "html": "<span class=\"ds-chip\"><i class=\"ds-dot ds-dot--draft\"></i>Draft</span> <span class=\"ds-chip ds-chip--on\">Novel</span>",
+   "css": ".ds-chip{display:inline-flex;align-items:center;gap:5px;background:#f3eee6;border:1px solid #e4ddd0;border-radius:999px;padding:1px 8px;font-family:Inter,system-ui,sans-serif;font-size:11px;font-weight:500;color:#2b2723;white-space:nowrap}.ds-chip--on{background:#ece9fb;border-color:#5b4bb7}.ds-dot{display:inline-block;width:6px;height:6px;border-radius:50%;background:#b8a99a}.ds-dot--draft{background:#d9a441}"
+  },
+  {
+   "name": "Cast card",
+   "kind": "card",
+   "refersTo": "card",
+   "description": "A bordered sheet card with a Literata name; accent border and wash ring when selected.",
+   "html": "<button class=\"ds-card\"><div class=\"ds-card__top\"><span class=\"ds-av\">M</span><div><div class=\"ds-card__nm\">Mara</div><div class=\"ds-card__role\">Hero</div></div></div><div class=\"ds-card__ln\"><span>Wants</span> her father to say what the glass is for.</div></button>",
+   "css": ".ds-card{font-family:Inter,system-ui,sans-serif;font-size:13px;background:#fff;border:1px solid #e4ddd0;border-radius:8px;padding:14px;display:flex;flex-direction:column;gap:6px;text-align:left;width:220px;color:#2b2723;cursor:pointer;transition:border-color .15s}.ds-card:hover{border-color:#a093c4}.ds-card:focus-visible{outline:none;border-color:#5b4bb7;box-shadow:0 0 0 2px #ece9fb}.ds-card__top{display:flex;align-items:center;gap:10px}.ds-av{width:38px;height:38px;border-radius:50%;background:#ece9fb;color:#5b4bb7;display:grid;place-items:center;font-family:Literata,Georgia,serif;font-weight:600;font-size:15px}.ds-card__nm{font-family:Literata,Georgia,serif;font-size:16px;font-weight:600;line-height:1.2}.ds-card__role{font-size:12px;color:#6f675d}.ds-card__ln{font-size:12.5px;line-height:1.45}.ds-card__ln span{color:#6f675d}"
+  },
+  {
+   "name": "Library tree",
+   "kind": "nav",
+   "refersTo": "tree-node",
+   "description": "26px rows on chrome with status dots and tabular counts; the active chapter on the violet wash.",
+   "html": "<nav class=\"ds-tree\"><button class=\"ds-node ds-node--story\"><span class=\"ds-chev\">&#9662;</span><span class=\"ds-t\">The Lighthouse Keeper's Daughter</span><span class=\"ds-w\">26,332</span></button><button class=\"ds-node ds-node--ch\"><i class=\"ds-nd\" style=\"background:#4f9d69\"></i><span class=\"ds-n\">1</span><span class=\"ds-t\">The lamp</span><span class=\"ds-w\">2,162</span></button><button class=\"ds-node ds-node--ch ds-node--active\"><i class=\"ds-nd\" style=\"background:#d9a441\"></i><span class=\"ds-n\">7</span><span class=\"ds-t\">The storm glass</span><span class=\"ds-w\">2,680</span></button><button class=\"ds-node ds-node--ch\"><i class=\"ds-nd\"></i><span class=\"ds-n\">8</span><span class=\"ds-t\">The boat</span><span class=\"ds-w\">0</span></button></nav>",
+   "css": ".ds-tree{background:#f3eee6;padding:8px;width:260px;font-family:Inter,system-ui,sans-serif;font-size:13px;color:#2b2723;display:flex;flex-direction:column;gap:0}.ds-node{display:flex;align-items:center;gap:6px;height:26px;padding:0 4px 0 6px;border:0;border-radius:4px;background:none;color:inherit;font:inherit;width:100%;text-align:left;white-space:nowrap;overflow:hidden;cursor:pointer}.ds-node:hover{background:#f8f4ee}.ds-node--story{font-weight:500}.ds-node--ch{padding-left:20px}.ds-node--active{background:#ece9fb}.ds-node:focus-visible{outline:2px solid #5b4bb7;outline-offset:-2px}.ds-chev{width:12px;color:#6f675d;font-size:10px;text-align:center}.ds-nd{display:inline-block;width:8px;height:8px;border-radius:50%;background:#b8a99a;flex:none}.ds-n{color:#6f675d;width:12px;text-align:right;font-variant-numeric:tabular-nums;font-size:12px}.ds-t{overflow:hidden;text-overflow:ellipsis;flex:1}.ds-w{margin-left:auto;color:#6f675d;font-size:11px;font-variant-numeric:tabular-nums}"
+  },
+  {
+   "name": "Ribbon",
+   "kind": "nav",
+   "refersTo": "ribbon-button",
+   "description": "The 44px chrome strip of 30px icon buttons; the current view sits on the violet wash in accent.",
+   "html": "<nav class=\"ds-ribbon\"><button class=\"ds-rb ds-rb--on\" title=\"Library\"><svg viewBox=\"0 0 24 24\"><path d=\"M4 19.5A2.5 2.5 0 0 1 6.5 17H20\"/><path d=\"M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z\"/></svg></button><button class=\"ds-rb\" title=\"Search\"><svg viewBox=\"0 0 24 24\"><circle cx=\"11\" cy=\"11\" r=\"7\"/><path d=\"m20 20-3.5-3.5\"/></svg></button><button class=\"ds-rb\" title=\"Outline\"><svg viewBox=\"0 0 24 24\"><path d=\"M9 6h11M9 12h11M9 18h11\"/><circle cx=\"4.5\" cy=\"6\" r=\"1.2\"/><circle cx=\"4.5\" cy=\"12\" r=\"1.2\"/><circle cx=\"4.5\" cy=\"18\" r=\"1.2\"/></svg></button><button class=\"ds-rb\" title=\"Cast\"><svg viewBox=\"0 0 24 24\"><circle cx=\"9\" cy=\"8\" r=\"3.5\"/><path d=\"M2.5 20a6.5 6.5 0 0 1 13 0\"/><circle cx=\"17\" cy=\"9\" r=\"2.5\"/><path d=\"M15.5 14.5a5 5 0 0 1 6 4.5\"/></svg></button></nav>",
+   "css": ".ds-ribbon{width:44px;background:#f3eee6;border-right:1px solid #e4ddd0;display:flex;flex-direction:column;align-items:center;padding:8px 0;gap:4px}.ds-rb{width:30px;height:30px;display:grid;place-items:center;border:0;border-radius:6px;background:none;color:#6f675d;cursor:pointer}.ds-rb svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}.ds-rb:hover{background:#f8f4ee;color:#2b2723}.ds-rb--on{color:#5b4bb7;background:#ece9fb}.ds-rb:focus-visible{outline:2px solid #5b4bb7;outline-offset:2px}"
+  },
+  {
+   "name": "Title-bar tab",
+   "kind": "nav",
+   "refersTo": "tree-node",
+   "description": "Tabs in the title bar; the active tab takes the page colour and joins the pane.",
+   "html": "<div class=\"ds-tabs\"><div class=\"ds-tab\"><span class=\"ds-tab__t\">Library</span></div><div class=\"ds-tab ds-tab--active\"><i class=\"ds-tab__dot\"></i><span class=\"ds-tab__t\">7 · The storm glass</span><button class=\"ds-tab__x\" aria-label=\"Close\">×</button></div></div>",
+   "css": ".ds-tabs{display:flex;align-items:flex-end;gap:2px;height:40px;padding:6px 8px 0;background:#f3eee6;border-bottom:1px solid #e4ddd0;font-family:Inter,system-ui,sans-serif}.ds-tab{display:flex;align-items:center;gap:7px;padding:0 6px 0 12px;height:34px;border:1px solid transparent;border-bottom:0;border-radius:7px 7px 0 0;color:#6f675d;font-size:12.5px;white-space:nowrap}.ds-tab:hover{color:#2b2723;background:#f7f3ed}.ds-tab--active{background:#faf7f2;color:#2b2723;border-color:#e4ddd0;margin-bottom:-1px}.ds-tab__dot{width:8px;height:8px;border-radius:50%;background:#d9a441}.ds-tab__x{border:0;background:none;color:#6f675d;font-size:11px;opacity:.7;padding:4px;border-radius:4px;cursor:pointer}.ds-tab__x:hover{opacity:1;background:#f3eee6;color:#2b2723}"
+  },
+  {
+   "name": "Command palette",
+   "kind": "custom",
+   "refersTo": "palette",
+   "description": "The one floating sheet: 10px radius, the floating shadow, rows on the violet wash when selected.",
+   "html": "<div class=\"ds-palette\"><div class=\"ds-palette__in\"><input placeholder=\"Type a command or a chapter\"><small>Esc</small></div><ul><li class=\"ds-palette__sel\">Open chapter 7 · The storm glass<small>Chapter</small></li><li>Focus mode<small>Ctrl+Shift+F</small></li><li>New story<small>Library</small></li></ul><footer><span>↑↓ move</span><span>↵ open</span></footer></div>",
+   "css": ".ds-palette{width:min(560px,100%);background:#fff;border:1px solid #e4ddd0;border-radius:10px;box-shadow:0 8px 24px rgb(43 39 35 / .14);overflow:hidden;font-family:Inter,system-ui,sans-serif;color:#2b2723}.ds-palette__in{display:flex;align-items:center;gap:10px;padding:9px 14px;border-bottom:1px solid #e4ddd0;font-size:14px;color:#6f675d}.ds-palette__in input{flex:1;border:0;background:transparent;font:inherit;font-size:14px;color:#2b2723;outline:none}.ds-palette__in small{font-size:11px}.ds-palette ul{list-style:none;margin:0;padding:6px}.ds-palette li{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:7px 10px;border-radius:6px;font-size:13px;cursor:pointer}.ds-palette li:hover{background:#f3eee6}.ds-palette__sel{background:#ece9fb}.ds-palette li small{color:#6f675d;font-size:11.5px}.ds-palette footer{padding:6px 12px;border-top:1px solid #e4ddd0;font-size:11px;color:#6f675d;display:flex;gap:14px}"
+  },
+  {
+   "name": "Manuscript",
+   "kind": "custom",
+   "refersTo": "manuscript",
+   "description": "Literata at 18px on a 620px measure; indented paragraphs, no gap after the first; the asterism as a scene break.",
+   "html": "<div class=\"ds-sheet\"><h1 class=\"ds-sheet__title\">The storm glass</h1><p>The glass had been clear all morning, which was how Mara knew her father was lying.</p><p>“It's a toy,” he said, when she asked. “Your grandmother's toy.” He did not look at it.</p><hr><p>By four the glass had clouded, and he had not.</p></div>",
+   "css": ".ds-sheet{max-width:620px;font-family:Literata,Georgia,'Times New Roman',serif;font-size:18px;line-height:1.7;color:#2b2723;background:#faf7f2;padding:40px 32px}.ds-sheet__title{font-size:28px;font-weight:600;letter-spacing:-.01em;line-height:1.25;margin:0 0 22px}.ds-sheet p{margin:0 0 1em;text-indent:1.5em}.ds-sheet__title+p,.ds-sheet hr+p{text-indent:0}.ds-sheet hr{border:0;text-align:center;margin:1.2em 0}.ds-sheet hr::after{content:'⁂';color:#6f675d;letter-spacing:.6em;font-size:.9em}.ds-sheet ::selection{background:#ece9fb}"
+  }
+ ],
+ "narrative": {
+  "northStar": "A quiet room with paper in it",
+  "overview": "Provenance. There is no direction contract and no seed. The world was fixed by two mockups the user approved on 2026-10-10 (`design/parchemin-desktop.html`, `design/parchemin-website.html`) and the build was code-led against them on 2026-10-12. This file records what shipped in `src/styles.css` and `site/site.css`, not what was planned. Where the mockups and the build differ, the build wins and the difference is noted.\n\nTwo surfaces share one world. The application is a desk: an Obsidian-shaped window with a ribbon, two sidebars, tabs in the title bar, a status bar, and the manuscript in the middle. Its rule is calm density: 13 px UI, 1 px borders, 6 px radii, one accent, and chrome a shade darker than the page in both themes. The website is a page: one left-aligned 1080 px column set almost entirely in Literata, with two large objects (the headline and the app window) and running text around them.\n\nThe palette is warm paper and warm ink, with one violet accent that marks the thing you are on and the one thing you can do next. Nothing is decorated. Depth comes from a border and a tone step, not a shadow, except for the few things that actually float. The app follows the system theme and can be pinned light or dark.",
+  "keyCharacteristics": [
+   "Two voices: Inter for what the app says, Literata for what the writer wrote.",
+   "One accent (`accent`), used on selection, the active view, links and one primary button per view.",
+   "Flat surfaces, 1 px lines, tone steps between page, sheet and chrome.",
+   "Five status colours exist only as 8 px dots and chip borders, never as text or fills.",
+   "Fonts ship with the build; no request leaves the machine for them."
+  ],
+  "rules": [
+   {
+    "name": "The One Accent Rule",
+    "body": "There is one accent. It marks where you are and the one thing to do next. At most one filled accent button is visible in a view; everything else is bordered or quiet.",
+    "section": "colors"
+   },
+   {
+    "name": "The Chrome Shade Rule",
+    "body": "The ribbon, sidebars and bars are one tone darker than the page in both themes. The page is the lightest thing in light mode and the darkest in dark mode; sheets step one tone the other way.",
+    "section": "colors"
+   },
+   {
+    "name": "The Dots Only Rule",
+    "body": "Status colours appear as 8 px dots (7 px in the status bar and outline marks) and as a chip's border. They never colour text, fill a row or tint a background.",
+    "section": "colors"
+   },
+   {
+    "name": "The Two Voices Rule",
+    "body": "Literata is for what the writer wrote or named. Inter is for what the app says. A string in Literata should be the writer's, or a line of the craft read to them; a control is never in Literata.",
+    "section": "typography"
+   },
+   {
+    "name": "The Measure Rule",
+    "body": "The manuscript is 620 px wide at 18 px. Website prose is capped at 58 to 62ch. Nothing the writer reads runs wider.",
+    "section": "typography"
+   },
+   {
+    "name": "The Floats Only Rule",
+    "body": "A shadow means the element is over the page: a palette, a menu, a modal, a dragged row, a sheet. Cards, rows, inputs and buttons rest on the page with a border and no shadow.",
+    "section": "elevation"
+   }
+  ],
+  "dos": [
+   "Do keep the app at 13 px Inter, 1 px `line` borders and 6 px radii. New controls take their radius from the scale above (4 / 5 / 6 / 8 / 10).",
+   "Do set anything the writer wrote or named in Literata, and anything the app says in Inter.",
+   "Do show status only as a dot or a chip border, with the five status tokens.",
+   "Do make chrome one tone darker than the page and sheets one tone lighter; use a border and a tone step before reaching for a shadow.",
+   "Do write labels in sentence case except the 10.5 px uppercase field label; count things in tabular numerals.",
+   "Do keep the website to one left-aligned 1080 px column, two large objects, and prose at 58 to 62ch.",
+   "Do bundle every font with the build; the app and site make no request to anyone else's server.",
+   "Do read copy aloud before shipping it: writer, never user; \"your story\", never \"your content\"."
+  ],
+  "donts": [
+   "Don't add a second accent or tint a background with a status colour.",
+   "Don't put a shadow on a resting card, row, button or input.",
+   "Don't centre the website or put its content in cards, icon tiles, eyebrow chips, numbered labels or gradients.",
+   "Don't set a control, menu or button in Literata, or set the manuscript in Inter.",
+   "Don't widen the manuscript past 620 px or the website's prose past 62ch.",
+   "Don't count streaks, show scores or use a colour to say \"behind\"; progress is a 6 px bar and a plain sentence."
+  ]
+ }
+}

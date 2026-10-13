@@ -42,6 +42,8 @@ export interface Scene {
   plan?: ChapterPlan
   /** Dialogue prep, a script draft and the writer's own checks. Never part of the manuscript. */
   dialogue?: ChapterDialogue
+  /** A sentence waiting: the writer's note on what happens next, left when they stop for the day. */
+  waiting?: string
 }
 
 /** Someone who talks in one chapter, and what they are after in it. Only the name is needed. */

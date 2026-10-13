@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
+import { Icon } from './Icons'
 
 export interface MenuItem {
   label: string
@@ -25,7 +26,7 @@ export function Menu({ items, label, children }: { items: MenuItem[]; label: str
   return (
     <div className="menu" ref={ref}>
       <button className="icon-btn" aria-label={label} aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen((o) => !o)}>
-        {children ?? '⋯'}
+        {children ?? <Icon name="more" size={16} />}
       </button>
       {open && (
         <div className="menu-pop" role="menu">

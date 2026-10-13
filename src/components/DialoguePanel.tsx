@@ -4,6 +4,7 @@ import { voiceById } from '../craft/voices'
 import { db, logWords, uid } from '../db'
 import type { Character, ChapterDialogue, Scene, Speaker } from '../types'
 import { countTextWords } from '../words'
+import { GrowingText } from './GrowingText'
 
 const SAVE_DELAY = 600
 const PASTE_THRESHOLD = 1500
@@ -154,7 +155,7 @@ function Field({ label, value, placeholder, onSave, hint }: { label: string; val
   return (
     <label className="field">
       <span>{label}</span>
-      <input defaultValue={value ?? ''} placeholder={placeholder} onBlur={(e) => e.target.value !== (value ?? '') && onSave(e.target.value)} />
+      <GrowingText defaultValue={value ?? ''} placeholder={placeholder} onBlur={(e) => e.target.value !== (value ?? '') && onSave(e.target.value)} />
       {hint && <small className="muted">{hint}</small>}
     </label>
   )
@@ -175,7 +176,7 @@ function SpeakerCard({ speaker, character, onSave, onRemove }: { speaker: Speake
         <button className="icon-btn" aria-label={`Remove ${speaker.name || 'speaker'}`} onClick={onRemove}>✕</button>
       </div>
       {voice && <small className="muted">{voice.name}: usually {voice.tactic.toLocaleLowerCase()}.</small>}
-      <Field label="Wants, in this chapter" value={speaker.want} placeholder={want ? `Their card says: ${want}` : 'One sentence, for the next few minutes'} onSave={(want) => onSave({ want })} />
+      <Field label="Wants" value={speaker.want} placeholder={want ? `Their card says: ${want}` : 'One sentence, for the next few minutes'} onSave={(want) => onSave({ want })} />
       <Field label="Won’t say" value={speaker.unsaid} placeholder="Thinks it, keeps it back" onSave={(unsaid) => onSave({ unsaid })} />
       <Field label="Can’t say" value={speaker.unsayable} placeholder={fear ? `Their fear: ${fear}` : 'Would never say it, or doesn’t know it'} onSave={(unsayable) => onSave({ unsayable })} />
     </li>
@@ -230,8 +231,6 @@ export function DialoguePanel({ scene, characters }: { scene: Scene; characters:
   }
   const castLeft = characters.filter((c) => !speakers.some((s) => s.characterId === c.id))
 
-  // which steps start open is decided once, so adding a speaker doesn't fold the section away mid-edit
-  const [opened] = useState(() => ({ prep: !speakers.length, script: !!speakers.length && !d.script }))
 
   const ticked = PASS.reduce((n, g) => n + g.items.filter((i) => checks[i.id]).length, 0)
   const ctx: Ctx = { f, d, scene, source, tactics: { named: lines.filter((l) => l.tactic).length, lines: lines.length } }
@@ -241,7 +240,7 @@ export function DialoguePanel({ scene, characters }: { scene: Scene; characters:
     <div className="stack dialogue">
       <p className="muted small">Nobody says what they mean. Decide who wants what, draft the talk fast as a script, then check it.</p>
 
-      <details className="dlg-step" open={opened.prep}>
+      <details className="dlg-step" open>
         <summary>Who wants what <span className="muted">{speakers.length ? plural(speakers.length, 'speaker', 'speakers') : ''}</span></summary>
         <ul className="speakers">
           {speakers.map((s) => (
@@ -278,7 +277,7 @@ export function DialoguePanel({ scene, characters }: { scene: Scene; characters:
         <Field label="Who knows more" value={d.knowsMore} placeholder="Someone in the room, or the reader" onSave={(v) => void saveField(scene.id, 'knowsMore', v)} />
       </details>
 
-      <details className="dlg-step" open={opened.script}>
+      <details className="dlg-step" open>
         <summary>Draft it as a script <span className="muted">{lines.length ? plural(lines.length, 'line', 'lines') : ''}</span></summary>
         <p className="muted small">
           Fast and rough, in one sitting: only the talk and a little action. Speed makes the interruptions for you. One speech per line, <code>NAME: what they say</code>, or{' '}
@@ -331,7 +330,7 @@ export function DialoguePanel({ scene, characters }: { scene: Scene; characters:
         byName={source === 'script'}
       />
 
-      <details className="dlg-step">
+      <details className="dlg-step" open>
         <summary>Dialogue pass <span className="muted">{ticked}/{PASS_COUNT}</span></summary>
         {PASS.map((g) => (
           <section key={g.group} className="dlg-group">
