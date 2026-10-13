@@ -1,9 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { useEffect } from 'react'
 import { dayKey } from '../craft/why'
 import { db } from '../db'
 import { useEditorState } from '../editorState'
 import { navigate, type Route } from '../route'
-import { useSafekeeping } from '../safekeeping'
+import { requestPersistOnce, useSafekeeping } from '../safekeeping'
 import { numberOf, type SceneRef } from '../sceneIndex'
 
 const num = (n: number) => n.toLocaleString()
@@ -25,10 +26,21 @@ export function StatusBar({ route, index, notice }: { route: Route; index: Scene
   const k = useSafekeeping()
   const today = useLiveQuery(() => db.days.get(dayKey()), [])
   const ed = useEditorState()
-  const scene = route.name === 'story' && route.tab === 'write' && route.itemId ? index.find((s) => s.id === route.itemId) : undefined
+  const writing = route.name === 'story' && route.tab === 'write'
+  const scene = writing && route.itemId ? index.find((s) => s.id === route.itemId) : undefined
   const words = scene ? (ed.sceneId === scene.id ? ed.words : scene.words) : null
 
-  const kept = k?.persisted === true
+  // Ask the browser to keep the data once there is writing to keep, from here so it happens whichever page the writer
+  // uses, and never mid-sentence: not while a chapter is open, since Firefox shows a prompt for it. Once; the Safekeeping
+  // page has a button to ask again.
+  const hasWork = !!k && (k.lastBackupAt !== null || index.some((s) => s.words > 0))
+  const persisted = k?.persisted
+  useEffect(() => {
+    if (hasWork && !writing && persisted === false) void requestPersistOnce().then((asked) => asked && k?.refresh())
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasWork, writing, persisted])
+
+  const kept = persisted === true
   const backup =
     !k ? '' : k.lastBackupAt === null ? 'No backup file yet' : `Backup file: ${ago(k.lastBackupAt)}${k.changed.words > 0 ? ` · ${num(k.changed.words)} words since` : ''}`
 

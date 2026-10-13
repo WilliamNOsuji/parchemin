@@ -91,10 +91,10 @@ export async function requestPersist(): Promise<boolean> {
 }
 
 /**
- * Asks once, the first time the home screen shows with writing in the library, so the request comes
- * from a site with work in it and never mid-sentence (Firefox shows a prompt for it). If the browser
- * says no, Parchemin does not ask again on its own; the safekeeping panel has a button for that.
- * Returns whether it asked.
+ * Asks once, the first time a screen other than the chapter shows with writing in the library (the status
+ * bar does it), so the request comes from a site with work in it and never mid-sentence (Firefox shows a
+ * prompt for it). If the browser says no, Parchemin does not ask again on its own; the Safekeeping page has
+ * a button for that. Returns whether it asked.
  */
 export async function requestPersistOnce(): Promise<boolean> {
   if (!canPersist()) return false

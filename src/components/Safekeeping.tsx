@@ -1,9 +1,9 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useRef, useState, type ChangeEvent } from 'react'
+import { useRef, useState, type ChangeEvent } from 'react'
 import { exportBackup, inspectBackup, restoreBackup, type Saved } from '../backup'
 import { db } from '../db'
 import { exportEpub, exportMarkdown } from '../export'
-import { canPersist, dismissNudge, requestPersist, requestPersistOnce, useBackupNudge, useSafekeeping, type Keeping } from '../safekeeping'
+import { canPersist, dismissNudge, requestPersist, useBackupNudge, useSafekeeping, type Keeping } from '../safekeeping'
 import type { Change, Story } from '../types'
 import { Section } from './RightSidebar'
 import { ago } from './StatusBar'
@@ -84,14 +84,6 @@ export function SafekeepingPane({ stories }: { stories: Story[] }) {
   const restoreInput = useRef<HTMLInputElement>(null)
   const checkInput = useRef<HTMLInputElement>(null)
   const storyId = exportId || stories[0]?.id
-
-  // Ask the browser to keep the data once there is writing to keep, here rather than mid-sentence in the editor.
-  const hasWork = !!k && (k.lastBackupAt !== null || (k.library?.words ?? 0) > 0)
-  const refresh = k?.refresh
-  useEffect(() => {
-    if (hasWork && k?.persisted === false) void requestPersistOnce().then((asked) => asked && refresh?.())
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [hasWork, k?.persisted])
 
   const report = (p: Promise<string>) => void p.then(setMsg, (e: unknown) => setMsg(failure(e)))
   const onBackup = () => report(exportBackup().then((s) => savedMessage(s, 'choose "Check a backup file" and pick it')))
