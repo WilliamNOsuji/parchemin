@@ -26,14 +26,18 @@ export function applyTheme(t: Theme) {
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#222128' : '#f3eee6')
 }
 
+/** The theme in force: read from storage once, then kept here, so a device whose storage refuses still cycles through all three. */
+let theme: Theme = currentTheme()
+
 const subscribe = (cb: () => void) => {
   listeners.add(cb)
   return () => void listeners.delete(cb)
 }
 
 export function useTheme(): [Theme, (t: Theme) => void] {
-  const theme = useSyncExternalStore(subscribe, currentTheme)
+  const current = useSyncExternalStore(subscribe, () => theme)
   const set = useCallback((t: Theme) => {
+    theme = t
     try {
       if (t === 'system') localStorage.removeItem(KEY)
       else localStorage.setItem(KEY, t)
@@ -43,5 +47,5 @@ export function useTheme(): [Theme, (t: Theme) => void] {
     applyTheme(t)
     listeners.forEach((l) => l())
   }, [])
-  return [theme, set]
+  return [current, set]
 }
