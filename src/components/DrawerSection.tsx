@@ -75,9 +75,10 @@ export function DrawerPage() {
 /** The drawer at a glance, in the Library's sidebar. */
 export function DrawerGlance() {
   const items = useLiveQuery(() => db.drawer.orderBy('setAsideAt').reverse().limit(6).toArray(), [], [] as DrawerItem[])
+  const count = useLiveQuery(() => db.drawer.count(), [], 0)
   const [msg, setMsg] = useState('')
   return (
-    <Section title="The drawer" count={items.length ? `${items.length} set aside` : undefined}>
+    <Section title="The drawer" count={count ? `${count} set aside` : undefined}>
       {items.length === 0 && <p className="hint">Nothing set aside. Anything you move to the drawer waits here with its snapshots.</p>}
       {items.map((it) => (
         <div className="snap" key={it.id}>
