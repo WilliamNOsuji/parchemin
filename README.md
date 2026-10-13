@@ -45,7 +45,7 @@ and the writer owns their data. The shell is `src/App.tsx` with `Ribbon`, `Libra
 `StatusBar` under `src/components/`; routes are in `src/route.ts`, open tabs in `src/tabs.ts`, the command list in
 `src/commands.ts`, the theme in `src/theme.ts`. Each screen is a pane (`Home`, `StoryView` with `SceneEditor`,
 `OutlinePane` and `CastPane`, `SafekeepingPane`, `DrawerPage`) with a matching sidebar (`HomeSidebar`, `StorySidebar`,
-`ChangesSidebar`). The desktop (Electron) build will wrap this same code. Word counts come from the browser's word segmenter (`src/words.ts`), so French
+`ChangesSidebar`). The desktop (Electron) build will wrap this same code. The story on screen is read once in `src/openStory.ts` for the pane and the sidebar, and every chapter is mirrored without its text into the `chapters` table (`src/chapterMirror.ts`) so the tree, the tabs and the home screen never read the manuscripts. Word counts come from the browser's word segmenter (`src/words.ts`), so French
 punctuation and Chinese or Japanese text count correctly. A story is made of chapters (`Scene`); a story always has at least one, so
 single-document writers never need to think about structure.
 
