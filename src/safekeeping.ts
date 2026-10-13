@@ -125,7 +125,7 @@ export interface Keeping {
   unchecked: number | null
   /** What changed since the last backup file: how many records of each table, and roughly how many new words. */
   changed: { tables: Record<string, number>; words: number }
-  /** With no backup file recorded: every chapter here, and the words in them. */
+  /** With no backup file recorded, and only when asked for: every chapter here, and the words in them. */
   library: { chapters: number; words: number } | null
   /** null while unknown, or when the browser has no way to say. */
   persisted: boolean | null
@@ -142,18 +142,21 @@ const isInstalled = () =>
   window.matchMedia('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true
 const isIOS = () => /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
 
-/** Everything the safekeeping panel shows. Only the home screen uses it. */
-export function useSafekeeping(): Keeping | null {
+/**
+ * Everything the safekeeping panel shows. The status bar reads it on every screen, so the count of every
+ * chapter (`library`, which reads the manuscripts) is made only when asked for, by the Safekeeping page.
+ */
+export function useSafekeeping(withLibrary = false): Keeping | null {
   const meta = useLiveQuery(() => db.meta.toArray(), [])
   const changes = useLiveQuery(() => db.changes.toArray(), [])
   const downloads = useLiveQuery(() => db.downloads.toCollection().primaryKeys(), [])
   const lastBackupAt = meta ? read(meta, 'lastBackupAt') : undefined
-  // Only with no backup file recorded is it worth reading every chapter. Until meta loads, wait.
+  // Only with no backup file recorded is it worth reading every chapter, and only where it is shown. Until meta loads, wait.
   const library = useLiveQuery(async () => {
-    if (lastBackupAt !== null) return lastBackupAt === undefined ? undefined : null
+    if (!withLibrary || lastBackupAt !== null) return lastBackupAt === undefined ? undefined : null
     const scenes = await db.scenes.toArray()
     return { chapters: scenes.length, words: sum(scenes) }
-  }, [lastBackupAt])
+  }, [withLibrary, lastBackupAt])
   const [storage, setStorage] = useState<Pick<Keeping, 'persisted' | 'usage' | 'quota'> | null>(null)
   const [tick, setTick] = useState(0)
 

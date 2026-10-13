@@ -78,7 +78,7 @@ function changesSince({ tables, words }: Keeping['changed']) {
 
 /** Where the stories are, when they were last copied out, and what this browser promises. Plain facts, no alarms. */
 export function SafekeepingPane({ stories }: { stories: Story[] }) {
-  const k = useSafekeeping()
+  const k = useSafekeeping(true)
   const [msg, setMsg] = useState('')
   const [exportId, setExportId] = useState('')
   const restoreInput = useRef<HTMLInputElement>(null)
