@@ -13,16 +13,14 @@ export interface SceneRef {
   updatedAt: number
 }
 
-const EMPTY: SceneRef[] = []
-
-export function useSceneIndex(): SceneRef[] {
+/** Every chapter in the library, live; undefined until the first read lands. */
+export function useSceneIndex(): SceneRef[] | undefined {
   return useLiveQuery(
     async () =>
       (await db.scenes.toArray())
         .map(({ id, storyId, title, status, order, words, updatedAt }) => ({ id, storyId, title, status, order, words, updatedAt }))
         .sort((a, b) => a.order - b.order),
     [],
-    EMPTY,
   )
 }
 

@@ -17,7 +17,7 @@ import { addScene, createCharacter, db, setAsideScene, takeSnapshot } from './db
 import { exportEpub, exportMarkdown } from './export'
 import { useOpenStory } from './openStory'
 import { navigate, useRoute, type Route } from './route'
-import { chaptersOf, useSceneIndex } from './sceneIndex'
+import { chaptersOf, useSceneIndex, type SceneRef } from './sceneIndex'
 import { useOpenTabs } from './tabs'
 import { THEMES, useTheme } from './theme'
 import type { Folder, Story } from './types'
@@ -75,6 +75,7 @@ function useStored(key: string, init: boolean): [boolean, (v: boolean | ((b: boo
   return [v, setV]
 }
 
+const NO_CHAPTERS: SceneRef[] = []
 const isPhone = () => window.matchMedia('(max-width: 720px)').matches
 
 export function App() {
@@ -82,7 +83,8 @@ export function App() {
   const screen = screenOf(route)
   const stories = useLiveQuery(() => db.stories.orderBy('updatedAt').reverse().toArray(), [], undefined as Story[] | undefined)
   const folders = useLiveQuery(() => db.folders.toArray(), [], [] as Folder[])
-  const index = useSceneIndex()
+  const sceneIndex = useSceneIndex()
+  const index = sceneIndex ?? NO_CHAPTERS
   const drawerCount = useLiveQuery(() => db.drawer.count(), [], 0)
   const open = useOpenStory(route.name === 'story' ? route.storyId : undefined)
   const { tabs, active, close, prune } = useOpenTabs(route)
@@ -237,7 +239,7 @@ export function App() {
           <button className="tb-btn nav" aria-label="Back" title="Back" onClick={() => history.back()}><Icon name="back" size={16} /></button>
           <button className="tb-btn nav" aria-label="Forward" title="Forward" onClick={() => history.forward()}><Icon name="fwd" size={16} /></button>
         </div>
-        <TabStrip tabs={tabs} active={active} stories={stories ?? []} index={index} loaded={stories !== undefined} onClose={close} onPrune={prune} onAdd={() => setNewStoryIn({ folderId: null })} />
+        <TabStrip tabs={tabs} active={active} stories={stories ?? []} index={index} loaded={stories !== undefined && sceneIndex !== undefined} onClose={close} onPrune={prune} onAdd={() => setNewStoryIn({ folderId: null })} />
         <div className="tb-right">
           {RIGHT_TABS[screen].length > 0 && (
             <button className={`tb-btn${hasRight ? ' on' : ''}`} aria-label={hasRight ? 'Hide the right sidebar' : 'Show the right sidebar'} title="Right sidebar" onClick={() => setRightOpen((o) => !o)}>
