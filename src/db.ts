@@ -1,8 +1,9 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { nanoid } from 'nanoid'
-import type { Change, Character, Download, DrawerItem, Folder, Meta, Scene, Snapshot, Story, WritingDay } from './types'
+import type { Change, Character, Download, DrawerItem, Folder, Meta, Scene, SceneRef, Snapshot, Story, WritingDay } from './types'
 import type { Template } from './templates'
 import { CHANGE_REV, changeKey, changeTracking } from './changes'
+import { chapterMirror, refOf } from './chapterMirror'
 import { dayKey } from './craft/why'
 import { countWords } from './words'
 
@@ -17,6 +18,7 @@ class ParcheminDB extends Dexie {
   meta!: EntityTable<Meta, 'key'>
   changes!: EntityTable<Change, 'key'>
   downloads!: EntityTable<Download, 'at'>
+  chapters!: EntityTable<SceneRef, 'id'>
 
   constructor() {
     super('parchemin')
@@ -55,6 +57,14 @@ class ParcheminDB extends Dexie {
         await tx.table('changes').bulkPut([...scenes.map(note('scenes')), ...characters.map(note('characters'))])
         await meta.put({ key: CHANGE_REV, value: 1 })
       })
+    // v6: every chapter mirrored without its text (chapterMirror.ts), so the tree and the tabs never read the manuscripts
+    this.version(6)
+      .stores({ chapters: 'id, storyId' })
+      .upgrade(async (tx) => {
+        const scenes = (await tx.table('scenes').toArray()) as Scene[]
+        await tx.table('chapters').bulkPut(scenes.map(refOf))
+      })
+    this.use(chapterMirror)
     this.use(changeTracking)
   }
 }

@@ -183,3 +183,14 @@ export interface DrawerItem {
   characters: Character[]
   snapshots: Snapshot[]
 }
+
+/** A chapter without its text: what the tree, the tabs and the home screen need. Mirrored from `scenes` into `chapters` (chapterMirror.ts). */
+export interface SceneRef {
+  id: string
+  storyId: string
+  title: string
+  status: SceneStatus
+  order: number
+  words: number
+  updatedAt: number
+}

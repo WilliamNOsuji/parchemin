@@ -1,27 +1,16 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db } from './db'
-import type { SceneStatus } from './types'
+import type { SceneRef } from './types'
 
-/** A chapter without its text: enough for the tree, the tabs and the home screen, and cheap to keep live. */
-export interface SceneRef {
-  id: string
-  storyId: string
-  title: string
-  status: SceneStatus
-  order: number
-  words: number
-  updatedAt: number
-}
+export type { SceneRef } from './types'
 
-/** Every chapter in the library, live; undefined until the first read lands. */
+/**
+ * Every chapter in the library without its text, live; undefined until the first read lands. It reads the
+ * `chapters` table that chapterMirror.ts keeps beside the manuscripts, so a save while writing re-runs a
+ * cheap query, not a read of every chapter's text.
+ */
 export function useSceneIndex(): SceneRef[] | undefined {
-  return useLiveQuery(
-    async () =>
-      (await db.scenes.toArray())
-        .map(({ id, storyId, title, status, order, words, updatedAt }) => ({ id, storyId, title, status, order, words, updatedAt }))
-        .sort((a, b) => a.order - b.order),
-    [],
-  )
+  return useLiveQuery(async () => (await db.chapters.toArray()).sort((a, b) => a.order - b.order), [])
 }
 
 export const chaptersOf = (index: SceneRef[], storyId: string) => index.filter((s) => s.storyId === storyId)
