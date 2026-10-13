@@ -1,11 +1,11 @@
 import { useEditorState, type Editor } from '@tiptap/react'
 import type { ReactNode } from 'react'
 
-function Btn({ active, disabled, label, onClick, rare, ui, children }: { active?: boolean; disabled?: boolean; label: string; onClick: () => void; rare?: boolean; ui?: boolean; children: ReactNode }) {
+function Btn({ active, disabled, label, onClick, rare, touch, ui, children }: { active?: boolean; disabled?: boolean; label: string; onClick: () => void; rare?: boolean; touch?: boolean; ui?: boolean; children: ReactNode }) {
   return (
     <button
       type="button"
-      className={`tb-fmt${active ? ' on' : ''}${rare ? ' rare' : ''}${ui ? ' ui' : ''}`}
+      className={`tb-fmt${active ? ' on' : ''}${rare ? ' rare' : ''}${touch ? ' touch' : ''}${ui ? ' ui' : ''}`}
       aria-label={label}
       title={label}
       aria-pressed={active}
@@ -33,6 +33,8 @@ export function Toolbar({ editor, children }: { editor: Editor; children?: React
       quote: e?.isActive('blockquote') ?? false,
       bullet: e?.isActive('bulletList') ?? false,
       ordered: e?.isActive('orderedList') ?? false,
+      canUndo: e?.can().undo() ?? false,
+      canRedo: e?.can().redo() ?? false,
     }),
   })
   const c = () => editor.chain().focus()
@@ -50,6 +52,10 @@ export function Toolbar({ editor, children }: { editor: Editor; children?: React
       <Btn label="Bulleted list" active={s.bullet} onClick={() => c().toggleBulletList().run()}>•</Btn>
       <Btn label="Numbered list" active={s.ordered} rare ui onClick={() => c().toggleOrderedList().run()}>1.</Btn>
       <Btn label="Scene break" onClick={() => c().setHorizontalRule().run()}>⁂</Btn>
+      {/* undo and redo where there is no Ctrl+Z: shown on touch devices only, see .touch in styles.css */}
+      <span className="sep touch" />
+      <Btn label="Undo" touch disabled={!s.canUndo} onClick={() => c().undo().run()}>↶</Btn>
+      <Btn label="Redo" touch disabled={!s.canRedo} onClick={() => c().redo().run()}>↷</Btn>
       {children && <span className="sep" />}
       {children}
     </div>
