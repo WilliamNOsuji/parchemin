@@ -5,10 +5,8 @@ import { FAMILIES, voiceById } from '../craft/voices'
 import { createCharacter, db } from '../db'
 import { navigate } from '../route'
 import type { Character, Story } from '../types'
+import { Avatar } from './Avatar'
 import { Icon } from './Icons'
-
-export const Avatar = ({ c, className = 'av' }: { c: Pick<Character, 'name' | 'image'>; className?: string }) =>
-  c.image ? <img className={className} src={c.image} alt="" /> : <span className={className} aria-hidden>{c.name.trim()[0]?.toUpperCase() ?? '?'}</span>
 
 /** One card per person: name, role, voice, what they want in a room, and their function. A character with no function is a card you can see is empty. */
 export function CastPane({ story, selectedId }: { story: Story; selectedId?: string }) {

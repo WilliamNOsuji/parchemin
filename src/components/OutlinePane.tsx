@@ -2,6 +2,7 @@ import { closestCenter, DndContext, KeyboardSensor, PointerSensor, TouchSensor, 
 import { arrayMove, SortableContext, sortableKeyboardCoordinates, useSortable, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { pace } from '../craft/audit'
+import { inDays } from '../craft/why'
 import { addScene, db, reorderScenes, setAsideScene } from '../db'
 import { navigate } from '../route'
 import { STATUSES, type Scene, type SceneStatus, type Story } from '../types'
@@ -10,13 +11,6 @@ import { Icon } from './Icons'
 import { Menu } from './Menu'
 
 const num = (n: number) => n.toLocaleString()
-const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-/** Date n days from today; today counts as day one. */
-export const inDays = (n: number) => {
-  const d = new Date()
-  d.setDate(d.getDate() + n)
-  return isoDay(d)
-}
 const longDate = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString([], { month: 'short', day: 'numeric' })
 
 const MARKS: { key: 'goal' | 'conflict' | 'turn'; label: string }[] = [

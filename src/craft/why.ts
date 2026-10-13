@@ -32,3 +32,10 @@ export const pick = <T,>(items: T[], seed = Math.floor(Math.random() * items.len
 
 export const dayKey = (d = new Date()) =>
   `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+
+/** The day n days from today, as a key; today counts as day one. */
+export const inDays = (n: number) => {
+  const d = new Date()
+  d.setDate(d.getDate() + n)
+  return dayKey(d)
+}

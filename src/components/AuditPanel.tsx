@@ -1,9 +1,8 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { auditOutline, pace } from '../craft/audit'
-import { dayKey } from '../craft/why'
+import { dayKey, inDays } from '../craft/why'
 import { db } from '../db'
 import type { Scene, Story } from '../types'
-import { inDays } from './OutlinePane'
 import { Section } from './RightSidebar'
 
 const num = (n: number) => n.toLocaleString()
