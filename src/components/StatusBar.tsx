@@ -19,9 +19,14 @@ function useDayKey(): string {
   return key
 }
 
-/** "2 days ago", "yesterday", "today", or the date when it is older than a week. */
+const midnight = (ms: number) => {
+  const d = new Date(ms)
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime()
+}
+
+/** "2 days ago", "yesterday", "today", or the date when it is older than a week. Calendar days, not 24-hour spans. */
 export function ago(t: number, now = Date.now()): string {
-  const days = Math.floor((now - t) / 86_400_000)
+  const days = Math.round((midnight(now) - midnight(t)) / 86_400_000)
   if (days <= 0) return 'today'
   if (days === 1) return 'yesterday'
   if (days < 7) return `${days} days ago`
