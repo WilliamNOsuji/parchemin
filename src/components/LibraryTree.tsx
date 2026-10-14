@@ -112,10 +112,12 @@ export function LibraryTree({ stories, folders, index, drawerCount, activeStoryI
               },
               { label: 'Open the outline', onClick: () => navigate({ name: 'story', storyId: s.id, tab: 'outline' }) },
               { label: 'Open the cast', onClick: () => navigate({ name: 'story', storyId: s.id, tab: 'cast' }) },
+              { label: 'Open the boards', onClick: () => navigate({ name: 'story', storyId: s.id, tab: 'canvas' }) },
+              { label: 'Open the Web', onClick: () => navigate({ name: 'story', storyId: s.id, tab: 'web' }) },
               {
                 label: 'Move to the drawer',
                 onClick: async () => {
-                  if (!window.confirm(`Move "${s.title}" to the drawer? Its chapters, characters and snapshots go with it, and you can put it back from the drawer.`)) return
+                  if (!window.confirm(`Move "${s.title}" to the drawer? Its chapters, characters, snapshots, boards and core ideas go with it, and you can put it back from the drawer.`)) return
                   await setAsideStory(s.id)
                   if (s.id === activeStoryId) navigate({ name: 'home' })
                 },

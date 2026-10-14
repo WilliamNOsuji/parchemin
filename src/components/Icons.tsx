@@ -145,6 +145,29 @@ const PATHS = {
       <path d="m21 16-5-5-8 8" />
     </>
   ),
+  canvas: (
+    <>
+      <rect x="3" y="3" width="7" height="6" rx="1.2" />
+      <rect x="14" y="3" width="7" height="6" rx="1.2" />
+      <rect x="8.5" y="15" width="7" height="6" rx="1.2" />
+      <path d="M6.5 9v3h11V9M12 12v3" />
+    </>
+  ),
+  web: (
+    <>
+      <circle cx="6" cy="6" r="2.5" />
+      <circle cx="18" cy="8" r="2.5" />
+      <circle cx="12" cy="18" r="2.5" />
+      <path d="M8.4 6.6 15.6 7.7M7.2 8.2l3.7 7.6M16.9 10.2l-3.8 5.7" />
+    </>
+  ),
+  group: <rect x="3" y="3" width="18" height="18" rx="2" strokeDasharray="3 2.5" />,
+  lock: (
+    <>
+      <rect x="5" y="11" width="14" height="10" rx="2" />
+      <path d="M8 11V8a4 4 0 0 1 8 0v3" />
+    </>
+  ),
 } as const
 
 export type IconName = keyof typeof PATHS

@@ -7,11 +7,23 @@ import { Section } from './RightSidebar'
 const plural = (n: number, one: string, many: string) => `${n.toLocaleString()} ${n === 1 ? one : many}`
 const title = (it: DrawerItem) => it.title.trim() || 'Untitled'
 
+const KIND_NAME: Record<DrawerItem['kind'], string> = { story: 'Story', chapter: 'Chapter', character: 'Character', board: 'Board', idea: 'Core idea', setting: 'Setting' }
+
+/** What else a story item carries besides its words and snapshots. Items set aside before the boards existed carry none. */
+function alsoHolds(it: DrawerItem): string[] {
+  return [
+    (it.boards?.length ?? 0) > 0 && plural(it.boards!.length, 'board', 'boards'),
+    (it.coreIdeas?.length ?? 0) > 0 && plural(it.coreIdeas!.length, 'core idea', 'core ideas'),
+    (it.settings?.length ?? 0) > 0 && plural(it.settings!.length, 'setting', 'settings'),
+  ].filter((x): x is string => typeof x === 'string')
+}
+
 function describe(it: DrawerItem): string {
   const from = it.storyTitle ? ` from “${it.storyTitle}”` : ''
-  const parts = [it.kind === 'story' ? 'Story' : it.kind === 'chapter' ? `Chapter${from}` : `Character${from}`]
+  const parts = [it.kind === 'story' ? 'Story' : `${KIND_NAME[it.kind]}${from}`]
   if (it.words > 0) parts.push(plural(it.words, 'word', 'words'))
   if (it.snapshots.length > 0) parts.push(plural(it.snapshots.length, 'snapshot', 'snapshots'))
+  if (it.kind === 'story') parts.push(...alsoHolds(it))
   parts.push(`set aside ${new Date(it.setAsideAt).toLocaleDateString([], { month: 'short', day: 'numeric' })}`)
   return parts.join(' · ')
 }
@@ -28,7 +40,7 @@ export function DrawerPage() {
       <div className="pane-scroll">
         <div className="drawer-page">
           <h1>The drawer</h1>
-          <p className="lead">Stories, chapters and characters you set aside wait here, with their snapshots. Nothing in the drawer is deleted. Put it back, or delete it for good yourself.</p>
+          <p className="lead">Stories, chapters, characters, boards, core ideas and settings you set aside wait here, with their snapshots. Nothing in the drawer is deleted. Put it back, or delete it for good yourself.</p>
           <p role="status" className="hint" style={{ marginBottom: msg ? 12 : 0 }}>{msg}</p>
           {items.length === 0 && !msg && <p className="muted">The drawer is empty. Anything you move here from a story's menu, the outline or the cast will wait here.</p>}
           {items.length > 0 && (
@@ -52,7 +64,7 @@ export function DrawerPage() {
                     <button
                       className="btn small danger"
                       onClick={async () => {
-                        const lost = [it.words > 0 && plural(it.words, 'word', 'words'), it.snapshots.length > 0 && plural(it.snapshots.length, 'snapshot', 'snapshots')].filter(Boolean)
+                        const lost = [it.words > 0 && plural(it.words, 'word', 'words'), it.snapshots.length > 0 && plural(it.snapshots.length, 'snapshot', 'snapshots'), ...alsoHolds(it)].filter(Boolean)
                         const what = lost.length ? ` Its ${lost.join(' and ')} will be gone.` : ''
                         if (!window.confirm(`Delete “${title(it)}” for good?${what} This can't be undone.`)) return
                         await deleteForGood(it.id)

@@ -14,11 +14,11 @@ export interface OpenTab {
 const KEY = 'parchemin.tabs'
 export const LIBRARY: OpenTab = { key: 'home', route: { name: 'home' } }
 
-/** One key per thing that gets a tab. A chapter is a tab; the cast page is one tab per story, whoever is selected. */
+/** One key per thing that gets a tab. A chapter is a tab, and so is a board; the cast, the outline and the Web are one tab per story, whatever is selected. */
 export function tabKey(r: Route): string {
   if (r.name === 'home') return 'home'
   if (r.name === 'safekeeping' || r.name === 'drawer') return r.name
-  if (r.tab === 'write') return r.itemId ? `write:${r.itemId}` : `write:${r.storyId}:first`
+  if (r.tab === 'write' || r.tab === 'canvas') return r.itemId ? `${r.tab}:${r.itemId}` : `${r.tab}:${r.storyId}:first`
   return `${r.tab}:${r.storyId}`
 }
 
@@ -38,8 +38,8 @@ export function useOpenTabs(route: Route) {
 
   useEffect(() => {
     setTabs((ts) => {
-      // a chapter opened by story alone has a placeholder tab until the route names the chapter
-      const placeholder = route.name === 'story' && route.tab === 'write' && route.itemId ? `write:${route.storyId}:first` : null
+      // a chapter or a board opened by story alone has a placeholder tab until the route names it
+      const placeholder = route.name === 'story' && (route.tab === 'write' || route.tab === 'canvas') && route.itemId ? `${route.tab}:${route.storyId}:first` : null
       const i = ts.findIndex((t) => t.key === active)
       if (i >= 0) {
         // a tab for a story's outline or cast keeps the selected item, so reopening it lands where the writer was

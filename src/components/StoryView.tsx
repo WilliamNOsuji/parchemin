@@ -7,6 +7,8 @@ import { SceneEditor } from './SceneEditor'
 // the outline and the cast pull in dnd-kit and a second editor, so they load on demand
 const OutlinePane = lazy(() => import('./OutlinePane').then((m) => ({ default: m.OutlinePane })))
 const CastPane = lazy(() => import('./CastPane').then((m) => ({ default: m.CastPane })))
+const CanvasPane = lazy(() => import('./CanvasPane').then((m) => ({ default: m.CanvasPane })))
+const WebPane = lazy(() => import('./WebPane').then((m) => ({ default: m.WebPane })))
 
 interface Props {
   storyId: string
@@ -20,7 +22,7 @@ interface Props {
   onOpenRight: (tab: string) => void
 }
 
-/** The pane for one story: the chapter being written, its outline, or its cast. */
+/** The pane for one story: the chapter being written, its outline, its cast, its boards or its Web. */
 export function StoryView({ storyId, story, scenes, tab, itemId, focus, onToggleFocus, onOpenRight }: Props) {
   // a chapter's address names the chapter, so the tab strip and the tree can find it; an address whose chapter
   // went to the drawer falls back to the first chapter
@@ -49,6 +51,8 @@ export function StoryView({ storyId, story, scenes, tab, itemId, focus, onToggle
     <Suspense fallback={<p className="hint pad" role="status">Loading…</p>}>
       {tab === 'outline' && <OutlinePane story={story} scenes={scenes} selectedId={itemId} onOpenRight={onOpenRight} />}
       {tab === 'cast' && <CastPane story={story} selectedId={itemId} />}
+      {tab === 'canvas' && <CanvasPane story={story} scenes={scenes} boardId={itemId} onOpenRight={onOpenRight} />}
+      {tab === 'web' && <WebPane story={story} scenes={scenes} itemId={itemId} />}
     </Suspense>
   )
 }

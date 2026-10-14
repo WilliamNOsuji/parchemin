@@ -1,4 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
+import { lazy, Suspense } from 'react'
 import { db } from '../db'
 import type { Tab } from '../route'
 import type { Character, Scene, Story } from '../types'
@@ -6,6 +7,10 @@ import { AuditPanel } from './AuditPanel'
 import { CharacterSidebar } from './CharacterSidebar'
 import { DialoguePanel } from './DialoguePanel'
 import { NotesPanel, PlanPanel, PromptsPanel, SnapshotsPanel } from './Panels'
+
+// the boards and the Web bring their own code, so their sidebars load with their panes
+const CanvasSidebar = lazy(() => import('./CanvasSidebar').then((m) => ({ default: m.CanvasSidebar })))
+const WebSidebar = lazy(() => import('./WebSidebar').then((m) => ({ default: m.WebSidebar })))
 
 interface Props {
   storyId: string
@@ -31,6 +36,13 @@ export function StorySidebar({ storyId, story, scenes, tab, itemId, rightTab }: 
     if (rightTab === 'notes') return <NotesPanel key={current.id} scene={current} story={story} />
     if (rightTab === 'unblock') return <PromptsPanel characters={characters} />
     return <PlanPanel key={current.id} scene={current} number={n} />
+  }
+  if (tab === 'canvas' || tab === 'web') {
+    return (
+      <Suspense fallback={<p className="hint" role="status">Loading…</p>}>
+        {tab === 'canvas' ? <CanvasSidebar story={story} scenes={scenes} boardId={itemId} rightTab={rightTab} /> : <WebSidebar story={story} scenes={scenes} itemId={itemId} rightTab={rightTab} />}
+      </Suspense>
+    )
   }
   if (tab === 'outline') {
     if (rightTab === 'plan') {

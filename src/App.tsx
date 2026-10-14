@@ -13,7 +13,7 @@ import { RightSidebar, type RightTab } from './components/RightSidebar'
 import { ChangesSidebar, SafekeepingPane } from './components/Safekeeping'
 import { StatusBar } from './components/StatusBar'
 import { TabStrip } from './components/TabStrip'
-import { addScene, createCharacter, db, setAsideScene, takeSnapshot } from './db'
+import { addScene, createBoard, createCharacter, createCoreIdea, createSetting, createSymbol, db, setAsideScene, takeSnapshot } from './db'
 import { desktop } from './desktop'
 import { exportEpub, exportMarkdown } from './export'
 import { useOpenStory } from './openStory'
@@ -22,12 +22,13 @@ import { chaptersOf, useSceneIndex, type SceneRef } from './sceneIndex'
 import { useOpenTabs } from './tabs'
 import { THEMES, useTheme } from './theme'
 import type { Folder, Story } from './types'
+import { webItem } from './web/item'
 
 // The story pages pull in Tiptap and dnd-kit, so they load on demand.
 const StoryView = lazy(() => import('./components/StoryView').then((m) => ({ default: m.StoryView })))
 const StorySidebar = lazy(() => import('./components/StorySidebar').then((m) => ({ default: m.StorySidebar })))
 
-type Screen = 'home' | 'write' | 'outline' | 'cast' | 'safekeeping' | 'drawer'
+type Screen = 'home' | 'write' | 'outline' | 'cast' | 'canvas' | 'web' | 'safekeeping' | 'drawer'
 const screenOf = (r: Route): Screen => (r.name === 'story' ? r.tab : r.name)
 
 /** The right sidebar's tabs, per screen. The web app's panels become icon tabs, as the mockup drew them. */
@@ -51,6 +52,14 @@ const RIGHT_TABS: Record<Screen, RightTab[]> = {
     { id: 'voice', icon: 'cast', title: 'Voice' },
     { id: 'hero', icon: 'plan', title: 'Hero check' },
     { id: 'bio', icon: 'notes', title: 'Profile and biography' },
+  ],
+  canvas: [
+    { id: 'boards', icon: 'canvas', title: 'Boards' },
+    { id: 'card', icon: 'plan', title: 'Selected card' },
+  ],
+  web: [
+    { id: 'idea', icon: 'notes', title: 'Core idea' },
+    { id: 'symbols', icon: 'web', title: 'Symbols' },
   ],
   safekeeping: [{ id: 'changes', icon: 'snap', title: 'Since the last backup file' }],
   drawer: [],
@@ -94,6 +103,8 @@ export function App() {
   const [newStoryIn, setNewStoryIn] = useState<{ folderId: string | null } | null>(null)
   const [drawer, setDrawer] = useState(false)
   const [leftOpen, setLeftOpen] = useStored('parchemin.left', true)
+  // boards and the Web want width, so the library sidebar starts folded there and remembers its own choice
+  const [leftWide, setLeftWide] = useStored('parchemin.left.wide', false)
   const [rightOpen, setRightOpen] = useStored('parchemin.right', !isPhone())
   const [sideTab, setSideTab] = useState<SideTab>('library')
   const [rightTabs, setRightTabs] = useState<Partial<Record<Screen, string>>>({})
@@ -103,8 +114,12 @@ export function App() {
 
   const writing = route.name === 'story' && route.tab === 'write'
   const focus = focusOn && writing
+  const wide = screen === 'canvas' || screen === 'web'
+  const leftShown = wide ? leftWide : leftOpen
+  const setLeftShown = wide ? setLeftWide : setLeftOpen
   const storyId = route.name === 'story' ? route.storyId : stories?.[0]?.id
-  const currentSceneId = route.name === 'story' ? (route.itemId ?? chaptersOf(index, route.storyId)[0]?.id) : undefined
+  // a board or a Web item is never the current chapter
+  const currentSceneId = route.name === 'story' ? ((route.tab === 'write' || route.tab === 'outline' ? route.itemId : undefined) ?? chaptersOf(index, route.storyId)[0]?.id) : undefined
   const rightTab = rightTabs[screen] ?? RIGHT_TABS[screen][0]?.id ?? ''
   const hasRight = RIGHT_TABS[screen].length > 0 && rightOpen
 
@@ -142,6 +157,18 @@ export function App() {
           newCharacter: async () => {
             if (storyId) navigate({ name: 'story', storyId, tab: 'cast', itemId: await createCharacter(storyId) })
           },
+          newBoard: async () => {
+            if (storyId) navigate({ name: 'story', storyId, tab: 'canvas', itemId: await createBoard(storyId) })
+          },
+          newCoreIdea: async () => {
+            if (storyId) navigate({ name: 'story', storyId, tab: 'web', itemId: webItem('idea', await createCoreIdea(storyId)) })
+          },
+          newSetting: async () => {
+            if (storyId) navigate({ name: 'story', storyId, tab: 'web', itemId: webItem('setting', await createSetting(storyId)) })
+          },
+          newSymbol: async () => {
+            if (storyId) navigate({ name: 'story', storyId, tab: 'web', itemId: webItem('symbol', await createSymbol(storyId)) })
+          },
           toggleFocus,
           snapshot: async () => {
             if (!currentSceneId) return
@@ -165,11 +192,11 @@ export function App() {
           exportMarkdown: () => storyId && void exportMarkdown(storyId),
           exportEpub: () => storyId && void exportEpub(storyId),
           cycleTheme,
-          toggleLeft: () => setLeftOpen((o) => !o),
+          toggleLeft: () => setLeftShown((o) => !o),
           toggleRight: () => setRightOpen((o) => !o),
         },
       }),
-    [route, stories, index, theme, storyId, currentSceneId, toggleFocus, openRight, cycleTheme, say, setLeftOpen, setRightOpen],
+    [route, stories, index, theme, storyId, currentSceneId, toggleFocus, openRight, cycleTheme, say, setLeftShown, setRightOpen],
   )
 
   useEffect(() => {
@@ -210,14 +237,15 @@ export function App() {
   }, [open.story])
 
   // the window's title names the page, so the tab in the browser and the taskbar read right
+  const board = useLiveQuery(() => (route.name === 'story' && route.tab === 'canvas' && route.itemId ? db.boards.get(route.itemId) : undefined), [route])
   useEffect(() => {
     const story = route.name === 'story' ? stories?.find((s) => s.id === route.storyId) : undefined
     const scene = currentSceneId ? index.find((s) => s.id === currentSceneId) : undefined
-    const page = route.name === 'home' ? 'Library' : route.name === 'safekeeping' ? 'Safekeeping' : route.name === 'drawer' ? 'The drawer' : route.tab === 'write' ? scene?.title : route.tab === 'outline' ? 'Outline' : 'Cast'
+    const page = route.name === 'home' ? 'Library' : route.name === 'safekeeping' ? 'Safekeeping' : route.name === 'drawer' ? 'The drawer' : route.tab === 'write' ? scene?.title : route.tab === 'outline' ? 'Outline' : route.tab === 'canvas' ? (route.itemId ? board?.name || 'Board' : 'Boards') : route.tab === 'web' ? 'Web' : 'Cast'
     document.title = [page, story?.title, 'Parchemin'].filter(Boolean).join(' · ')
-  }, [route, stories, index, currentSceneId])
+  }, [route, stories, index, currentSceneId, board])
 
-  const onMenu = () => (isPhone() ? setDrawer(true) : setLeftOpen((o) => !o))
+  const onMenu = () => (isPhone() ? setDrawer(true) : setLeftShown((o) => !o))
   const ribbon = (className?: string) => (
     <Ribbon
       className={className}
@@ -229,19 +257,19 @@ export function App() {
       onSearch={() => {
         setSideTab('search')
         if (isPhone()) setDrawer(true)
-        else setLeftOpen(true)
+        else setLeftShown(true)
       }}
       onNavigate={() => setDrawer(false)}
     />
   )
 
-  const cls = ['app', focus && 'focus', drawer && 'drawer-open', !leftOpen && 'no-left', !hasRight && 'no-right', writing && rightTab === 'dialogue' && 'wide-right'].filter(Boolean).join(' ')
+  const cls = ['app', focus && 'focus', drawer && 'drawer-open', !leftShown && 'no-left', !hasRight && 'no-right', writing && rightTab === 'dialogue' && 'wide-right'].filter(Boolean).join(' ')
 
   return (
     <div className={cls} data-screen={screen} data-desktop={desktop ? '' : undefined}>
       <header className="titlebar">
         <div className="tb-left">
-          <button className={`tb-btn${leftOpen ? ' on' : ''}`} aria-label={leftOpen ? 'Hide the library' : 'Show the library'} title="Library sidebar" onClick={onMenu}>
+          <button className={`tb-btn${leftShown ? ' on' : ''}`} aria-label={leftShown ? 'Hide the library' : 'Show the library'} title="Library sidebar" onClick={onMenu}>
             <Icon name="menu" size={16} />
           </button>
           <button className="tb-btn nav" aria-label="Back" title="Back" onClick={() => history.back()}><Icon name="back" size={16} /></button>

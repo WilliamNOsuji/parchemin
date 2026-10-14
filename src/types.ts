@@ -1,3 +1,5 @@
+import type { CanvasDoc } from './canvas/types'
+
 export type SceneStatus = 'idea' | 'draft' | 'revised' | 'done'
 
 export const STATUSES: { id: SceneStatus; label: string }[] = [
@@ -165,14 +167,78 @@ export interface Download {
   held: Record<string, number>
 }
 
+/** A place in the story, asked obstacle-first: what makes it hard comes before what it looks like. */
+export interface Setting {
+  id: string
+  storyId: string
+  name: string
+  /** What makes it hard for the people in it to get what they want. */
+  hard: string
+  /** What the place shows about whoever is in it. */
+  reveals: string
+  /** Objects someone can pick up, fight over or hide behind. */
+  props: string[]
+  /** Mood comes last. */
+  mood: string
+  createdAt: number
+  updatedAt: number
+}
+
+/** A thing the book returns to: an object, an image, a phrase. A name and a line. (Not `Symbol`: that is the global.) */
+export interface StorySymbol {
+  id: string
+  storyId: string
+  name: string
+  note: string
+  createdAt: number
+  updatedAt: number
+}
+
+export type WebLinkKind = 'chapter' | 'character' | 'setting' | 'symbol' | 'board'
+/** A part of the story the writer says carries a core idea. A thread in the Web. */
+export interface WebLink {
+  kind: WebLinkKind
+  id: string
+}
+
+/** A document in the Web: what the story believes, in the writer's words, and the parts the writer says carry it. For the writer only, never exported. */
+export interface CoreIdea {
+  id: string
+  storyId: string
+  title: string
+  text: string // HTML, the editor's schema
+  carriedBy: WebLink[]
+  createdAt: number
+  updatedAt: number
+}
+
+/** A board: one JSON Canvas document with a name. Pictures live in `images`, so a board stays small. */
+export interface Board {
+  id: string
+  storyId: string
+  name: string
+  canvas: CanvasDoc
+  createdAt: number
+  updatedAt: number
+}
+
+/** A picture placed on a board, as an embedded data URL (cleanImage's rule). `name` is its caption: the one thing Obsidian keeps. */
+export interface BoardImage {
+  id: string
+  storyId: string
+  name: string
+  data: string
+  createdAt: number
+}
+
 /**
- * Work the writer set aside instead of deleting: a whole story, one chapter or one character,
- * with everything needed to put it back exactly as it was, snapshots included.
+ * Work the writer set aside instead of deleting: a whole story, one chapter, one character, a board, a core idea
+ * or a setting, with everything needed to put it back exactly as it was, snapshots included.
  * Only "Delete for good" in the drawer removes anything permanently.
  */
 export interface DrawerItem {
   id: string
-  kind: 'story' | 'chapter' | 'character'
+  kind: 'story' | 'chapter' | 'character' | 'board' | 'idea' | 'setting'
   title: string
   storyId: string
   storyTitle: string
@@ -182,6 +248,12 @@ export interface DrawerItem {
   scenes: Scene[]
   characters: Character[]
   snapshots: Snapshot[]
+  /** Added with the boards and the Web; items set aside before then lack them, so read with `?? []`. */
+  boards?: Board[]
+  images?: BoardImage[]
+  coreIdeas?: CoreIdea[]
+  settings?: Setting[]
+  symbols?: StorySymbol[]
 }
 
 /** A chapter without its text: what the tree, the tabs and the home screen need. Mirrored from `scenes` into `chapters` (chapterMirror.ts). */

@@ -35,6 +35,8 @@ export function Ribbon({ route, storyId, drawerCount, theme, onTheme, onSearch, 
       {item(false, 'Search', 'search', onSearch)}
       {item(tab === 'outline', 'Outline', 'outline', () => storyId && go({ name: 'story', storyId, tab: 'outline' }), !storyId)}
       {item(tab === 'cast', 'Cast', 'cast', () => storyId && go({ name: 'story', storyId, tab: 'cast' }), !storyId)}
+      {item(tab === 'canvas', 'Boards', 'canvas', () => storyId && go({ name: 'story', storyId, tab: 'canvas' }), !storyId)}
+      {item(tab === 'web', 'Web', 'web', () => storyId && go({ name: 'story', storyId, tab: 'web' }), !storyId)}
       {item(route.name === 'drawer', drawerCount ? `The drawer · ${drawerCount} set aside` : 'The drawer', 'drawer', () => go({ name: 'drawer' }))}
       {item(route.name === 'safekeeping', 'Safekeeping', 'safe', () => go({ name: 'safekeeping' }))}
       <span className="spacer" />

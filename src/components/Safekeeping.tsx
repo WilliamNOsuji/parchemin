@@ -66,6 +66,11 @@ const KINDS: [table: string, one: string, many: string][] = [
   ['snapshots', 'snapshot', 'snapshots'],
   ['folders', 'folder', 'folders'],
   ['drawer', 'thing in the drawer', 'things in the drawer'],
+  ['boards', 'board', 'boards'],
+  ['images', 'picture', 'pictures'],
+  ['coreIdeas', 'core idea', 'core ideas'],
+  ['settings', 'setting', 'settings'],
+  ['symbols', 'symbol', 'symbols'],
 ]
 
 function changesSince({ tables, words }: Keeping['changed']) {

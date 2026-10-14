@@ -3,7 +3,8 @@ import { dayKey } from './craft/why'
 import { db } from './db'
 import { desktop } from './desktop'
 import { confirmBackup, markBackup, markRestored, notePendingBackup } from './safekeeping'
-import type { Character, DrawerItem, Folder, Scene, Snapshot, Story, WritingDay } from './types'
+import { parseCanvas } from './canvas/jsonCanvas'
+import type { Board, BoardImage, Character, CoreIdea, DrawerItem, Folder, Scene, Setting, Snapshot, Story, StorySymbol, WebLink, WritingDay } from './types'
 import { countWords } from './words'
 
 const FORMAT = 'parchemin-backup'
@@ -19,11 +20,22 @@ const FIELDS: Record<TableName, readonly string[]> = {
   snapshots: ['id', 'sceneId', 'content'],
 }
 
+/** Tables added after the first backup files were made. Optional in the file, so every older file still restores. */
+const OPTIONAL = ['boards', 'images', 'coreIdeas', 'settings', 'symbols'] as const
+type OptionalName = (typeof OPTIONAL)[number]
+const OPTIONAL_FIELDS: Record<OptionalName, readonly string[]> = {
+  boards: ['id', 'storyId', 'name'],
+  images: ['id', 'storyId', 'data'],
+  coreIdeas: ['id', 'storyId', 'title', 'text'],
+  settings: ['id', 'storyId', 'name'],
+  symbols: ['id', 'storyId', 'name'],
+}
+
 export interface BackupFile {
   format: typeof FORMAT
   version: number
   exportedAt: number
-  data: Record<TableName, { id: string }[]> & { days?: WritingDay[]; drawer?: DrawerItem[] }
+  data: Record<TableName, { id: string }[]> & { days?: WritingDay[]; drawer?: DrawerItem[] } & Partial<Record<OptionalName, { id: string }[]>>
 }
 
 export interface Saved {
@@ -71,7 +83,7 @@ async function pickFile(suggestedName: string): Promise<SaveHandle | 'cancelled'
 
 /** Everything a backup holds, read in one transaction so the file is one moment of the library, with the change notes as they stood. */
 function readLibrary() {
-  const tables = [db.folders, db.stories, db.scenes, db.characters, db.snapshots, db.days, db.drawer, db.meta, db.changes]
+  const tables = [db.folders, db.stories, db.scenes, db.characters, db.snapshots, db.days, db.drawer, db.meta, db.changes, db.boards, db.images, db.coreIdeas, db.settings, db.symbols]
   return db.transaction('r', tables, async () => {
     const data: BackupFile['data'] = {
       folders: await db.folders.toArray(),
@@ -81,6 +93,11 @@ function readLibrary() {
       snapshots: await db.snapshots.toArray(),
       days: await db.days.toArray(),
       drawer: await db.drawer.toArray(),
+      boards: await db.boards.toArray(),
+      images: await db.images.toArray(),
+      coreIdeas: await db.coreIdeas.toArray(),
+      settings: await db.settings.toArray(),
+      symbols: await db.symbols.toArray(),
     }
     const held = Object.fromEntries((await db.changes.toArray()).filter((c) => c.added > 0).map((c) => [c.key, c.added]))
     return { data, rev: (await db.meta.get(CHANGE_REV))?.value ?? 0, held, at: Date.now() }
@@ -143,6 +160,9 @@ function parse(text: string): BackupFile {
   for (const t of TABLES) {
     if (!isRows(f.data[t], FIELDS[t])) throw new Error(`The backup is damaged (bad "${t}" data).`)
   }
+  for (const t of OPTIONAL) {
+    if (f.data[t] !== undefined && !isRows(f.data[t], OPTIONAL_FIELDS[t])) throw new Error(`The backup is damaged (bad "${t}" data).`)
+  }
   if (f.data.days !== undefined && (!Array.isArray(f.data.days) || f.data.days.some((r) => !r || typeof r.date !== 'string' || typeof r.words !== 'number'))) {
     throw new Error('The backup is damaged (bad "days" data).')
   }
@@ -174,18 +194,48 @@ function cleanRows(d: BackupFile['data'], clean: Clean, cleanImage: CleanImage) 
   }
   const character = (c: Character): Character => ({ ...c, bio: clean(c.bio), image: cleanImage(c.image) })
   const list = <T,>(rows: unknown) => (Array.isArray(rows) ? (rows as T[]) : [])
+  const present = <T,>(rows: (T | null)[]) => rows.filter((r): r is T => r !== null)
+  const LINK_KINDS = ['chapter', 'character', 'setting', 'symbol', 'board']
+  const idea = (c: CoreIdea): CoreIdea => ({
+    ...c,
+    text: clean(c.text),
+    carriedBy: list<WebLink>(c.carriedBy).filter((l) => !!l && typeof l === 'object' && LINK_KINDS.includes(l.kind) && typeof l.id === 'string'),
+  })
+  const setting = (s: Setting): Setting => ({ ...s, props: list<unknown>(s.props).filter((p): p is string => typeof p === 'string') })
+  // a picture that is not an embedded image, or a board that is not a canvas, is dropped on its own; the restore goes on
+  const image = (i: BoardImage): BoardImage | null => {
+    const data = cleanImage(i.data)
+    return data ? { ...i, data } : null
+  }
+  const board = (b: Board): Board | null => {
+    try {
+      return { ...b, canvas: parseCanvas(b.canvas) }
+    } catch {
+      return null
+    }
+  }
   return {
     folders: d.folders as Folder[],
     stories: d.stories as Story[],
     scenes: (d.scenes as Scene[]).map(scene),
     characters: (d.characters as Character[]).map(character),
     snapshots: (d.snapshots as Snapshot[]).map(snapshot),
+    boards: present(list<Board>(d.boards).map(board)),
+    images: present(list<BoardImage>(d.images).map(image)),
+    coreIdeas: list<CoreIdea>(d.coreIdeas).map(idea),
+    settings: list<Setting>(d.settings).map(setting),
+    symbols: list<StorySymbol>(d.symbols),
     drawer: (d.drawer ?? []).map((item) => ({
       ...item,
       stories: list<Story>(item.stories),
       scenes: list<Scene>(item.scenes).map(scene),
       characters: list<Character>(item.characters).map(character),
       snapshots: list<Snapshot>(item.snapshots).map(snapshot),
+      boards: present(list<Board>(item.boards).map(board)),
+      images: present(list<BoardImage>(item.images).map(image)),
+      coreIdeas: list<CoreIdea>(item.coreIdeas).map(idea),
+      settings: list<Setting>(item.settings).map(setting),
+      symbols: list<StorySymbol>(item.symbols),
     })),
   }
 }
@@ -205,7 +255,7 @@ export async function restoreBackup(file: File): Promise<RestoreCounts> {
   const { cleanHtml, cleanImage } = await import('./sanitize')
   const d = cleanRows(backup.data, cleanHtml, cleanImage)
   const days = backup.data.days
-  const tables = [db.folders, db.stories, db.scenes, db.characters, db.snapshots, db.days, db.drawer, db.changes, db.meta, db.downloads]
+  const tables = [db.folders, db.stories, db.scenes, db.characters, db.snapshots, db.days, db.drawer, db.changes, db.meta, db.downloads, db.boards, db.images, db.coreIdeas, db.settings, db.symbols]
   await db.transaction('rw', tables, async () => {
     await db.folders.bulkPut(d.folders)
     await db.stories.bulkPut(d.stories)
@@ -214,8 +264,13 @@ export async function restoreBackup(file: File): Promise<RestoreCounts> {
     await db.snapshots.bulkPut(d.snapshots)
     if (days) await db.days.bulkPut(days)
     if (d.drawer.length) await db.drawer.bulkPut(d.drawer)
+    await db.boards.bulkPut(d.boards)
+    await db.images.bulkPut(d.images)
+    await db.coreIdeas.bulkPut(d.coreIdeas)
+    await db.settings.bulkPut(d.settings)
+    await db.symbols.bulkPut(d.symbols)
     // what was just written is what the file holds, and the writer holds the file
-    const keys = [...TABLES, 'drawer' as const].flatMap((t) => d[t].map((r) => changeKey(t, r.id)))
+    const keys = [...TABLES, 'drawer' as const, ...OPTIONAL].flatMap((t) => d[t].map((r) => changeKey(t, r.id)))
     await markRestored(keys, madeAt(backup, file))
   })
   return { stories: d.stories.length, characters: d.characters.length }

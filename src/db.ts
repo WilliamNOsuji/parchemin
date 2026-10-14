@@ -1,6 +1,8 @@
 import Dexie, { type EntityTable } from 'dexie'
 import { nanoid } from 'nanoid'
-import type { Change, Character, Download, DrawerItem, Folder, Meta, Scene, SceneRef, Snapshot, Story, WritingDay } from './types'
+import type { Board, BoardImage, Change, Character, CoreIdea, Download, DrawerItem, Folder, Meta, Scene, SceneRef, Setting, Snapshot, Story, StorySymbol, WritingDay } from './types'
+import { emptyCanvas } from './canvas/jsonCanvas'
+import { refOf as cardRef } from './canvas/types'
 import type { Template } from './templates'
 import { CHANGE_REV, changeKey, changeTracking } from './changes'
 import { chapterMirror, refOf } from './chapterMirror'
@@ -19,6 +21,11 @@ class ParcheminDB extends Dexie {
   changes!: EntityTable<Change, 'key'>
   downloads!: EntityTable<Download, 'at'>
   chapters!: EntityTable<SceneRef, 'id'>
+  boards!: EntityTable<Board, 'id'>
+  images!: EntityTable<BoardImage, 'id'>
+  coreIdeas!: EntityTable<CoreIdea, 'id'>
+  settings!: EntityTable<Setting, 'id'>
+  symbols!: EntityTable<StorySymbol, 'id'>
 
   constructor() {
     super('parchemin')
@@ -64,6 +71,8 @@ class ParcheminDB extends Dexie {
         const scenes = (await tx.table('scenes').toArray()) as Scene[]
         await tx.table('chapters').bulkPut(scenes.map(refOf))
       })
+    // v7: the boards (JSON Canvas documents) with their pictures, and the Web's core ideas, settings and symbols
+    this.version(7).stores({ boards: 'id, storyId', images: 'id, storyId', coreIdeas: 'id, storyId', settings: 'id, storyId', symbols: 'id, storyId' })
     this.use(chapterMirror)
     this.use(changeTracking)
   }
@@ -143,7 +152,7 @@ export async function reorderScenes(orderedIds: string[]) {
   })
 }
 
-const DRAWER_TABLES = () => [db.stories, db.scenes, db.characters, db.snapshots, db.drawer]
+const DRAWER_TABLES = () => [db.stories, db.scenes, db.characters, db.snapshots, db.drawer, db.boards, db.images, db.coreIdeas, db.settings, db.symbols]
 
 /** Moves a chapter and its snapshots into the drawer. */
 export async function setAsideScene(id: string) {
@@ -170,7 +179,7 @@ export async function setAsideScene(id: string) {
   })
 }
 
-/** Moves a whole story into the drawer: chapters, characters and snapshots. */
+/** Moves a whole story into the drawer: chapters, characters, snapshots, boards and the Web's documents. */
 export async function setAsideStory(id: string) {
   await db.transaction('rw', DRAWER_TABLES(), async () => {
     const story = await db.stories.get(id)
@@ -178,6 +187,11 @@ export async function setAsideStory(id: string) {
     const scenes = await db.scenes.where('storyId').equals(id).toArray()
     const characters = await db.characters.where('storyId').equals(id).toArray()
     const snapshots = await db.snapshots.where('sceneId').anyOf(scenes.map((s) => s.id)).toArray()
+    const boards = await db.boards.where('storyId').equals(id).toArray()
+    const images = await db.images.where('storyId').equals(id).toArray()
+    const coreIdeas = await db.coreIdeas.where('storyId').equals(id).toArray()
+    const settings = await db.settings.where('storyId').equals(id).toArray()
+    const symbols = await db.symbols.where('storyId').equals(id).toArray()
     await db.drawer.add({
       id: uid(),
       kind: 'story',
@@ -190,12 +204,107 @@ export async function setAsideStory(id: string) {
       scenes,
       characters,
       snapshots,
+      boards,
+      images,
+      coreIdeas,
+      settings,
+      symbols,
     })
     await db.snapshots.bulkDelete(snapshots.map((s) => s.id))
     await db.scenes.bulkDelete(scenes.map((s) => s.id))
     await db.characters.bulkDelete(characters.map((c) => c.id))
+    await db.boards.bulkDelete(boards.map((b) => b.id))
+    await db.images.bulkDelete(images.map((i) => i.id))
+    await db.coreIdeas.bulkDelete(coreIdeas.map((c) => c.id))
+    await db.settings.bulkDelete(settings.map((s) => s.id))
+    await db.symbols.bulkDelete(symbols.map((s) => s.id))
     await db.stories.delete(id)
   })
+}
+
+/** An item for the drawer with nothing in it yet; each setAside fills in what it carries. */
+function drawerItem(kind: DrawerItem['kind'], title: string, storyId: string, storyTitle: string): DrawerItem {
+  return { id: uid(), kind, title, storyId, storyTitle, words: 0, setAsideAt: Date.now(), stories: [], scenes: [], characters: [], snapshots: [] }
+}
+
+/** The ids of the pictures a board's cards point at. */
+const imagesOn = (b: Board) => new Set(b.canvas.nodes.flatMap((n) => (n.type === 'file' && n.file.startsWith('images/') ? [cardRef(n) ?? ''] : [])))
+
+/** Moves a board into the drawer, with the pictures no other board of the story uses. */
+export async function setAsideBoard(id: string) {
+  await db.transaction('rw', DRAWER_TABLES(), async () => {
+    const board = await db.boards.get(id)
+    if (!board) return
+    const story = await db.stories.get(board.storyId)
+    const others = (await db.boards.where('storyId').equals(board.storyId).toArray()).filter((b) => b.id !== id)
+    const kept = new Set(others.flatMap((b) => [...imagesOn(b)]))
+    const mine = [...imagesOn(board)].filter((i) => i && !kept.has(i))
+    const images = (await db.images.bulkGet(mine)).filter((i): i is BoardImage => !!i)
+    await db.drawer.add({ ...drawerItem('board', board.name, board.storyId, story?.title ?? ''), boards: [board], images })
+    await db.images.bulkDelete(images.map((i) => i.id))
+    await db.boards.delete(id)
+  })
+}
+
+/** Moves a core idea into the drawer. */
+export async function setAsideCoreIdea(id: string) {
+  await db.transaction('rw', DRAWER_TABLES(), async () => {
+    const idea = await db.coreIdeas.get(id)
+    if (!idea) return
+    const story = await db.stories.get(idea.storyId)
+    await db.drawer.add({ ...drawerItem('idea', idea.title, idea.storyId, story?.title ?? ''), words: countWords(idea.text), coreIdeas: [idea] })
+    await db.coreIdeas.delete(id)
+  })
+}
+
+/** Moves a setting into the drawer. Cards and threads that point at it say it is gone until it is put back. */
+export async function setAsideSetting(id: string) {
+  await db.transaction('rw', DRAWER_TABLES(), async () => {
+    const setting = await db.settings.get(id)
+    if (!setting) return
+    const story = await db.stories.get(setting.storyId)
+    await db.drawer.add({ ...drawerItem('setting', setting.name, setting.storyId, story?.title ?? ''), settings: [setting] })
+    await db.settings.delete(id)
+  })
+}
+
+/** A symbol is a name and a line, so it is the one thing deleted in place. */
+export async function deleteSymbol(id: string) {
+  await db.symbols.delete(id)
+}
+
+export async function createBoard(storyId: string, name = 'New board'): Promise<string> {
+  const id = uid()
+  const now = Date.now()
+  await db.boards.add({ id, storyId, name, canvas: emptyCanvas(), createdAt: now, updatedAt: now })
+  return id
+}
+
+export async function addImage(storyId: string, name: string, data: string): Promise<string> {
+  const id = uid()
+  await db.images.add({ id, storyId, name, data, createdAt: Date.now() })
+  return id
+}
+
+export async function createCoreIdea(storyId: string, title = ''): Promise<string> {
+  const id = uid()
+  const now = Date.now()
+  await db.coreIdeas.add({ id, storyId, title, text: '', carriedBy: [], createdAt: now, updatedAt: now })
+  return id
+}
+
+export async function createSetting(storyId: string, name = ''): Promise<string> {
+  const id = uid()
+  const now = Date.now()
+  await db.settings.add({ id, storyId, name, hard: '', reveals: '', props: [], mood: '', createdAt: now, updatedAt: now })
+  return id
+}
+
+export async function createSymbol(storyId: string, name = ''): Promise<string> {
+  const id = uid()
+  const now = Date.now()
+  await db.symbols.add({ id, storyId, name, note: '', createdAt: now, updatedAt: now })
+  return id
 }
 
 /** Moves a character into the drawer. */
@@ -255,6 +364,12 @@ export async function putBack(itemId: string) {
     }
     await db.characters.bulkPut(item.characters)
     await db.snapshots.bulkPut(item.snapshots)
+    // items set aside before the boards and the Web existed carry none of these
+    await db.boards.bulkPut(item.boards ?? [])
+    await db.images.bulkPut(item.images ?? [])
+    await db.coreIdeas.bulkPut(item.coreIdeas ?? [])
+    await db.settings.bulkPut(item.settings ?? [])
+    await db.symbols.bulkPut(item.symbols ?? [])
     await db.stories.update(item.storyId, { updatedAt: now })
     await db.drawer.delete(itemId)
   })

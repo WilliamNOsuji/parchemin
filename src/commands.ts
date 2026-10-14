@@ -24,6 +24,10 @@ export interface CommandContext {
     newStory: () => void
     newChapter: () => void
     newCharacter: () => void
+    newBoard: () => void
+    newCoreIdea: () => void
+    newSetting: () => void
+    newSymbol: () => void
     toggleFocus: () => void
     snapshot: () => void
     openRight: (tab: string) => void
@@ -65,6 +69,12 @@ export function buildCommands({ route, stories, index, theme, actions: a }: Comm
       { id: 'audit', label: 'Read the whole outline', hint: 'Outline', run: () => { a.go({ name: 'story', storyId: story.id, tab: 'outline' }); a.openRight('audit') } },
       { id: 'cast', label: 'Open the cast', hint: story.title, run: () => a.go({ name: 'story', storyId: story.id, tab: 'cast' }) },
       { id: 'character', label: 'New character', hint: story.title, run: a.newCharacter },
+      { id: 'boards', label: 'Open the boards', hint: story.title, run: () => a.go({ name: 'story', storyId: story.id, tab: 'canvas' }) },
+      { id: 'board', label: 'New board', hint: story.title, run: a.newBoard },
+      { id: 'web', label: 'Open the Web', hint: story.title, run: () => a.go({ name: 'story', storyId: story.id, tab: 'web' }) },
+      { id: 'idea', label: 'New core idea', hint: story.title, run: a.newCoreIdea },
+      { id: 'setting', label: 'New setting', hint: story.title, run: a.newSetting },
+      { id: 'symbol', label: 'New symbol', hint: story.title, run: a.newSymbol },
       { id: 'md', label: 'Export as Markdown', hint: 'Export', run: a.exportMarkdown },
       { id: 'epub', label: 'Export as EPUB', hint: 'Export', run: a.exportEpub },
     )

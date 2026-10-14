@@ -26,3 +26,6 @@ dist-pages
 # the desktop app: compiled main and preload, and packaged builds
 dist-electron
 release
+
+# throwaway harness pages, check scripts and screenshots
+scratch/

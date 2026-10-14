@@ -1,6 +1,6 @@
 import { useMemo, useSyncExternalStore } from 'react'
 
-export type Tab = 'write' | 'outline' | 'cast'
+export type Tab = 'write' | 'outline' | 'cast' | 'canvas' | 'web'
 
 export type Route =
   | { name: 'home' }
@@ -12,7 +12,7 @@ function parse(hash: string): Route {
   const [, kind, storyId, tab, itemId] = hash.replace(/^#/, '').split('/')
   if (kind === 'story' && storyId) {
     // 'characters' is the old name of the Cast page; links to it still work
-    const t: Tab = tab === 'outline' ? 'outline' : tab === 'cast' || tab === 'characters' ? 'cast' : 'write'
+    const t: Tab = tab === 'outline' ? 'outline' : tab === 'cast' || tab === 'characters' ? 'cast' : tab === 'canvas' ? 'canvas' : tab === 'web' ? 'web' : 'write'
     return { name: 'story', storyId, tab: t, itemId: itemId || undefined }
   }
   if (kind === 'safekeeping') return { name: 'safekeeping' }

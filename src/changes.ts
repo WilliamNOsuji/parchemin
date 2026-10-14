@@ -1,5 +1,5 @@
 import type { DBCore, DBCoreMutateRequest, DBCoreTable, DBCoreTransaction, Middleware } from 'dexie'
-import type { Change, Character, Scene, Story } from './types'
+import type { Board, Change, Character, CoreIdea, Scene, Setting, Story, StorySymbol } from './types'
 import { countTextWords, countWords } from './words'
 
 /**
@@ -12,7 +12,7 @@ import { countTextWords, countWords } from './words'
  */
 
 /** Tables a backup file holds. The writing-day tally goes in too, but it only moves when a chapter does. */
-const TRACKED = new Set(['folders', 'stories', 'scenes', 'characters', 'snapshots', 'drawer'])
+const TRACKED = new Set(['folders', 'stories', 'scenes', 'characters', 'snapshots', 'drawer', 'boards', 'images', 'coreIdeas', 'settings', 'symbols'])
 /** The counter, kept in the meta table. */
 export const CHANGE_REV = 'changeRev'
 
@@ -38,6 +38,24 @@ function wordsIn(table: string, row: unknown): number {
   if (table === 'stories') {
     const s = row as Story
     return countTextWords(text(s.title, s.synopsis))
+  }
+  if (table === 'coreIdeas') {
+    const c = row as CoreIdea
+    return countWords(text(c.text)) + countTextWords(text(c.title))
+  }
+  if (table === 'settings') {
+    const s = row as Setting
+    return countTextWords(text(s.name, s.hard, s.reveals, s.mood, ...(Array.isArray(s.props) ? s.props : [])))
+  }
+  if (table === 'symbols') {
+    const s = row as StorySymbol
+    return countTextWords(text(s.name, s.note))
+  }
+  if (table === 'boards') {
+    const b = row as Board
+    const nodes = Array.isArray(b.canvas?.nodes) ? b.canvas.nodes : []
+    const edges = Array.isArray(b.canvas?.edges) ? b.canvas.edges : []
+    return countTextWords(text(b.name, ...nodes.map((n) => (n.type === 'text' ? n.text : n.type === 'group' ? n.label : undefined)), ...edges.map((e) => e.label)))
   }
   return 0
 }
