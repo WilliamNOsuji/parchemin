@@ -14,6 +14,7 @@ import { ChangesSidebar, SafekeepingPane } from './components/Safekeeping'
 import { StatusBar } from './components/StatusBar'
 import { TabStrip } from './components/TabStrip'
 import { addScene, createCharacter, db, setAsideScene, takeSnapshot } from './db'
+import { desktop } from './desktop'
 import { exportEpub, exportMarkdown } from './export'
 import { useOpenStory } from './openStory'
 import { navigate, useRoute, type Route } from './route'
@@ -194,6 +195,9 @@ export function App() {
         e.preventDefault()
         if (rightTab === 'dialogue' && rightOpen) setRightOpen(false)
         else openRight('dialogue')
+      } else if (key === 'n' && !e.shiftKey && desktop) {
+        e.preventDefault()
+        commands.find((c) => c.id === 'chapter')?.run()
       }
     }
     window.addEventListener('keydown', onKey)
@@ -234,7 +238,7 @@ export function App() {
   const cls = ['app', focus && 'focus', drawer && 'drawer-open', !leftOpen && 'no-left', !hasRight && 'no-right', writing && rightTab === 'dialogue' && 'wide-right'].filter(Boolean).join(' ')
 
   return (
-    <div className={cls} data-screen={screen}>
+    <div className={cls} data-screen={screen} data-desktop={desktop ? '' : undefined}>
       <header className="titlebar">
         <div className="tb-left">
           <button className={`tb-btn${leftOpen ? ' on' : ''}`} aria-label={leftOpen ? 'Hide the library' : 'Show the library'} title="Library sidebar" onClick={onMenu}>

@@ -3,6 +3,7 @@ import { useRef, useState, type ChangeEvent } from 'react'
 import { exportBackup, inspectBackup, restoreBackup, type Saved } from '../backup'
 import { db } from '../db'
 import { exportEpub, exportMarkdown } from '../export'
+import { desktop } from '../desktop'
 import { canPersist, dismissNudge, requestPersist, useBackupNudge, useSafekeeping, type Keeping } from '../safekeeping'
 import type { Change, Story } from '../types'
 import { Section } from './RightSidebar'
@@ -111,20 +112,24 @@ export function SafekeepingPane({ stories }: { stories: Story[] }) {
       <div className="pane-scroll">
         <div className="safe">
           <h1>Safekeeping</h1>
-          <p className="lead">Your stories live in this browser, on this device. A backup file is a copy you hold yourself. Nothing here leaves the machine unless you carry it.</p>
+          <p className="lead">{desktop ? 'Your stories live on this computer.' : 'Your stories live in this browser, on this device.'} A backup file is a copy you hold yourself. Nothing here leaves the machine unless you carry it.</p>
           <p role="status" className="hint" style={{ marginBottom: msg ? 12 : 0 }}>{msg}</p>
 
           <div className="krow">
             <div className="k">Kept where</div>
             <div>
-              {k?.persisted === true ? 'This browser, on this device. The browser has promised to keep your stories unless you clear its data yourself.' : 'This browser, on this device. It may clear stored data if the device runs low on space; a backup file is the copy that is safe from that.'}
+              {desktop
+                ? "This computer only, in Parchemin's own data folder, which removing the app leaves in place. A backup file is the copy you can carry."
+                : k?.persisted === true
+                  ? 'This browser, on this device. The browser has promised to keep your stories unless you clear its data yourself.'
+                  : 'This browser, on this device. It may clear stored data if the device runs low on space; a backup file is the copy that is safe from that.'}
               {k?.usage !== null && k?.usage !== undefined && (
-                <div className="sub">Parchemin takes up {size(k.usage)} here, the app itself included{k.quota ? `, of the ${size(k.quota)} this browser allows` : ''}.</div>
+                <div className="sub">Parchemin takes up {size(k.usage)} here, the app itself included{k.quota && !desktop ? `, of the ${size(k.quota)} this browser allows` : ''}.</div>
               )}
-              {k?.ios && !k.installed && (
+              {!desktop && k?.ios && !k.installed && (
                 <div className="sub">On iPhone and iPad, Safari can clear a website's data after seven days without a visit. Adding Parchemin to the Home Screen (Share, then Add to Home Screen) avoids that and gives it storage of its own.</div>
               )}
-              {k?.persisted === false && canPersist() && <div className="acts"><button className="btn small" onClick={onKeep}>Keep my stories on this device</button></div>}
+              {!desktop && k?.persisted === false && canPersist() && <div className="acts"><button className="btn small" onClick={onKeep}>Keep my stories on this device</button></div>}
             </div>
           </div>
 
@@ -193,7 +198,7 @@ export function SafekeepingGlance({ say }: { say: (s: string) => void }) {
   const k = useSafekeeping()
   return (
     <Section title="Safekeeping">
-      <div className="f"><span>Kept where</span><div>This browser{k?.persisted === true ? ' · promised to keep it' : k?.persisted === false ? ' · not yet promised' : ''}</div></div>
+      <div className="f"><span>Kept where</span><div>{desktop ? 'This computer' : `This browser${k?.persisted === true ? ' · promised to keep it' : k?.persisted === false ? ' · not yet promised' : ''}`}</div></div>
       <div className="f">
         <span>Last backup file</span>
         <div>{!k ? '…' : k.lastBackupAt === null ? 'None yet' : `${ago(k.lastBackupAt)}${k.changed.words > 0 ? ` · ${num(k.changed.words)} words since` : ' · nothing new since'}`}</div>
@@ -257,6 +262,16 @@ export function ChangesSidebar() {
 
 /** Parchemin has no AI. This says where unasked-for suggestions come from, and how to turn them off at the source. */
 export function SuggestionsNote() {
+  if (desktop) {
+    return (
+      <details className="help-note">
+        <summary>Seeing writing suggestions you didn't ask for?</summary>
+        <p style={{ marginTop: 8 }}>
+          Parchemin contains no AI and sends nothing anywhere. There is no browser in this window, so no browser extension can read what you write, and the window asks the system to keep its own writing suggestions out. If they still appear while you type, turn them off at the source: on Windows under Settings, then Time &amp; language, then Typing; on a Mac under Settings, then Apple Intelligence &amp; Siri.
+        </p>
+      </details>
+    )
+  }
   return (
     <details className="help-note">
       <summary>Seeing writing suggestions you didn't ask for?</summary>

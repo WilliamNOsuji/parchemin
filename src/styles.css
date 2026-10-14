@@ -160,6 +160,9 @@ textarea.quiet:focus { border-color: var(--accent); background: var(--surface); 
 .tab-add { width: 28px; height: 28px; margin-bottom: 3px; display: grid; place-items: center; color: var(--muted); border-radius: 5px; flex: none; }
 .tab-add:hover { background: var(--surface-2); color: var(--text); }
 .tb-right { display: flex; padding-right: 6px; }
+/* The desktop app: the title bar drags the window, and the system draws its own controls at its right, where the padding leaves room for them. */
+.app[data-desktop] .titlebar { -webkit-app-region: drag; padding-right: calc(100% - env(titlebar-area-width, 100%)); }
+.app[data-desktop] .tb-btn, .app[data-desktop] .tab, .app[data-desktop] .tab-add { -webkit-app-region: no-drag; }
 
 .body { display: grid; grid-template-columns: var(--ribbon-w) var(--left-w) minmax(0, 1fr) var(--right-w); min-height: 0; }
 .app.no-left .body { grid-template-columns: var(--ribbon-w) 0 minmax(0, 1fr) var(--right-w); }

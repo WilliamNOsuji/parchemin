@@ -22,3 +22,7 @@ research/.fetch-*
 dist-site
 dist-pages
 .impeccable/review/
+
+# the desktop app: compiled main and preload, and packaged builds
+dist-electron
+release

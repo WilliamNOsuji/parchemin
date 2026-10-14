@@ -1,4 +1,5 @@
 import { useCallback, useSyncExternalStore } from 'react'
+import { desktop, syncTitleBar } from './desktop'
 
 /** Parchemin follows the system theme. The ribbon's toggle can pin it light or dark on this device. */
 export type Theme = 'system' | 'light' | 'dark'
@@ -24,6 +25,9 @@ export function applyTheme(t: Theme) {
   else root.setAttribute('data-theme', t)
   const dark = t === 'dark' || (t === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
   document.querySelector('meta[name="theme-color"]')?.setAttribute('content', dark ? '#222128' : '#f3eee6')
+  // the desktop's window follows the pin too: its own controls now, and Chromium's colour scheme through the pin
+  desktop?.setTheme(t)
+  syncTitleBar()
 }
 
 /** The theme in force: read from storage once, then kept here, so a device whose storage refuses still cycles through all three. */

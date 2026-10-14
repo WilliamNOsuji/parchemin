@@ -6,8 +6,11 @@ A calm, local-first writing app for stories and the characters in them.
 
 ```bash
 npm install
-npm run dev      # http://localhost:5173
-npm run build    # production build in dist/
+npm run dev          # http://localhost:5173
+npm run build        # production build in dist/
+npm run desktop      # the desktop app: built, then opened in its window
+npm run desktop:dev  # the desktop app around the dev server, reloading as the code changes
+npm run dist:win     # the Windows installer, in release/
 ```
 
 ## What's in the app
@@ -38,10 +41,20 @@ The shell follows the desktop mockup under `design/` (integrated on 2026-10-12):
 
 `site/` holds the landing page from `design/parchemin-website.html`, as a second Vite root with the same bundled fonts (no request to Google Fonts). `npm run site` serves it, `npm run build:site` builds it into `dist-site/`, and `npm run build:pages` builds the site and the app together into `dist-pages/` the way they are published: the site at the root, the app under `app/`. Netlify publishes that folder after every push to `main` (`netlify.toml`); the one-time setup, what the page says while the source is private, and what to restore when it goes public are in `site/README.md`.
 
+## The desktop app
+
+`electron/` wraps the same web app in an Electron window, as the mockup under `design/` draws it: the tabs in the title bar, the system's own window controls at its right (the title bar drags the window), 1280 × 800 by default, and the window remembers its size and place. The page is served from the app's own files over the `parchemin://` scheme, with a content security policy that allows nothing but those files; the preload (`electron/preload.cts`) gives the page four functions and nothing of Node; and the main process (`electron/main.mts`) makes no request to any other server: there is no updater and no telemetry, and the spelling dictionaries Chromium would otherwise fetch from Google are pointed at the app itself, so the desktop app has no spellcheck until dictionaries ship with it. A link in the writer's own text opens in their browser.
+
+What the page does differently on a desktop goes through `src/desktop.ts`. Backups and exports are saved through the system's own dialog, so a backup always lands in a real folder and always counts; the status bar says "Kept on this computer" and the Safekeeping page drops the browser's persistence question; `Ctrl+N` makes a new chapter; and the window controls take the chrome's colours whenever the theme changes, light or dark. The library stays in the app's own storage for now: the library folder (`library.json` and a Markdown file per chapter) is the next step.
+
+`npm run dist` packages the app for the platform it runs on and `npm run dist:win` makes the Windows installer (`electron-builder.yml`: one click, per user, the writer's data kept when the app is removed). The Windows build and its signing have not been run yet; an unpacked Linux build has.
+
+On Linux and WSL, Electron needs `libnss3`, `libnspr4` and `libasound2`, which a bare install may lack (`sudo apt install libnss3 libnspr4 libasound2t64`). Windows and macOS need nothing extra.
+
 ## Architecture
 
 React + TypeScript + Vite. All data lives in the browser's IndexedDB via Dexie (`src/db.ts`), so it works offline
-and the writer owns their data. The shell is `src/App.tsx` with `Ribbon`, `LibraryTree`, `TabStrip`, `RightSidebar` and
+and the writer owns their data. The desktop app (`electron/`) wraps this same code. The shell is `src/App.tsx` with `Ribbon`, `LibraryTree`, `TabStrip`, `RightSidebar` and
 `StatusBar` under `src/components/`; routes are in `src/route.ts`, open tabs in `src/tabs.ts`, the command list in
 `src/commands.ts`, the theme in `src/theme.ts`. Each screen is a pane (`Home`, `StoryView` with `SceneEditor`,
 `OutlinePane` and `CastPane`, `SafekeepingPane`, `DrawerPage`) with a matching sidebar (`HomeSidebar`, `StorySidebar`,
@@ -53,6 +66,8 @@ single-document writers never need to think about structure.
 
 The mission, beliefs and decision tests live in [PHILOSOPHY.md](PHILOSOPHY.md). Read it before adding features.
 The rules for the optional AI guide are in [AI-POLICY.md](AI-POLICY.md) (draft).
+The brief for anyone, person or agent, who develops the app is [PROMPT.md](PROMPT.md): read it at the start of a session, then add the task.
+A pass on the interface follows [PROMPT-UI.md](PROMPT-UI.md): what better means for a writer, the method, and the shape of the report.
 
 ## Not built yet
 
@@ -62,7 +77,7 @@ The agreed roadmap is at the end of [PHILOSOPHY.md](PHILOSOPHY.md). In short:
 - **Between devices:** a "move my library" flow, then optional sync that writers can host themselves.
 - **Writing tools:** read-aloud, a notes pane, a rhythm view, a private challenge mode.
 - **AI:** an optional, self-hosted AI guide, off by default.
-- **The desktop app:** the Electron wrapper around this code, the library as a folder of plain files, and the canvas (JSON Canvas). The mockup is in `design/`.
+- **The desktop app:** the Electron wrapper is built (2026-10-13, see above). Still to do: the library as a folder of plain files, the canvas (JSON Canvas), import by dropping files on the tree, spelling dictionaries that ship with the app, the signed installer, and the "Your words" page on first run. The mockup is in `design/`.
 - **The Web:** the graph of the writer's core ideas, read by the optional guide. Decided on 2026-10-10 (`research.md`, section 13), not built.
 - **From before:** setting sheets, chapter guides, mobile apps.
 

@@ -1,6 +1,7 @@
 import { CHANGE_REV, changeKey } from './changes'
 import { dayKey } from './craft/why'
 import { db } from './db'
+import { desktop } from './desktop'
 import { confirmBackup, markBackup, markRestored, notePendingBackup } from './safekeeping'
 import type { Character, DrawerItem, Folder, Scene, Snapshot, Story, WritingDay } from './types'
 import { countWords } from './words'
@@ -42,6 +43,23 @@ const fileName = (d: Date) => `parchemin-backup-${dayKey(d)}-${two(d.getHours())
 
 /** Asks where to save, where the browser can. null when it can't, 'cancelled' when the writer closed the dialog. */
 async function pickFile(suggestedName: string): Promise<SaveHandle | 'cancelled' | null> {
+  // the desktop app has the system's own dialog, so a backup always lands in a real folder
+  const bridge = desktop
+  if (bridge) {
+    const target = await bridge.pickSave(suggestedName, { name: 'Parchemin backup', extensions: ['json'] })
+    if (!target) return 'cancelled'
+    const parts: Blob[] = []
+    return {
+      name: target.name,
+      createWritable: async () => ({
+        write: async (data: Blob) => void parts.push(data),
+        close: async () => {
+          const failed = await bridge.writeFile(target.path, new Uint8Array(await new Blob(parts).arrayBuffer()))
+          if (failed) throw new Error(failed)
+        },
+      }),
+    }
+  }
   const w = window as unknown as { showSaveFilePicker?: SavePicker }
   if (typeof w.showSaveFilePicker !== 'function') return null
   try {

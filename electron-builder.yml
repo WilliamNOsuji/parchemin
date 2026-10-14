@@ -1,0 +1,28 @@
+# Packages the desktop app (npm run dist, or dist:win for the Windows installer). No update server is named here and
+# no updater ships, so an installed copy never calls anywhere. See electron/main.mts.
+appId: io.github.WilliamNOsuji.parchemin
+productName: Parchemin
+copyright: Copyright © 2026 William Osuji
+directories:
+  output: release
+files:
+  - dist/**
+  - dist-electron/**
+  - package.json
+  - "!node_modules/**"
+asar: true
+win:
+  target:
+    - nsis
+  icon: public/icon-512.png
+nsis:
+  oneClick: true
+  perMachine: false
+  # the writer's library stays on the machine when the app is removed
+  deleteAppDataOnUninstall: false
+linux:
+  target:
+    - AppImage
+  icon: public/icon-512.png
+  category: Office
+publish: null

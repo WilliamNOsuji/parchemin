@@ -1,13 +1,5 @@
 import { db } from './db'
-
-function download(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob)
-  const a = document.createElement('a')
-  a.href = url
-  a.download = filename
-  a.click()
-  setTimeout(() => URL.revokeObjectURL(url), 1000)
-}
+import { saveFile } from './desktop'
 
 const slug = (s: string) => s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'story'
 const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
@@ -34,7 +26,7 @@ export async function exportMarkdown(storyId: string) {
     if (multi) parts.push(`## ${s.title}`)
     parts.push(turndown.turndown(s.content))
   }
-  download(new Blob([parts.join('\n\n') + '\n'], { type: 'text/markdown' }), `${slug(story.title)}.md`)
+  await saveFile(new Blob([parts.join('\n\n') + '\n'], { type: 'text/markdown' }), `${slug(story.title)}.md`, { name: 'Markdown', extensions: ['md'] })
 }
 
 /** Tiptap emits HTML; EPUB needs well-formed XHTML (e.g. <br/> not <br>). */
@@ -117,5 +109,5 @@ ${all.map((c) => `<itemref idref="${c.id}"/>`).join('\n')}
   )
 
   const blob = await zip.generateAsync({ type: 'blob', mimeType: 'application/epub+zip' })
-  download(blob, `${slug(story.title)}.epub`)
+  await saveFile(blob, `${slug(story.title)}.epub`, { name: 'EPUB', extensions: ['epub'] })
 }

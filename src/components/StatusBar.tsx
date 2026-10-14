@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useState } from 'react'
 import { dayKey } from '../craft/why'
 import { db } from '../db'
+import { desktop } from '../desktop'
 import { useEditorState } from '../editorState'
 import { navigate, type Route } from '../route'
 import { requestPersistOnce, useSafekeeping } from '../safekeeping'
@@ -52,11 +53,11 @@ export function StatusBar({ route, index, notice }: { route: Route; index: Scene
   const hasWork = !!k && (k.lastBackupAt !== null || index.some((s) => s.words > 0))
   const persisted = k?.persisted
   useEffect(() => {
-    if (hasWork && !writing && persisted === false) void requestPersistOnce().then((asked) => asked && k?.refresh())
+    if (!desktop && hasWork && !writing && persisted === false) void requestPersistOnce().then((asked) => asked && k?.refresh())
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [hasWork, writing, persisted])
 
-  const kept = persisted === true
+  const kept = !!desktop || persisted === true
   const backup =
     !k ? '' : k.lastBackupAt === null ? 'No backup file yet' : `Backup file: ${ago(k.lastBackupAt)}${k.changed.words > 0 ? ` · ${num(k.changed.words)} words since` : ''}`
 
@@ -65,7 +66,7 @@ export function StatusBar({ route, index, notice }: { route: Route; index: Scene
       <div>
         {notice ? <span role="status">{notice}</span> : null}
         <button className={`st ${kept ? 'ok' : 'warn'}`} onClick={() => navigate({ name: 'safekeeping' })} title="Open Safekeeping">
-          {kept ? 'Kept in this browser' : 'In this browser, not yet promised'}
+          {desktop ? 'Kept on this computer' : kept ? 'Kept in this browser' : 'In this browser, not yet promised'}
         </button>
         {backup && <button className="st backup" onClick={() => navigate({ name: 'safekeeping' })} title="Open Safekeeping">{backup}</button>}
       </div>

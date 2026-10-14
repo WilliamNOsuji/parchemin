@@ -1,3 +1,4 @@
+import { desktop } from './desktop'
 import type { Route } from './route'
 import type { SceneRef } from './sceneIndex'
 import type { Theme } from './theme'
@@ -59,7 +60,7 @@ export function buildCommands({ route, stories, index, theme, actions: a }: Comm
   }
   if (story) {
     out.push(
-      { id: 'chapter', label: 'New chapter', hint: story.title, run: a.newChapter },
+      { id: 'chapter', label: 'New chapter', hint: story.title, keys: desktop ? 'Ctrl+N' : undefined, run: a.newChapter },
       { id: 'outline', label: 'Open the outline', hint: story.title, run: () => a.go({ name: 'story', storyId: story.id, tab: 'outline' }) },
       { id: 'audit', label: 'Read the whole outline', hint: 'Outline', run: () => { a.go({ name: 'story', storyId: story.id, tab: 'outline' }); a.openRight('audit') } },
       { id: 'cast', label: 'Open the cast', hint: story.title, run: () => a.go({ name: 'story', storyId: story.id, tab: 'cast' }) },
