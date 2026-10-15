@@ -16,6 +16,8 @@ const KIND_NAME: Record<WebKind, string> = { core: 'core idea', char: 'character
 const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 /** The layout is redone only when the space changes by more than this, so a sidebar opening does not reshuffle the Web. */
 const RELAYOUT = 0.15
+/** The legend floats over the right of a wide graph, so the nodes are laid out and fitted beside it. */
+const beside = (w: number) => (w >= 700 ? 250 : 0)
 
 interface Props {
   nodes: WebNode[]
@@ -58,7 +60,7 @@ export function Graph({ nodes, edges, picked = null, onPick, onOpen }: Props) {
   const shape = useMemo(() => nodes.map((n) => n.key).join(' ') + '\n' + edges.map((e) => `${e.from}>${e.to}:${e.kind}${e.weight}`).join(' '), [nodes, edges])
   const prev = useRef<Map<string, Point>>(new Map())
   const positions = useMemo(
-    () => (space ? layout(nodes, edges, { width: space.w, height: space.h, prev: prev.current }) : null),
+    () => (space ? layout(nodes, edges, { width: space.w - beside(space.w), height: space.h, prev: prev.current }) : null),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [shape, space],
   )
@@ -84,8 +86,9 @@ export function Graph({ nodes, edges, picked = null, onPick, onOpen }: Props) {
       }
       if (!Number.isFinite(x0)) return
       const pad = 16
-      const zoom = clampZoom(Math.min((size.w - 2 * pad) / (x1 - x0), (size.h - 2 * pad) / (y1 - y0), 1.5))
-      const next = { zoom, x: (size.w - (x1 - x0) * zoom) / 2 - x0 * zoom, y: (size.h - (y1 - y0) * zoom) / 2 - y0 * zoom }
+      const w = size.w - beside(size.w)
+      const zoom = clampZoom(Math.min((w - 2 * pad) / (x1 - x0), (size.h - 2 * pad) / (y1 - y0), 1.5))
+      const next = { zoom, x: (w - (x1 - x0) * zoom) / 2 - x0 * zoom, y: (size.h - (y1 - y0) * zoom) / 2 - y0 * zoom }
       setFitting(animate && !reducedMotion())
       setView(next)
     },
