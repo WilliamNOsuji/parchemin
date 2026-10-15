@@ -1,0 +1,7 @@
+/* the zoom bar the boards and the Web share, bottom right, as the mockup draws it */
+.cv-zoom { position: absolute; right: 14px; bottom: 14px; display: flex; align-items: center; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 3px; font-size: 11.5px; color: var(--muted); z-index: 2; }
+.cv-zoom button, .cv-zoom span { padding: 3px 7px; font-variant-numeric: tabular-nums; border-radius: 5px; }
+.cv-zoom span:not(.sep) { min-width: 4.5ch; text-align: center; }
+.cv-zoom button:hover:not(:disabled) { background: var(--surface-2); color: var(--text); }
+.cv-zoom button:disabled { opacity: .45; cursor: default; }
+.cv-zoom .sep { width: 1px; height: 14px; background: var(--border); padding: 0; }
