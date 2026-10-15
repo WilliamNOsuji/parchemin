@@ -1,8 +1,9 @@
 <!--
 The approved plan for the Canvas and the Web, copied from the planning session of 2026-10-14. It is the reference the
 wave prompts (WAVE-1.md, WAVE-2.md) point to: the design spec quoted from the mockup, the contract the scaffold built,
-and every unit. Status on 2026-10-15: the scaffold is done (commit d687722 on main); wave 1 is drafted but unfinished;
-wave 2 has not started. The "Coordinator steps" at the end describe the original run; the wave prompts supersede them.
+and every unit. Status on 2026-10-15: done. The scaffold is commit d687722; the wave-1 drafts on the other machine were
+not used, and all ten units were built again from this plan and merged into local main, with the fifteen final checks
+of WAVE-2.md passing. Nothing is pushed. The "Coordinator steps" at the end describe the original run.
 -->
 
 # The Canvas and the Web: implementation plan (batch)
