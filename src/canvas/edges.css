@@ -1,0 +1,16 @@
+/* A board's arrows: under the cards, in the board's coordinates, each with a name the writer gave it. */
+.edges, .edge-draft { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.edges .line { fill: none; stroke: var(--muted); stroke-width: 1.5; }
+.edges .edge.picked .line { stroke: var(--accent); stroke-width: 2; }
+.edges marker path { fill: var(--muted); stroke: none; }
+.edges marker.on path { fill: var(--accent); }
+.edges .hit { fill: none; stroke: transparent; stroke-width: 12; pointer-events: stroke; cursor: pointer; outline: none; }
+.edges .hit:focus-visible { stroke: color-mix(in srgb, var(--accent) 30%, transparent); }
+.edges text { font-family: var(--ui); font-size: 11px; font-weight: 500; fill: var(--text); paint-order: stroke; stroke: var(--bg); stroke-width: 4px; stroke-linejoin: round; pointer-events: all; cursor: pointer; }
+.edges .edge.picked text { fill: var(--accent); }
+.edges foreignObject { overflow: visible; pointer-events: all; }
+.edge-input { width: 100%; height: 26px; padding: 2px 8px; font-size: 11px; font-weight: 500; text-align: center; border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent-soft); }
+.edge-draft path { fill: none; stroke: var(--accent); stroke-width: calc(1.5px * var(--inv, 1)); stroke-dasharray: 4 4; }
+/* the side handles keep their size on screen at any zoom */
+.edge-hd { position: absolute; width: 12px; height: 12px; margin: -6px 0 0 -6px; border-radius: 50%; background: var(--surface); border: 1.5px solid var(--accent); transform: scale(var(--inv, 1)); cursor: crosshair; touch-action: none; z-index: 2; }
+.edge-hd:hover { background: var(--accent); }
