@@ -4,40 +4,22 @@ import { symbolName, WEB_COPY } from '../craft/web'
 import { createSymbol, db, deleteSymbol } from '../db'
 import type { Story, StorySymbol } from '../types'
 import { GrowingText } from './GrowingText'
+import { useAutosave } from './useAutosave'
 import { Icon } from './Icons'
 import { Section } from './RightSidebar'
 import './web-editors.css'
 
 /** One symbol: its name and its line, saved as the writer types. */
 function SymbolRow({ symbol, selected }: { symbol: StorySymbol; selected: boolean }) {
-  const [s, setS] = useState(symbol)
-  const latest = useRef(symbol)
-  const timer = useRef<number | undefined>(undefined)
-  const dirty = useRef(false)
+  const [s, update] = useAutosave(symbol, (id, patch) => db.symbols.update(id, { ...patch, updatedAt: Date.now() }))
   const row = useRef<HTMLLIElement>(null)
-
-  const flush = () => {
-    window.clearTimeout(timer.current)
-    if (!dirty.current) return Promise.resolve()
-    dirty.current = false
-    const { id, ...changes } = latest.current
-    return db.symbols.update(id, { ...changes, updatedAt: Date.now() })
-  }
-  const update = (patch: Partial<StorySymbol>) => {
-    latest.current = { ...latest.current, ...patch }
-    dirty.current = true
-    setS(latest.current)
-    window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(flush, 500)
-  }
-  useEffect(() => () => void flush(), []) // eslint-disable-line react-hooks/exhaustive-deps
   // a symbol just made, or picked in the Web, is ready to name
   useEffect(() => {
     if (!selected) return
     const name = row.current?.querySelector('textarea')
     name?.scrollIntoView({ block: 'nearest' })
-    if (!latest.current.name.trim()) name?.focus()
-  }, [selected])
+    if (!s.name.trim()) name?.focus()
+  }, [selected]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <li ref={row} className={`symbol${selected ? ' active' : ''}`}>
@@ -56,8 +38,6 @@ function SymbolRow({ symbol, selected }: { symbol: StorySymbol; selected: boolea
           title="Delete"
           onClick={async () => {
             if (!window.confirm(WEB_COPY.deleteSymbol(symbolName(s)))) return
-            window.clearTimeout(timer.current)
-            dirty.current = false
             await deleteSymbol(s.id)
           }}
         >
@@ -73,6 +53,8 @@ function SymbolRow({ symbol, selected }: { symbol: StorySymbol; selected: boolea
 export function SymbolsPanel({ story, selectedId }: { story: Story; selectedId?: string }) {
   const symbols = useLiveQuery(() => db.symbols.where('storyId').equals(story.id).sortBy('createdAt'), [story.id])
   const [made, setMade] = useState<string | undefined>()
+  // a symbol just made is the one in view, until the Web picks another
+  useEffect(() => setMade(undefined), [selectedId])
   if (!symbols) return null
   return (
     <Section title="Symbols" count={symbols.length || undefined}>

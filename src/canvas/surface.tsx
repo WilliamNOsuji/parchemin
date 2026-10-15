@@ -201,6 +201,8 @@ export function CanvasSurface({ doc, onChange, renderNode, under, over, picked, 
   const onPointerMove = (e: PointerEvent<HTMLDivElement>) => {
     const g = gesture.current
     if (!g || g.pointer !== e.pointerId) return
+    // the button came up outside the board before the drag began, so no pointerup ever arrived here
+    if (e.pointerType === 'mouse' && !(e.buttons & 1)) return onPointerCancel()
     const dx = e.clientX - (g.kind === 'marquee' ? 0 : g.start.x)
     const dy = e.clientY - (g.kind === 'marquee' ? 0 : g.start.y)
     const z = viewRef.current.zoom
@@ -295,7 +297,7 @@ export function CanvasSurface({ doc, onChange, renderNode, under, over, picked, 
       const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0
       const ids = nodesPicked()
       // with nothing picked, the arrows look around the board instead
-      if (ids.length) onChange(moveBy(doc, movingSet(doc, ids), dx, dy))
+      if (ids.length) onChange(moveBy(doc, movingSet(doc, ids), dx, dy, false))
       else setView((v) => ({ ...v, x: v.x - dx * 3, y: v.y - dy * 3 }))
     } else if (e.key === 'Escape' && picked.length) {
       e.preventDefault()

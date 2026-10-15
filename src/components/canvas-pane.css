@@ -1,0 +1,25 @@
+/* the board's name in the crumbs, renamed where it sits */
+.crumb-name { border: 1px solid transparent; background: transparent; padding: 1px 4px; margin-left: -4px; font-size: 12px; font-weight: 500; color: var(--text); width: auto; min-width: 6ch; max-width: 40ch; box-shadow: none; border-radius: 4px; text-overflow: ellipsis; }
+.crumb-name:hover { border-color: var(--border); background: var(--surface); }
+.crumb-name:focus { border-color: var(--accent); background: var(--surface); }
+.canvas-acts { flex-wrap: nowrap; }
+.canvas-acts .notice:empty { display: none; }
+.canvas-acts .notice { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 40ch; }
+/* a narrow pane keeps the crumbs and the menu; Fit sits in the zoom bar */
+@container (max-width: 640px) {
+  .canvas-acts .fit-btn, .canvas-acts .notice { display: none; }
+}
+/* the canvas's sidebar */
+.board-row { display: flex; align-items: center; gap: 2px; min-width: 0; }
+.board-row > .snap { flex: 1; min-width: 0; }
+.board-row .menu { flex: none; }
+.board-row input { flex: 1; }
+.sel-colours { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.sel-colours button { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid transparent; }
+.sel-colours button.none { background: var(--surface); border-color: var(--border); }
+.sel-colours button[aria-pressed='true'] { box-shadow: 0 0 0 2px var(--surface-2), 0 0 0 3.5px var(--text); }
+.sel-ends { display: flex; gap: 14px; flex-wrap: wrap; }
+.sel-ends label { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; }
+.chg.facts > span:first-child { flex: none; }
+.chg.facts > span:last-child { white-space: normal; text-align: right; }
+.chg.facts .nb { white-space: nowrap; }

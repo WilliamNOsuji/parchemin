@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react'
 import type { Point } from '../canvas/types'
 import { clampZoom, ZoomBar } from '../components/ZoomBar'
+import { LINK_COLOR } from '../craft/web'
 import { layout } from './layout'
 import type { WebEdge, WebFilters, WebKind, WebNode } from './types'
 import './web.css'
@@ -234,11 +235,11 @@ export function Graph({ nodes, edges, picked = null, onPick, onOpen }: Props) {
 
 const LEGEND: { kind: WebKind; label: string; color: string }[] = [
   { kind: 'core', label: 'Core ideas', color: 'var(--accent)' },
-  { kind: 'char', label: 'Characters', color: 'var(--revised)' },
-  { kind: 'set', label: 'Settings', color: 'var(--place)' },
-  { kind: 'sym', label: 'Symbols', color: 'var(--draft)' },
-  { kind: 'ch', label: 'Chapters', color: 'var(--muted)' },
-  { kind: 'board', label: 'Boards', color: 'var(--text)' },
+  { kind: 'char', label: 'Characters', color: LINK_COLOR.character },
+  { kind: 'set', label: 'Settings', color: LINK_COLOR.setting },
+  { kind: 'sym', label: 'Symbols', color: LINK_COLOR.symbol },
+  { kind: 'ch', label: 'Chapters', color: LINK_COLOR.chapter },
+  { kind: 'board', label: 'Boards', color: LINK_COLOR.board },
 ]
 
 function Switch({ on, label, onChange }: { on: boolean; label: string; onChange: (on: boolean) => void }) {

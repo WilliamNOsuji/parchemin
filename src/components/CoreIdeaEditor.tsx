@@ -1,7 +1,7 @@
 import Placeholder from '@tiptap/extension-placeholder'
 import { EditorContent, useEditor } from '@tiptap/react'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { ideaTitle, LINK_COLOR, LINK_GROUPS, linkLabel, linkOptions, sameLink, WEB_COPY } from '../craft/web'
 import { db, setAsideCoreIdea } from '../db'
 import { storyKit } from '../editorSchema'
@@ -10,6 +10,7 @@ import { Icon } from './Icons'
 import { Modal } from './Modal'
 import { Section } from './RightSidebar'
 import { Toolbar } from './Toolbar'
+import { useAutosave } from './useAutosave'
 import './web-editors.css'
 
 function IdeaDoc({ html, onChange }: { html: string; onChange: (html: string) => void }) {
@@ -73,28 +74,10 @@ function LinkPicker({ options, links, onToggle, onClose }: { options: ReturnType
  * the writer says carry it. Each of those is a thread in the Web. Never exported.
  */
 export function CoreIdeaEditor({ idea, story, scenes, onSetAside }: { idea: CoreIdea; story: Story; scenes: Scene[]; onSetAside: () => void }) {
-  const [c, setC] = useState(idea)
+  const [c, update, flush] = useAutosave(idea, (id, patch) => db.coreIdeas.update(id, { ...patch, updatedAt: Date.now() }))
   const [picking, setPicking] = useState(false)
-  const latest = useRef(idea)
-  const timer = useRef<number | undefined>(undefined)
-  const dirty = useRef(false)
-
-  const flush = () => {
-    window.clearTimeout(timer.current)
-    if (!dirty.current) return Promise.resolve()
-    dirty.current = false
-    // update, not put: a late save must not bring back an idea that was just moved to the drawer
-    const { id, ...changes } = latest.current
-    return db.coreIdeas.update(id, { ...changes, updatedAt: Date.now() })
-  }
-  const update = (patch: Partial<CoreIdea>) => {
-    latest.current = { ...latest.current, ...patch }
-    dirty.current = true
-    setC(latest.current)
-    window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(flush, 500)
-  }
-  useEffect(() => () => void flush(), []) // eslint-disable-line react-hooks/exhaustive-deps
+  // the links as they stand, so two quick toggles both count before the next render
+  const links = useRef(idea.carriedBy)
 
   const parts = useLiveQuery(async () => {
     const [characters, settings, symbols, boards] = await Promise.all([
@@ -108,8 +91,9 @@ export function CoreIdeaEditor({ idea, story, scenes, onSetAside }: { idea: Core
   const options = useMemo(() => linkOptions({ scenes, characters: parts?.characters ?? [], settings: parts?.settings ?? [], symbols: parts?.symbols ?? [], boards: parts?.boards ?? [] }), [scenes, parts])
 
   const toggle = (link: WebLink) => {
-    const has = latest.current.carriedBy.some((l) => sameLink(l, link))
-    update({ carriedBy: has ? latest.current.carriedBy.filter((l) => !sameLink(l, link)) : [...latest.current.carriedBy, link] })
+    const has = links.current.some((l) => sameLink(l, link))
+    links.current = has ? links.current.filter((l) => !sameLink(l, link)) : [...links.current, link]
+    update({ carriedBy: links.current })
   }
   // chips read in the order of the picker's groups, so chapters come first, then people, places and things
   const order = (k: WebLinkKind) => LINK_GROUPS.findIndex((g) => g.kind === k)

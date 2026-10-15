@@ -1,5 +1,6 @@
 /* A board's arrows: under the cards, in the board's coordinates, each with a name the writer gave it. */
 .edges, .edge-draft { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.edges { z-index: 0; }
 .edges .line { fill: none; stroke: var(--muted); stroke-width: 1.5; }
 .edges .edge.picked .line { stroke: var(--accent); stroke-width: 2; }
 .edges marker path { fill: var(--muted); stroke: none; }

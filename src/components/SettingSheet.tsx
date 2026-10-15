@@ -1,35 +1,16 @@
-import { useEffect, useRef, useState } from 'react'
+import { useState } from 'react'
 import { propsFrom, SETTING_COPY, SETTING_FIELDS, settingName } from '../craft/settings'
 import { db, setAsideSetting } from '../db'
 import type { Setting } from '../types'
 import { GrowingText } from './GrowingText'
+import { useAutosave } from './useAutosave'
 import './settings.css'
 
 /** A setting sheet: the name, then the place asked obstacle-first, saved as the writer types. */
 export function SettingSheet({ setting, onSetAside }: { setting: Setting; onSetAside?: () => void }) {
-  const [s, setS] = useState(setting)
+  const [s, update, flush] = useAutosave(setting, (id, patch) => db.settings.update(id, { ...patch, updatedAt: Date.now() }))
   // props are typed one per line, so the text keeps the line being typed until it is saved as a list
   const [propsText, setPropsText] = useState(() => setting.props.join('\n'))
-  const latest = useRef(setting)
-  const timer = useRef<number | undefined>(undefined)
-  const dirty = useRef(false)
-
-  const flush = () => {
-    window.clearTimeout(timer.current)
-    if (!dirty.current) return Promise.resolve()
-    dirty.current = false
-    // update, not put: a late save must not bring back a setting that was just moved to the drawer
-    const { id, ...changes } = latest.current
-    return db.settings.update(id, { ...changes, updatedAt: Date.now() })
-  }
-  const update = (patch: Partial<Setting>) => {
-    latest.current = { ...latest.current, ...patch }
-    dirty.current = true
-    setS(latest.current)
-    window.clearTimeout(timer.current)
-    timer.current = window.setTimeout(flush, 500)
-  }
-  useEffect(() => () => void flush(), []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="setting-sheet">
