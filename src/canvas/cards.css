@@ -1,0 +1,55 @@
+/* Cards on a board, as the mockup draws them. The board is the one place cards take a tinted wash and a resting shadow. */
+.cc { position: relative; background: var(--surface); border: 1.5px solid var(--border); border-radius: 8px; padding: 10px 12px; font-size: 12px; line-height: 1.4; color: var(--text); overflow: hidden; box-shadow: 0 1px 2px rgba(0, 0, 0, .05); }
+.cc p { margin: 0; overflow-wrap: anywhere; } .cc p + p { margin-top: 4px; } .cc p span { color: var(--muted); }
+.cc p.empty { color: var(--muted); font-style: italic; }
+.cc .note-text { white-space: pre-wrap; }
+.cc .mono { font-family: var(--mono); font-size: 11.5px; }
+.cc-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; min-width: 0; }
+.cc-head > div { min-width: 0; }
+.cc-head b { font-weight: 600; display: block; font-size: 12.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc-head small { display: block; color: var(--muted); font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc .av { width: 28px; height: 28px; font-size: 12px; }
+.cc.char { border-color: var(--accent); background: color-mix(in srgb, var(--accent) 5%, var(--surface)); }
+.cc.chapter.draft { border-color: var(--draft); } .cc.chapter.idea { border-color: var(--idea); }
+.cc.chapter.revised { border-color: var(--revised); } .cc.chapter.done { border-color: var(--done); }
+.cc.setting { border-color: var(--place); background: color-mix(in srgb, var(--place) 5%, var(--surface)); }
+.cc.question { border-color: var(--draft); background: color-mix(in srgb, var(--draft) 8%, var(--surface)); }
+.cc.group { background: color-mix(in srgb, var(--accent) 6%, transparent); border: 1.5px dashed color-mix(in srgb, var(--accent) 45%, transparent); box-shadow: none; overflow: visible; padding: 0; }
+.g-label { position: absolute; left: 10px; top: -10px; background: var(--bg); padding: 0 6px; font-size: 11.5px; font-weight: 600; color: var(--accent); white-space: nowrap; max-width: calc(100% - 20px); overflow: hidden; text-overflow: ellipsis; cursor: default; line-height: 1.6; }
+.cc.image { padding: 0; } .cc.image img { display: block; width: 100%; height: 100px; object-fit: cover; }
+.cc.image small { display: block; padding: 6px 10px; color: var(--muted); font-size: 11px; border-top: 1px solid var(--border); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cc.gone { border-style: dashed; background: transparent; box-shadow: none; color: var(--muted); display: grid; place-items: center; text-align: center; }
+.cc textarea.cc-text { font-size: 12px; line-height: 1.4; }
+.cc-inplace { font-size: 11.5px; padding: 2px 6px; }
+.cc.group .cc-inplace { position: absolute; left: 6px; top: -13px; width: min(240px, calc(100% - 12px)); font-weight: 600; }
+.cc.image .cc-inplace { margin: 4px 6px; width: calc(100% - 12px); }
+
+/* the bar over a picked card */
+.cc-bar { position: absolute; display: flex; gap: 2px; align-items: center; background: var(--surface); border: 1px solid var(--border); border-radius: 7px; padding: 3px; box-shadow: 0 4px 14px rgba(0, 0, 0, .1); font-size: 11.5px; color: var(--muted); transform-origin: 0 100%; white-space: nowrap; z-index: 3; }
+.cc-bar > button, .cc-bar .icon-btn { padding: 3px 7px; border-radius: 5px; display: inline-flex; align-items: center; gap: 5px; color: var(--muted); }
+.cc-bar > button:hover, .cc-bar .icon-btn:hover { background: var(--surface-2); color: var(--text); }
+.cc-bar .swatch { width: 12px; height: 12px; border-radius: 50%; background: var(--accent); padding: 0; margin: 0 4px; flex: none; }
+.cc-bar .swatch:hover { box-shadow: 0 0 0 2px var(--surface-2); }
+.cc-bar .swatch.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 3.5px var(--text); }
+.cc-bar .swatch.none { background: var(--surface); border: 1.5px solid var(--border); }
+.cc-colours { display: inline-flex; align-items: center; gap: 2px; padding: 0 2px; }
+.cc-bar .menu-pop { font-size: 12.5px; color: var(--text); }
+
+/* the toolbar at the bottom of a board */
+.cv-tools { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); display: flex; gap: 2px; background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 4px; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); white-space: nowrap; z-index: 2; }
+.cv-tools button { display: inline-flex; align-items: center; gap: 6px; padding: 5px 9px; border-radius: 7px; font-size: 11.5px; color: var(--muted); }
+.cv-tools button:hover { color: var(--text); background: var(--surface-2); }
+.cv-tools button.on { color: var(--text); background: var(--surface-2); }
+.cv-tools svg { width: 15px; height: 15px; }
+/* a narrow board keeps the icons and drops the words, and moves clear of the zoom */
+@container (max-width: 640px) {
+  .cv-tools { left: 14px; transform: none; }
+  .cv-tools .w { display: none; }
+  .cv-tools button { padding: 6px 8px; }
+}
+
+/* "Add from the story" */
+.add-pop { min-width: 230px; max-height: min(60vh, 420px); overflow: auto; }
+.add-pop button { display: flex; align-items: center; gap: 8px; }
+.add-pop .add-h { font-size: 10.5px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: .05em; padding: 8px 10px 2px; }
+.add-pop .add-none { padding: 6px 10px; }
