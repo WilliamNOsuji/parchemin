@@ -138,9 +138,11 @@ When a feature idea comes up, run it through these questions. A "no" to the firs
 | Gentle habit | `src/components/Why.tsx` (today's words as seven bars, no streak), `logWords` in `src/db.ts` |
 | Tomorrow starts with a sentence waiting | `waiting` on a chapter (`src/types.ts`), shown by `src/components/Home.tsx`, written in the Notes panel |
 | Finishing is learnable | Finish line in `src/components/OutlinePane.tsx`, the audit in `src/components/AuditPanel.tsx`, `pace` in `src/craft/audit.ts` |
-| Craft without a cage | `src/craft/` (voices, hero check, audit, dialogue, cast), the optional chapter plan in `src/components/Panels.tsx`, the Dialogue panel in `src/components/DialoguePanel.tsx`, the cast read against itself in `src/components/CastPane.tsx` |
+| Craft without a cage | `src/craft/` (voices, hero check, audit, dialogue, cast, setting sheets asked obstacle-first in `settings.ts`), the optional chapter plan in `src/components/Panels.tsx`, the Dialogue panel in `src/components/DialoguePanel.tsx`, the cast read against itself in `src/components/CastPane.tsx` |
 | Calm | The shell in `src/App.tsx` and `src/styles.css`: one accent, chrome a shade darker than the page, both sidebars collapsible, focus mode |
-| The writer owns the work | Local-first IndexedDB in `src/db.ts`, backup in `src/backup.ts`, safekeeping in `src/safekeeping.ts`, exports in `src/export.ts`, fonts bundled in `src/main.tsx`, the desktop app's own scheme with no updater and no outside request in `electron/main.mts`, `LICENSE` (AGPL-3.0-or-later) |
+| Structure is a skeleton, not a cage | The boards in `src/canvas/` and `src/components/CanvasPane.tsx`: one surface for whatever the writer needs to lay out, live cards from the story, arrows the writer names, and nothing on a board touches the manuscript |
+| The answers belong to the writer | The Web in `src/web/`: a thread is a link the writer made in a core idea, a grey line only means two names appear together in the text (`cooccur.ts`), and a chapter no idea names says so in words, with no score |
+| The writer owns the work | Local-first IndexedDB in `src/db.ts`, boards saved and opened as JSON Canvas files in `src/canvas/canvasFiles.ts`, the Web and its core ideas kept out of every export (`src/export.ts` reads only stories and chapters), backup in `src/backup.ts`, safekeeping in `src/safekeeping.ts`, exports in `src/export.ts`, fonts bundled in `src/main.tsx`, the desktop app's own scheme with no updater and no outside request in `electron/main.mts`, `LICENSE` (AGPL-3.0-or-later) |
 | Safe to cut | The drawer: `setAside*` and `putBack` in `src/db.ts`, `src/components/DrawerSection.tsx` |
 | The story is never written for you | Prompts in `src/prompts.ts`; the AI guide's limits in `AI-POLICY.md` |
 
@@ -168,10 +170,14 @@ order yet.
    the title bar, right sidebar, status bar, command palette, theme toggle, the cast grid, the outline as rows), and
    the website under `site/`.
    Done on 2026-10-13: the Electron wrapper (`electron/`), the window as the mockup draws it, backups and exports
-   through the system's save dialog, and Ctrl+N. Still to do: the library folder, the canvas, the installer, and the Web.
+   through the system's save dialog, and Ctrl+N.
+   Done on 2026-10-15: the canvas (boards of live cards, notes, groups, pictures and named arrows, saved and opened as
+   JSON Canvas) and the Web in its no-guide form (core ideas, the threads the writer declares, grey lines where names
+   appear together in the text, never exported). Still to do: the library folder and the installer; the guide's part of
+   the Web waits for the guide.
 
-Still planned from before: setting sheets (obstacle-first, with a prop list) and chapter guides. The cast grid view was
-done on 2026-10-12 with the shell.
+Still planned from before: chapter guides. The cast grid view was done on 2026-10-12 with the shell, and setting sheets
+(obstacle-first, with a prop list) on 2026-10-15 with the Web.
 Done on 2026-10-09: the dialogue test where you cover the names, as part of the Dialogue panel (`research/notes/14-dialogue.md`). Not now: a first-run timing test and French-first work. Parked: an animated
 poem mode, an idea to try with poets first.
 

@@ -6,8 +6,8 @@ The brief for anyone, person or agent, who builds on this project. Paste it at t
 ---
 
 You are developing Parchemin, a calm, local-first writing app for stories and the characters in them. The web app under
-`src/` and the website under `site/` are built and deployable, and the desktop app, the library folder, the canvas
-and the Web are decided and still to build. The look is settled: `design/parchemin-desktop.html` is the design the
+`src/` and the website under `site/` are built and deployable, the desktop app, the canvas and the Web (without the AI
+guide) are built, and the library folder and the guide are decided and still to build. The look is settled: `design/parchemin-desktop.html` is the design the
 team chose and likes, and the shell in `src/` was built from it. The person using it is a writer, alone at a desk with
 a book that matters to them. Build for that person.
 
@@ -24,7 +24,7 @@ rather than restating them somewhere new.
 | `DESIGN.md` | The design system as shipped: tokens, type, the chrome-shade and two-voices rules, the do and don't lists |
 
 The mockup is the design, for every screen, built or not. The one under `src/` matches it; a screen still to build
-(Canvas, Web, the desktop's Safekeeping) is drawn there already, down to the copy. Where the build and the mockup
+(the desktop's Safekeeping, the guide's panels in the Web) is drawn there already, down to the copy. Where the build and the mockup
 differ, the mockup wins unless `DESIGN.md` records the difference as deliberate. Its "Open questions for the team" are
 still open, so ask rather than decide them.
 
@@ -62,8 +62,12 @@ These conventions are not written down elsewhere. Match them.
 
 - **Stored data.** A change to the shape of what is stored is a new `this.version(n)` with an `upgrade` in `src/db.ts`;
   earlier versions stay exactly as they are. A new table that holds the writer's words is added to the backup
-  (`TABLES` and `FIELDS` in `src/backup.ts`) and to change tracking (`TRACKED` in `src/changes.ts`), and restore keeps
-  merging by id without deleting. HTML that comes from outside (a restore, an import) is rebuilt through `cleanHtml` in
+  and to change tracking (`TRACKED` in `src/changes.ts`), and restore keeps merging by id without deleting. A table
+  added after the first backup files were made goes into `OPTIONAL` and `OPTIONAL_FIELDS` in `src/backup.ts`, not
+  `TABLES`, so an older file without it still restores and an older build drops it quietly; the five tables of the
+  boards and the Web (`boards`, `images`, `coreIdeas`, `settings`, `symbols`) are added that way. A board's document
+  has one owner in memory (`src/canvas/boardStore.ts`): the pane and the sidebar edit it only through that store, and
+  only a board's name is written straight to the database. HTML that comes from outside (a restore, an import) is rebuilt through `cleanHtml` in
   `src/sanitize.ts`; images are embedded data URLs only.
 - **Chapters without their text.** Anything that lists chapters (tree, tabs, home, outline rows) reads the `chapters`
   mirror through `useSceneIndex` in `src/sceneIndex.ts`. Only the editor and the pane that owns a chapter read its
@@ -128,12 +132,14 @@ code.
    source mode, frontmatter, paid sync. Open for the team: chapters in the tree or a list in the pane, what the right
    sidebar opens by default, which shortcuts ship on.
 2. **Import and export.** `.docx`, `.md` and `.txt` in; a manuscript `.docx`, "Copy for AO3" and poem-safe formats out.
-3. **The canvas.** Chapters, characters and settings as live cards; notes, groups and sketches that exist only on the
-   board; arrows the writer names; each board saved as JSON Canvas in the library folder. Nothing on a board touches the
-   manuscript.
-4. **The Web.** Core ideas as documents in a graph, threads as evidence, deviation shown as thin or missing threads,
-   proposals accepted or refused by the writer, for the writer only and never exported. It needs the AI guide, and the
-   unit of evidence is still open.
+3. **The canvas.** Built on 2026-10-15 (`src/canvas/`, `src/components/CanvasPane.tsx`): chapters, characters and
+   settings as live cards; notes, groups and pictures that exist only on the board; arrows the writer names; each board
+   a JSON Canvas document, saved and opened as a `.canvas` file. Nothing on a board touches the manuscript. Still to do:
+   each board as a file in the library folder.
+4. **The Web.** Built on 2026-10-15 in its no-guide form (`src/web/`, `src/components/WebPane.tsx`): core ideas as
+   documents in a graph, threads the writer declares, grey lines where names appear together in the text, a chapter no
+   idea names shown as "no thread", for the writer only and never exported. Still to do, with the AI guide: threads it
+   finds in the text, proposals accepted or refused by the writer, reading on save. The unit of evidence is still open.
 5. **The AI guide**, self-hosted, optional, off by default, under `AI-POLICY.md`.
 6. The rest of the roadmap in `PHILOSOPHY.md`: between devices, writing support, setting sheets, chapter guides.
 
