@@ -1,0 +1,10 @@
+/* setting sheets and the pick lists of the right sidebar (settings, boards) */
+.setting-sheet { display: flex; flex-direction: column; gap: 9px; }
+.setting-name { font-family: var(--serif); font-size: 16px; font-weight: 600; }
+.setting-sheet .field > small.hint { margin-top: 1px; }
+.pick-list { display: flex; flex-direction: column; gap: 6px; }
+.pick-list button.snap { width: 100%; text-align: left; transition: border-color .15s; }
+.pick-list button.snap:hover { border-color: color-mix(in srgb, var(--accent) 50%, var(--border)); }
+.pick-list button.snap.active { border-color: var(--accent); }
+.pick-list .snap > b { min-width: 0; }
+.pick-list .acts { margin-top: 2px; }
