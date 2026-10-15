@@ -1,6 +1,6 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { nanoid } from 'nanoid'
-import { useRef, useState, type ReactNode } from 'react'
+import { Fragment, useRef, useState, type ReactNode } from 'react'
 import { dropBoard, flushBoard, patchEdge, patchNode, setBoardDoc, useBoardDoc } from '../canvas/boardStore'
 import { openCanvasFile, saveCanvasFile } from '../canvas/canvasFiles'
 import { removeFromDoc } from '../canvas/geometry'
@@ -316,7 +316,8 @@ function OnThisBoard({ doc, board, story }: { doc: CanvasDoc; board: Board; stor
   // plain counts of what is there; a kind the board has none of is left out
   const list = (parts: [number, string, string][]) => {
     const items = parts.filter(([n]) => n > 0).map(([n, one, many]) => plural(n, one, many))
-    return items.length ? items.map((t, i) => <span key={t} className="nb">{i ? ` · ${t}` : t}</span>) : 'nothing yet'
+    // each count stays whole; the line breaks only between them
+    return items.length ? items.map((t, i) => <Fragment key={t}>{i ? ' · ' : ''}<span className="nb">{t}</span></Fragment>) : 'nothing yet'
   }
   const fromStory = list([[count('character'), 'character', 'characters'], [count('chapter'), 'chapter', 'chapters'], [count('setting'), 'setting', 'settings']])
   const onlyHere = list([[count('note'), 'note', 'notes'], [count('group'), 'group', 'groups'], [count('image'), 'picture', 'pictures'], [count('link') + count('file'), 'from another app', 'from another app']])
