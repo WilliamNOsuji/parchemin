@@ -1,0 +1,48 @@
+/* The Web, as the mockup draws it: Obsidian's graph with the story's parts as nodes. */
+.web { flex: 1; position: relative; overflow: hidden; background: var(--bg); min-height: 0; }
+svg.graph { position: absolute; inset: 0; width: 100%; height: 100%; touch-action: none; cursor: grab; user-select: none; -webkit-user-select: none; }
+svg.graph:active { cursor: grabbing; }
+.graph .world { transform-origin: 0 0; }
+.graph .world.fitting { transition: transform 200ms ease; }
+.graph .e { stroke: var(--muted); opacity: .22; }
+.graph .e.t { stroke: var(--accent); opacity: .4; }
+.graph .e.hot { stroke: var(--accent); opacity: .95; }
+.graph .n { cursor: pointer; outline: none; }
+.graph .n circle { fill: var(--muted); stroke: var(--bg); stroke-width: 2; }
+.graph .n.core circle { fill: var(--accent); } .graph .n.char circle { fill: var(--revised); }
+.graph .n.set circle { fill: var(--place); } .graph .n.sym circle { fill: var(--draft); } .graph .n.board circle { fill: var(--text); }
+.graph .n.orphan circle { fill: var(--surface-2); stroke: var(--border); }
+.graph .n .ring { fill: none; stroke: var(--draft); stroke-width: 1.5; stroke-dasharray: 3 3; }
+.graph .n text { font-family: var(--ui); font-size: 11px; fill: var(--text); paint-order: stroke; stroke: var(--bg); stroke-width: 3px; stroke-linejoin: round; }
+.graph .n.core text { font-weight: 600; font-size: 12px; }
+.graph .n.far { opacity: .45; }
+/* a dimmed node shows itself in full while the pointer or the keyboard is on it */
+.graph .n.far:hover, .graph .n.far:focus-visible { opacity: 1; }
+.graph .n.picked circle { stroke: var(--text); stroke-width: 2.5; }
+/* the app's focus ring, drawn as a circle because an outline does not follow a node */
+.graph .n circle.fr { fill: none; stroke: none; }
+.graph .n:focus-visible circle.fr { stroke: var(--accent); stroke-width: 2; }
+.graph .n.picked circle.fr, .graph .n.orphan circle.fr { fill: none; }
+
+.gpanel { position: absolute; right: 14px; top: 14px; width: 226px; background: var(--surface); border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, .12); font-size: 11.5px; overflow: hidden; z-index: 2; }
+.gpanel-toggle { display: none; width: 100%; padding: 6px 10px; align-items: center; justify-content: space-between; gap: 8px; font-size: 11.5px; font-weight: 500; color: var(--text); }
+.gsec { padding: 8px 10px; border-bottom: 1px solid var(--border); } .gsec:last-child { border-bottom: 0; }
+.gsec h5 { margin: 0 0 5px; font-size: 10.5px; text-transform: uppercase; letter-spacing: .05em; color: var(--muted); font-weight: 600; }
+.gline { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2.5px 0; }
+.gline > span:first-child { display: inline-flex; align-items: center; gap: 6px; font-variant-numeric: tabular-nums; }
+.gnote { color: var(--muted); padding: 2.5px 0; line-height: 1.4; }
+.gk { width: 9px; height: 9px; border-radius: 50%; display: inline-block; flex: none; }
+.switch { width: 26px; height: 14px; border-radius: 7px; background: var(--border); position: relative; flex: none; border: 0; padding: 0; }
+.switch::after { content: ''; position: absolute; top: 2px; left: 2px; width: 10px; height: 10px; border-radius: 50%; background: var(--surface); box-shadow: 0 1px 2px rgba(0, 0, 0, .25); transition: left .15s; }
+.switch.on { background: var(--accent); } .switch.on::after { left: 14px; }
+.core-doc { font-family: var(--serif); font-size: 13px; line-height: 1.5; }
+
+/* a narrow pane keeps the graph in view: the panel folds into its button */
+@container (max-width: 560px) {
+  .gpanel { width: auto; max-width: calc(100% - 28px); right: 10px; top: 10px; }
+  .gpanel-toggle { display: flex; }
+  .gpanel:not(.open) .gpanel-body { display: none; }
+  .gpanel.open { width: 226px; }
+  .gpanel.open .gpanel-toggle { border-bottom: 1px solid var(--border); }
+}
+@media (prefers-reduced-motion: reduce) { .graph .world.fitting { transition: none; } }
