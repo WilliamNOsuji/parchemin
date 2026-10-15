@@ -64,7 +64,6 @@ const Slot = memo(function Slot({ node, rect, picked, render }: { node: CanvasNo
       aria-label={KIND_LABEL[kind]}
       style={{ left: rect.x, top: rect.y, width: rect.width, height: rect.height }}
     >
-      {render(node, picked)}
       {/* a group is picked by its label or its edges, so the board stays open inside it */}
       {kind === 'group' && (
         <>
@@ -74,6 +73,7 @@ const Slot = memo(function Slot({ node, rect, picked, render }: { node: CanvasNo
           <span className="g-edge l" />
         </>
       )}
+      {render(node, picked)}
       {picked && CORNERS.map((c) => <span key={c} className={`hd ${c}`} data-corner={c} aria-hidden />)}
     </div>
   )
@@ -185,7 +185,7 @@ export function CanvasSurface({ doc, onChange, renderNode, under, over, picked, 
       return
     }
     if (slot && id) {
-      slot.setPointerCapture(e.pointerId)
+      // the pointer is captured only once a drag starts, so a click or a double-click still reaches what is under it
       const wasPicked = picked.includes(id)
       // a card is picked as it is grabbed, so dragging an unpicked card moves just that card
       if (!e.shiftKey && !wasPicked) onPick([id])
@@ -207,6 +207,7 @@ export function CanvasSurface({ doc, onChange, renderNode, under, over, picked, 
     if (g.kind === 'move') {
       if (g.additive || !g.ids.length) return
       if (!g.moved && Math.hypot(dx, dy) < ACTIVATE) return
+      if (!g.moved) el.current?.setPointerCapture(e.pointerId)
       g.moved = true
       setLive({ move: { ids: new Set(g.ids), dx: dx / z, dy: dy / z } })
     } else if (g.kind === 'resize') {
