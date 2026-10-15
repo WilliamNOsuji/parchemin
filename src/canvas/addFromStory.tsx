@@ -2,6 +2,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { useEffect, useRef, useState } from 'react'
 import { Icon } from '../components/Icons'
 import { addImage, createSetting, db } from '../db'
+import { settingName } from '../craft/settings'
 import { cleanImage } from '../sanitize'
 import type { Scene, Story } from '../types'
 import { newNode } from './cards'
@@ -9,18 +10,32 @@ import { kindOf, refOf, type CanvasDoc, type CanvasNode } from './types'
 
 /** The longest side a picture keeps on a board, so a photo does not swell the library or the backup. */
 const MAX_SIDE = 1600
+/** A picture this small is kept exactly as it is, animation and all. */
+const KEEP_BYTES = 1_500_000
+
+const readAsDataUrl = (file: File) =>
+  new Promise<string>((resolve, reject) => {
+    const r = new FileReader()
+    r.onload = () => resolve(String(r.result))
+    r.onerror = () => reject(r.error)
+    r.readAsDataURL(file)
+  })
 
 async function shrink(file: File): Promise<string | null> {
   try {
     const bmp = await createImageBitmap(file)
     const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height))
+    if (scale === 1 && file.size <= KEEP_BYTES) {
+      bmp.close()
+      return cleanImage(await readAsDataUrl(file))
+    }
     const canvas = document.createElement('canvas')
     canvas.width = Math.round(bmp.width * scale)
     canvas.height = Math.round(bmp.height * scale)
     canvas.getContext('2d')!.drawImage(bmp, 0, 0, canvas.width, canvas.height)
     bmp.close()
-    // a drawing keeps its transparency; a photo is kept as a JPEG
-    return cleanImage(file.type === 'image/png' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/jpeg', 0.85))
+    // a photo is kept as a JPEG; anything that may be see-through keeps its transparency as a WebP
+    return cleanImage(file.type === 'image/jpeg' ? canvas.toDataURL('image/jpeg', 0.85) : canvas.toDataURL('image/webp', 0.9))
   } catch {
     return null
   }
@@ -131,7 +146,7 @@ export function AddFromStory({ story, scenes, doc, onAdd, open: controlled, onOp
           {show('setting') && settings.length > 0 && <div className="add-h">Settings</div>}
           {show('setting') && settings.map((s) => (
             <button key={s.id} role="menuitem" onClick={() => add(newNode('setting', { x: 0, y: 0 }, s.id))}>
-              <Icon name="place" size={13} /> {s.name.trim() || 'Unnamed setting'}
+              <Icon name="place" size={13} /> {settingName(s)}
             </button>
           ))}
           {nothing && <p className="hint add-none">{open === 'character' ? 'Everyone in the cast is on this board.' : open === 'chapter' ? 'Every chapter is on this board.' : 'Everything from the story is on this board.'}</p>}

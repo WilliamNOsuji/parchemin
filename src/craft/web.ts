@@ -1,4 +1,5 @@
 import type { Board, Character, Scene, Setting, StorySymbol, WebLink, WebLinkKind } from '../types'
+import { settingName } from './settings'
 
 /** The Web's copy, in one place, so the button, the palette and the hint say the same words. */
 export const WEB_COPY = {
@@ -44,7 +45,7 @@ export function linkOptions(t: LinkTargets): Record<WebLinkKind, { id: string; l
   return {
     chapter: t.scenes.map((s, i) => ({ id: s.id, label: `${i + 1} · ${s.title.trim() || 'Untitled'}` })),
     character: t.characters.map((c) => ({ id: c.id, label: c.name.trim() || 'Unnamed' })),
-    setting: t.settings.map((s) => ({ id: s.id, label: s.name.trim() || 'Unnamed setting' })),
+    setting: t.settings.map((s) => ({ id: s.id, label: settingName(s) })),
     symbol: t.symbols.map((s) => ({ id: s.id, label: symbolName(s) })),
     board: t.boards.map((b) => ({ id: b.id, label: b.name.trim() || 'Untitled board' })),
   }

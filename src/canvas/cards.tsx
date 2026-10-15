@@ -1,17 +1,21 @@
 import { useLiveQuery } from 'dexie-react-hooks'
 import { nanoid } from 'nanoid'
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { createContext, useContext, useEffect, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { Avatar } from '../components/Avatar'
 import { GrowingText } from '../components/GrowingText'
 import { Icon } from '../components/Icons'
 import { Menu } from '../components/Menu'
+import { settingName } from '../craft/settings'
 import { voiceById } from '../craft/voices'
 import { db } from '../db'
-import { STATUSES } from '../types'
+import { STATUSES, type Scene } from '../types'
 import { COLOR_CHOICES, colorOf, DEFAULT_SIZE, kindOf, pathFor, refOf, type CanvasDoc, type CanvasNode, type CardKind, type LiveKind, type Point } from './types'
 import './cards.css'
 
 const GONE = 'No longer in the story'
+
+/** The open story's chapters, from the pane that shows the board, so a chapter card never reads a manuscript itself. */
+export const BoardScenes = createContext<Scene[] | null>(null)
 
 /** A new card of a kind, centred on a point. A live card names what it shows by its path. */
 export function newNode(kind: CardKind, at: Point, ref?: string): CanvasNode {
@@ -75,12 +79,17 @@ function CharacterCard({ id, style }: { id: string; style?: CSSProperties }) {
 }
 
 function ChapterCard({ id, picked, style }: { id: string; picked: boolean; style?: CSSProperties }) {
-  const row = useLiveQuery(async () => {
+  // the board's pane hands down the story's chapters, read once; on its own, the card reads its chapter
+  const scenes = useContext(BoardScenes)
+  const own = useLiveQuery(async () => {
+    if (scenes) return undefined
     const s = await db.scenes.get(id)
     if (!s) return null
     const refs = await db.chapters.where('storyId').equals(s.storyId).sortBy('order')
     return { s, n: refs.findIndex((r) => r.id === id) + 1 }
-  }, [id])
+  }, [id, !!scenes])
+  const i = scenes ? scenes.findIndex((s) => s.id === id) : -1
+  const row = scenes ? (i < 0 ? null : { s: scenes[i], n: i + 1 }) : own
   const [draft, setDraft] = useState<string | null>(null)
   const timer = useRef<number | undefined>(undefined)
   const pending = useRef<string | null>(null)
@@ -133,7 +142,7 @@ function SettingCard({ id, style }: { id: string; style?: CSSProperties }) {
   if (s === null) return <Gone kind="setting" />
   return (
     <div className="cc setting" style={style}>
-      <Head lead={<Icon name="place" size={16} style={{ color: 'var(--place)' }} />} title={s.name.trim() || 'Unnamed setting'} sub="setting" />
+      <Head lead={<Icon name="place" size={16} style={{ color: 'var(--place)' }} />} title={settingName(s)} sub="setting" />
       {s.hard.trim() && <p><span>Hard because:</span> {s.hard}</p>}
       {s.props.length > 0 && <p><span>Props:</span> {s.props.join(', ')}</p>}
       {!s.hard.trim() && !s.props.length && <p className="empty">What makes it hard here?</p>}
@@ -176,7 +185,7 @@ function ImageCard({ id, style }: { id: string; style?: CSSProperties }) {
     <div className="cc image" style={style}>
       <img src={img.data} alt={img.name} draggable={false} />
       <InPlace value={img.name} label="Caption" onSave={(name) => void db.images.update(id, { name: name.trim() })}>
-        {(edit) => <small onDoubleClick={edit} title="Double-click to change the caption">{img.name || 'A picture'}</small>}
+        {(edit) => <small onDoubleClick={(e) => (e.stopPropagation(), edit())} title="Double-click to change the caption">{img.name || 'A picture'}</small>}
       </InPlace>
     </div>
   )
@@ -189,7 +198,15 @@ function NoteCard({ node, picked, style, onChange }: { node: Extract<CanvasNode,
   }, [picked])
   const question = node.color === '2' || node.color === '3'
   return (
-    <div className={`cc${question ? ' question' : ''}`} style={style} onDoubleClick={() => setEditing(true)}>
+    <div
+      className={`cc${question ? ' question' : ''}`}
+      style={style}
+      onDoubleClick={(e) => {
+        // writing in place is enough; the sidebar stays as it is
+        e.stopPropagation()
+        setEditing(true)
+      }}
+    >
       {editing ? (
         <GrowingText className="cc-text" autoFocus aria-label="Note" value={node.text} placeholder="Write a note" onChange={(e) => onChange({ text: e.target.value })} onBlur={() => setEditing(false)}
           onKeyDown={(e) => {
@@ -226,7 +243,7 @@ export function Card({ node, picked, onChange }: { node: CanvasNode; picked: boo
       return (
         <div className="cc group" style={style}>
           <InPlace value={node.type === 'group' ? (node.label ?? '') : ''} label="Group name" onSave={(label) => onChange({ label: label.trim() } as Partial<CanvasNode>)}>
-            {(edit) => <span className="g-label" onDoubleClick={edit} style={color ? { color } : undefined}>{(node.type === 'group' && node.label?.trim()) || 'Group'}</span>}
+            {(edit) => <span className="g-label" onDoubleClick={(e) => (e.stopPropagation(), edit())} style={color ? { color } : undefined}>{(node.type === 'group' && node.label?.trim()) || 'Group'}</span>}
           </InPlace>
         </div>
       )
