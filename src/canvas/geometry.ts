@@ -24,8 +24,8 @@ export function bounds(rects: Iterable<Rect>): Rect | null {
   return Number.isFinite(x0) ? { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } : null
 }
 
-/** The view that shows a rect whole in a viewport, centred, never closer than 100 %. */
-export function fitView(r: Rect, size: { w: number; h: number }, clamp: (z: number) => number, pad = 48): View {
+/** The view that shows a rect whole in a viewport, centred, never closer than 100 %, with room for arrows that loop outside the cards. */
+export function fitView(r: Rect, size: { w: number; h: number }, clamp: (z: number) => number, pad = 72): View {
   const zoom = clamp(Math.min((size.w - 2 * pad) / Math.max(r.width, 1), (size.h - 2 * pad) / Math.max(r.height, 1), 1))
   return { zoom, x: (size.w - r.width * zoom) / 2 - r.x * zoom, y: (size.h - r.height * zoom) / 2 - r.y * zoom }
 }

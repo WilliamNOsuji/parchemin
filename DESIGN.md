@@ -160,6 +160,16 @@ components:
     textColor: "{colors.ink}"
     rounded: "{rounded.xl}"
     width: "min(560px, 100%)"
+  canvas-card:
+    backgroundColor: "{colors.sheet}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.lg}"
+    padding: "10px 12px"
+  graph-legend:
+    backgroundColor: "{colors.sheet}"
+    textColor: "{colors.ink}"
+    rounded: "{rounded.lg}"
+    width: "226px"
 ---
 
 # Design System: Parchemin
@@ -201,14 +211,14 @@ Warm paper, warm ink, one violet, five small status dots.
 
 ### Status
 - **Idea** (`idea`, dark `idea-dark`), **Draft** (`draft`), **Revised** (`revised`), **Done** (`done`): the state of a chapter, as a dot in the tree, the tab and the outline row, and as the border of the status chip. Draft doubles as the status bar's warning dot; done as its "kept" dot.
-- **Place** (`place`, dark `place-dark`): settings, in the cast. Not on the website.
+- **Place** (`place`, dark `place-dark`): settings: the border and wash of a setting card on a board, the setting node in the Web, its dot in a chip. Not on the website.
 
 ### Named Rules
 **The One Accent Rule.** There is one accent. It marks where you are and the one thing to do next. At most one filled accent button is visible in a view; everything else is bordered or quiet.
 
 **The Chrome Shade Rule.** The ribbon, sidebars and bars are one tone darker than the page in both themes. The page is the lightest thing in light mode and the darkest in dark mode; sheets step one tone the other way.
 
-**The Dots Only Rule.** Status colours appear as 8 px dots (7 px in the status bar and outline marks) and as a chip's border. They never colour text, fill a row or tint a background.
+**The Dots Only Rule.** Status colours appear as 8 px dots (7 px in the status bar and outline marks) and as a chip's border. They never colour text, fill a row or tint a background. Two screens break it on purpose, because the mockup draws them that way (see Components): a board borders and lightly washes its cards by kind, and the Web fills its nodes by kind.
 
 ## Typography
 
@@ -251,6 +261,8 @@ Flat, with borders. Depth is a 1 px `line` border and a one-step tone change: pa
 - **Bottom sheet** (`box-shadow: 0 -8px 30px rgb(0 0 0 / .2)`): the right sidebar on a phone.
 - **Ring** (`box-shadow: 0 0 0 2px var(--accent-soft)`): a focused input, a selected outline row or cast card. Paired with an accent border.
 - **The app window** (`box-shadow: 0 30px 80px rgba(43, 39, 35, .16)`): the one object on the website that is lifted. Nothing else on the site has a shadow.
+- **Board and Web overlays** (`box-shadow: 0 8px 24px rgba(0, 0, 0, .12)`): the toolbar at the bottom of a board and the Web's legend, which float over the surface; the card bar over a picked card takes `0 4px 14px rgba(0, 0, 0, .1)`. The mockup's values, kept as drawn.
+- **Card at rest on a board** (`box-shadow: 0 1px 2px rgba(0, 0, 0, .05)`): the one resting shadow in the app, so a card reads as a thing lying on the dot grid. A deliberate exception to the Floats Only Rule, from the mockup.
 - **Side tab** (`box-shadow: 0 1px 0 var(--border)`): the hairline under the active Library / Tags / Search tab.
 
 ### Named Rules
@@ -301,6 +313,19 @@ Borders are always 1 px in `line`. Dashed borders mean an invitation: the "add a
 - **Website nav:** wordmark in Literata 600 at 22 px with a 20 px quill; links in Inter 15 px, ink, accent on hover; one small primary button on the right.
 - **Mobile:** the ribbon folds into the left drawer; the right sidebar becomes a bottom sheet; the status bar keeps only the safekeeping line and words today.
 
+### Canvas cards
+- **Surface:** the board is the page colour with a 1 px `line` dot every 20 px (doubled while the dots would sit closer than 10 px), and pans and zooms from 10 % to 300 %. The zoom bar (− 85 % + | Fit) sits bottom right and the toolbar (Note, Chapter, Character, Setting, Group, Image, each an icon and a word) bottom centre; under 640 px of pane the toolbar keeps its icons, moves left and drops the words.
+- **Card:** sheet, 1.5 px border, 8 px radius, 10 × 12 px padding, Inter 12 px at 1.4. A head of a 28 px avatar, dot or icon beside a 12.5 px 600 name and an 11 px muted line. A character card takes an accent border and a 5 % accent wash; a setting card the place border and a 5 % place wash; a chapter card the border of its status; a question note (colour 2 or 3) the draft border and an 8 % draft wash. A card whose chapter, person or place is gone says "No longer in the story" in a dashed, transparent card that keeps its place.
+- **Group:** a dashed 1.5 px region at 45 % accent over a 6 % accent wash, its name in 11.5 px 600 accent on the page colour, sitting on the top border. The inside belongs to the board (it can be panned and swept); the group answers at its name and its edges.
+- **Picked:** a 2 px accent outline 2 px out, four 8 px corner handles, four 12 px side handles that start an arrow, and the card bar above the top-left corner (colour, the card's page, ⋯). Handles and the bar keep their size on screen at any zoom.
+- **Arrow:** a 1.5 px muted line, a cubic curve square to the sides it joins (straight when they face each other in line), a 7 px head, and its name in Inter 11 px 500 with a 4 px page-colour halo at the middle. Picked: accent, 2 px.
+
+### The Web's graph
+- **Nodes:** filled circles with a 2 px page-colour halo, by kind: a core idea in accent (16 px plus 2 per thread, up to 22; label 12 px 600), a character in revised (10), a setting in place (9), a symbol in draft (9), a board in ink (10), a chapter in muted (7). Labels in Inter 11 px under the node with a 3 px halo. A written chapter no idea names has a dashed draft ring 5 px out and "no thread"; an empty chapter is a sheet-coloured circle with a line border and "not written".
+- **Lines:** a thread in accent at 40 %, 0.9 px per idea that names the part plus 0.6; a grey line (two names in the same chapter) in muted at 22 %, 1.5 px. Picking a node lights its lines at 95 % and dims every node it does not touch to 45 %; hovering or focusing a dimmed node shows it whole.
+- **Legend:** a 226 px sheet top right with an 8 px radius and the overlay shadow: Show (a 9 px key, the kind and its count, a 26 × 14 px switch) and Threads. Under 560 px of pane it folds into one "Show and threads" button.
+- **Why these break the rules:** the mockup fills nodes with colour and floats a legend over the graph, as Obsidian's graph does; a graph read by colour needs it, and the screen stays one accent everywhere else.
+
 ### Command palette
 A 560 px sheet at 10 px radius with the floating shadow, 72 px from the top (24 px on a phone) over a `rgb(20 16 30 / .32)` scrim. A 14 px borderless input, a list of 13 px rows at 6 px radius with the selected row on the violet wash, a footer of 11 px muted hints.
 
@@ -323,8 +348,8 @@ A 12 px-radius sheet with the lifted shadow, Inter at 13 px, reproducing the app
 - **Do** read copy aloud before shipping it: writer, never user; "your story", never "your content".
 
 ### Don't:
-- **Don't** add a second accent or tint a background with a status colour.
-- **Don't** put a shadow on a resting card, row, button or input.
+- **Don't** add a second accent or tint a background with a status colour (a board's cards and the Web's nodes are the recorded exceptions).
+- **Don't** put a shadow on a resting card, row, button or input (a card on a board is the one recorded exception).
 - **Don't** centre the website or put its content in cards, icon tiles, eyebrow chips, numbered labels or gradients.
 - **Don't** set a control, menu or button in Literata, or set the manuscript in Inter.
 - **Don't** widen the manuscript past 620 px or the website's prose past 62ch.

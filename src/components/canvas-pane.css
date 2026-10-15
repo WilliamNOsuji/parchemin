@@ -21,5 +21,5 @@
 .sel-ends { display: flex; gap: 14px; flex-wrap: wrap; }
 .sel-ends label { display: inline-flex; gap: 6px; align-items: center; font-size: 12.5px; }
 .chg.facts > span:first-child { flex: none; }
-.chg.facts > span:last-child { white-space: normal; text-align: right; }
+.chg.facts > span:last-child { white-space: normal; text-align: right; min-width: 0; }
 .chg.facts .nb { white-space: nowrap; }
