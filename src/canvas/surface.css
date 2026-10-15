@@ -1,0 +1,29 @@
+/* The board's surface: the viewport with its dot grid, the world that pans and zooms, and the slots cards sit in. */
+.canvas { flex: 1; position: relative; overflow: hidden; background: var(--bg); background-image: radial-gradient(var(--border) 1px, transparent 1px); background-size: 20px 20px; touch-action: none; min-height: 0; user-select: none; -webkit-user-select: none; }
+.canvas:focus { outline: none; }
+.canvas:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.canvas.moving { cursor: grabbing; }
+.canvas.fitting { transition: background-position 200ms ease, background-size 200ms ease; }
+.board { position: absolute; left: 0; top: 0; }
+.board.fitting { transition: transform 200ms ease; }
+.cc-slot { position: absolute; display: flex; border-radius: 8px; }
+.cc-slot > :first-child { flex: 1; min-width: 0; min-height: 0; }
+.cc-slot:focus { outline: none; }
+.cc-slot.picked, .cc-slot:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.cc-slot.picked > :first-child { overflow: visible; }
+/* the inside of a group is the board's, so it can be panned and swept; the group answers at its label and its edges */
+.cc-slot.group { pointer-events: none; }
+.cc-slot.group .g-label, .cc-slot.group .g-edge, .cc-slot.group .hd { pointer-events: auto; }
+.g-edge { position: absolute; }
+.g-edge.t { left: 0; right: 0; top: -4px; height: 8px; }
+.g-edge.b { left: 0; right: 0; bottom: -4px; height: 8px; }
+.g-edge.l { top: 0; bottom: 0; left: -4px; width: 8px; }
+.g-edge.r { top: 0; bottom: 0; right: -4px; width: 8px; }
+/* handles keep their size on screen at any zoom */
+.hd { position: absolute; width: 8px; height: 8px; background: var(--surface); border: 1.5px solid var(--accent); border-radius: 2px; transform: scale(var(--inv, 1)); z-index: 1; touch-action: none; }
+.hd.tl { left: -6px; top: -6px; cursor: nwse-resize; } .hd.tr { right: -6px; top: -6px; cursor: nesw-resize; }
+.hd.bl { left: -6px; bottom: -6px; cursor: nesw-resize; } .hd.br { right: -6px; bottom: -6px; cursor: nwse-resize; }
+.marquee { position: absolute; border: calc(1px * var(--inv, 1)) solid var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); pointer-events: none; }
+.cv-ui { position: absolute; inset: 0; pointer-events: none; }
+.cv-ui > * { pointer-events: auto; }
+@media (prefers-reduced-motion: reduce) { .board.fitting, .canvas.fitting { transition: none; } }
