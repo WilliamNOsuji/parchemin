@@ -56,11 +56,11 @@ export function toEndOfLayer(nodes: CanvasNode[], ids: Set<string>): CanvasNode[
   return [...order(groups), ...order(rest)]
 }
 
-/** Moves nodes by a delta, and puts them on top of their layer. */
-export function moveBy(doc: CanvasDoc, ids: string[], dx: number, dy: number): CanvasDoc {
+/** Moves nodes by a delta. A drag also puts them on top of their layer; a nudge from the keyboard leaves the order, so focus stays put. */
+export function moveBy(doc: CanvasDoc, ids: string[], dx: number, dy: number, toTop = true): CanvasDoc {
   const set = new Set(ids)
   const moved = doc.nodes.map((n) => (set.has(n.id) ? { ...n, x: n.x + dx, y: n.y + dy } : n))
-  return { ...doc, nodes: toEndOfLayer(moved, set) }
+  return { ...doc, nodes: toTop ? toEndOfLayer(moved, set) : moved }
 }
 
 /** Takes nodes off the board, and every arrow that touches them, and any arrows named. The story is not touched. */

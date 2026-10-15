@@ -297,7 +297,7 @@ export function CanvasSurface({ doc, onChange, renderNode, under, over, picked, 
       const dy = e.key === 'ArrowUp' ? -step : e.key === 'ArrowDown' ? step : 0
       const ids = nodesPicked()
       // with nothing picked, the arrows look around the board instead
-      if (ids.length) onChange(moveBy(doc, movingSet(doc, ids), dx, dy))
+      if (ids.length) onChange(moveBy(doc, movingSet(doc, ids), dx, dy, false))
       else setView((v) => ({ ...v, x: v.x - dx * 3, y: v.y - dy * 3 }))
     } else if (e.key === 'Escape' && picked.length) {
       e.preventDefault()

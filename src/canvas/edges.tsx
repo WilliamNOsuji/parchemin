@@ -1,6 +1,7 @@
 import { nanoid } from 'nanoid'
 import { useId, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
 import { anchor, edgePath, nearestSide } from './edgePath'
+import { bounds } from './geometry'
 import { colorOf, type CanvasDoc, type CanvasEdge, type CanvasSide, type Layer, type Point } from './types'
 import './edges.css'
 
@@ -99,8 +100,15 @@ export function EdgeLayer({ doc, layer, picked, onPick, onChange }: Props) {
     }
   }
 
+  // the layer covers what it draws, so the browser repaints all of it when the view moves
+  const box = bounds(layer.rects.values()) ?? { x: 0, y: 0, width: 0, height: 0 }
+  const pad = 240
+  const left = Math.floor(box.x - pad)
+  const top = Math.floor(box.y - pad)
   return (
-    <svg className="edges" width={1} height={1} role="group" aria-label="Arrows">
+    // Chrome keeps an SVG label's first scale when a CSS zoom above it changes, and paints it in the old place;
+    // drawing the layer anew at each zoom keeps the labels on their arrows
+    <svg key={layer.view.zoom} className="edges" style={{ left, top }} width={Math.ceil(box.width + 2 * pad)} height={Math.ceil(box.height + 2 * pad)} viewBox={`${left} ${top} ${Math.ceil(box.width + 2 * pad)} ${Math.ceil(box.height + 2 * pad)}`} role="group" aria-label="Arrows">
       <defs>
         {head(`arr${uid}`)}
         {head(`arr-on${uid}`, undefined, 'on')}
@@ -219,8 +227,11 @@ export function useEdgeDraft(doc: CanvasDoc, layer: Layer, onChange: (doc: Canva
     const r = layer.rects.get(draft.from)
     if (r) {
       const { d } = edgePath(r, draft.side, { ...draft.to, width: 0, height: 0 }, undefined)
+      const box = bounds([r, { ...draft.to, width: 0, height: 0 }])!
+      const pad = 200
+      const vb = [Math.floor(box.x - pad), Math.floor(box.y - pad), Math.ceil(box.width + 2 * pad), Math.ceil(box.height + 2 * pad)]
       path = (
-        <svg className="edge-draft" width={1} height={1} aria-hidden>
+        <svg className="edge-draft" style={{ left: vb[0], top: vb[1] }} width={vb[2]} height={vb[3]} viewBox={vb.join(' ')} aria-hidden>
           <path d={d} />
         </svg>
       )
