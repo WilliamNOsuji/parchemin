@@ -21,3 +21,5 @@ const subscribe = (cb: () => void) => {
 }
 
 export const useEditorState = () => useSyncExternalStore(subscribe, () => state)
+/** The same, read once outside React: whether the chapter's last save landed before Parchemin restarts to update. */
+export const getEditorState = () => state

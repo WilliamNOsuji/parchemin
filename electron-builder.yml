@@ -1,5 +1,6 @@
-# Packages the desktop app (npm run dist, or dist:win for the Windows installer). No update server is named here and
-# no updater ships, so an installed copy never calls anywhere. See electron/main.mts.
+# Packages the desktop app (npm run dist, or dist:win for the Windows installer). An installed copy calls nowhere unless
+# the writer asks for a new version; then it reads latest.yml from the public releases repository named under publish,
+# and nothing else. See electron/updates.mts, and README.md for publishing an update.
 appId: io.github.WilliamNOsuji.parchemin
 productName: Parchemin
 copyright: Copyright © 2026 William Osuji
@@ -16,6 +17,8 @@ win:
     - nsis
   icon: public/icon-512.png
 nsis:
+  # no spaces, so the name in latest.yml is the name GitHub keeps for the file
+  artifactName: Parchemin-Setup-${version}.${ext}
   oneClick: true
   perMachine: false
   # the writer's library stays on the machine when the app is removed
@@ -25,4 +28,8 @@ linux:
     - AppImage
   icon: public/icon-512.png
   category: Office
-publish: null
+# where the app looks for a new version; electron-builder writes latest.yml beside the installer for it, and uploads
+# nothing itself (scripts/publish-update.mjs does that, by hand)
+publish:
+  provider: generic
+  url: https://github.com/WilliamNOsuji/parchemin-releases/releases/latest/download

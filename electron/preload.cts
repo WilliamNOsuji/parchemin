@@ -7,4 +7,14 @@ contextBridge.exposeInMainWorld('parchemin', {
   writeFile: (path: string, data: Uint8Array) => ipcRenderer.invoke('write-file', path, data),
   setTheme: (theme: string) => ipcRenderer.send('theme', theme),
   setTitleBar: (colors: { color: string; symbolColor: string }) => ipcRenderer.send('title-bar', colors),
+  // updates happen only when the page asks, and the page asks only when the writer does
+  appInfo: () => ipcRenderer.invoke('app-info'),
+  checkUpdate: () => ipcRenderer.invoke('update-check'),
+  downloadUpdate: () => ipcRenderer.invoke('update-download'),
+  installUpdate: () => ipcRenderer.send('update-install'),
+  onUpdateProgress: (cb: (p: { received: number; total: number }) => void) => {
+    const listener = (_e: unknown, p: { received: number; total: number }) => cb(p)
+    ipcRenderer.on('update-progress', listener)
+    return () => void ipcRenderer.removeListener('update-progress', listener)
+  },
 })

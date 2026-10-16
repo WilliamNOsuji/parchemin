@@ -23,6 +23,7 @@ export interface CommandContext {
     go: (r: Route) => void
     newStory: () => void
     importMarkdown: () => void
+    checkUpdates: () => void
     newChapter: () => void
     newCharacter: () => void
     newBoard: () => void
@@ -87,6 +88,7 @@ export function buildCommands({ route, stories, index, theme, actions: a }: Comm
     { id: 'import', label: 'Import Markdown files', hint: story ? story.title : 'One or many, as chapters', run: a.importMarkdown },
     { id: 'backup', label: 'Save a backup file', hint: 'Safekeeping', run: a.backup },
     { id: 'safekeeping', label: 'Safekeeping', hint: 'Where your words are', run: () => a.go({ name: 'safekeeping' }) },
+    ...(desktop ? [{ id: 'updates', label: 'Check for updates', hint: 'Safekeeping', run: a.checkUpdates }] : []),
     { id: 'drawer', label: 'The drawer', hint: 'What you set aside', run: () => a.go({ name: 'drawer' }) },
     { id: 'theme', label: `Theme: switch to ${THEME_NEXT[theme]}`, hint: `Now ${theme === 'system' ? 'following the system' : theme}`, run: a.cycleTheme },
     { id: 'left', label: 'Show or hide the library sidebar', run: a.toggleLeft },

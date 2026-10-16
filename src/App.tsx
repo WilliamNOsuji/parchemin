@@ -22,6 +22,7 @@ import { chaptersOf, useSceneIndex, type SceneRef } from './sceneIndex'
 import { useOpenTabs } from './tabs'
 import { THEMES, useTheme } from './theme'
 import type { Folder, Story } from './types'
+import { appInfo, autoCheck, checkForUpdate } from './updates'
 import { webItem } from './web/item'
 
 // The story pages pull in Tiptap and dnd-kit, so they load on demand.
@@ -164,6 +165,10 @@ export function App() {
           go: navigate,
           newStory: () => setNewStoryIn({ folderId: null }),
           importMarkdown: () => openImport(),
+          checkUpdates: () => {
+            navigate({ name: 'safekeeping' })
+            void checkForUpdate()
+          },
           newChapter: async () => {
             if (storyId) navigate({ name: 'story', storyId, tab: 'write', itemId: await addScene(storyId) })
           },
@@ -264,6 +269,16 @@ export function App() {
       window.removeEventListener('drop', drop)
     }
   }, [openImport])
+
+  // the desktop app looks for a new version when it opens only if the writer turned that on; otherwise it never asks
+  useEffect(() => {
+    if (!desktop || !autoCheck()) return
+    void appInfo().then(async (info) => {
+      if (!info?.updates) return
+      const s = await checkForUpdate()
+      if (s.phase === 'available') say(`Parchemin ${s.version} is ready to download, under Safekeeping.`)
+    })
+  }, [say])
 
   // a story moved to the drawer leaves the screen, and a link to one that is not here lands the same way: on the library
   useEffect(() => {

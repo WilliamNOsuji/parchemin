@@ -12,7 +12,22 @@ export interface DesktopBridge {
   setTheme(theme: 'system' | 'light' | 'dark'): void
   /** The colours of the system's window controls, from the stylesheet's tokens. */
   setTitleBar(colors: { color: string; symbolColor: string }): void
+  /** The app's version, and whether this copy can update itself (the installed Windows app). Missing in older builds. */
+  appInfo?(): Promise<{ version: string; updates: boolean }>
+  /** Asks the update server for the newest version. The one request a check makes. */
+  checkUpdate?(): Promise<UpdateCheck>
+  /** Downloads the offered version's installer and checks its fingerprint. */
+  downloadUpdate?(): Promise<{ ok: true } | { ok: false; message: string }>
+  /** Closes Parchemin, installs the downloaded version and opens it. */
+  installUpdate?(): void
+  onUpdateProgress?(cb: (p: { received: number; total: number }) => void): () => void
 }
+
+export type UpdateCheck =
+  | { state: 'unsupported' }
+  | { state: 'latest'; version: string }
+  | { state: 'available'; version: string; size: number; date?: string }
+  | { state: 'error'; message: string }
 
 export interface SaveFilter {
   name: string

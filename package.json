@@ -5,7 +5,7 @@
   "author": "William Osuji",
   "private": true,
   "license": "AGPL-3.0-or-later",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "type": "module",
   "main": "dist-electron/main.mjs",
   "scripts": {
@@ -19,7 +19,8 @@
     "desktop": "npm run build:desktop && electron .",
     "desktop:dev": "tsc -p electron && node scripts/desktop-dev.mjs",
     "dist": "npm run build:desktop && electron-builder",
-    "dist:win": "npm run build:desktop && electron-builder --win"
+    "dist:win": "npm run build:desktop && electron-builder --win",
+    "publish:update": "node scripts/publish-update.mjs"
   },
   "dependencies": {
     "@dnd-kit/core": "^6.3.1",

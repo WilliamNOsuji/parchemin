@@ -128,7 +128,7 @@ code.
    for everything, plus one Markdown file of clean prose per chapter, so the book is readable without Parchemin and
    the writer's own Dropbox or iCloud carries it between devices); import by dropping `.docx` or `.txt` on the
    tree; spelling dictionaries that ship with the app; the Windows build, signed, as one quiet `.exe` (no account, no
-   telemetry, updates off by default); the "Your words" page on first run. Left out on purpose: plugins, a Markdown
+   telemetry, updates off by default; the updater is built, 2026-10-15, and asks only when the writer checks); the "Your words" page on first run. Left out on purpose: plugins, a Markdown
    source mode, frontmatter, paid sync. Open for the team: chapters in the tree or a list in the pane, what the right
    sidebar opens by default, which shortcuts ship on.
 2. **Import and export.** `.docx`, `.md` and `.txt` in; a manuscript `.docx`, "Copy for AO3" and poem-safe formats out.

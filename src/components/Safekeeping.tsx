@@ -1,11 +1,12 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { useRef, useState, type ChangeEvent } from 'react'
+import { useEffect, useRef, useState, type ChangeEvent } from 'react'
 import { exportBackup, inspectBackup, restoreBackup, type Saved } from '../backup'
 import { db } from '../db'
 import { exportEpub, exportMarkdown } from '../export'
 import { desktop } from '../desktop'
 import { canPersist, dismissNudge, requestPersist, useBackupNudge, useSafekeeping, type Keeping } from '../safekeeping'
 import type { Change, Story } from '../types'
+import { appInfo, autoCheck, checkForUpdate, downloadUpdate, installUpdate, megabytes, setAutoCheck, useUpdate } from '../updates'
 import { Section } from './RightSidebar'
 import { ago } from './StatusBar'
 
@@ -83,6 +84,79 @@ function changesSince({ tables, words }: Keeping['changed']) {
 }
 
 /** Where the stories are, when they were last copied out, and what this browser promises. Plain facts, no alarms. */
+/**
+ * The desktop app's version, and a new one when the writer asks for it: checked, downloaded and installed one step at
+ * a time, each on the writer's word. Nothing is asked of any server until they press a button or turn on the check.
+ */
+function UpdatesRow() {
+  const u = useUpdate()
+  const [info, setInfo] = useState<{ version: string; updates: boolean } | null>(null)
+  const [auto, setAuto] = useState(autoCheck)
+  const [held, setHeld] = useState('')
+  useEffect(() => void appInfo().then(setInfo), [])
+  if (!desktop || !info) return null
+  const pct = u.phase === 'downloading' ? Math.min(100, Math.round((u.received / u.size) * 100)) : 0
+  return (
+    <div className="krow">
+      <div className="k">Updates</div>
+      <div>
+        Parchemin {info.version}.
+        {!info.updates ? (
+          <div className="sub">Updating from inside the app is for the installed Windows app.</div>
+        ) : (
+          <>
+            <span role="status">
+              {u.phase === 'checking' && ' Looking for a new version…'}
+              {u.phase === 'latest' && ' This is the newest version.'}
+              {u.phase === 'available' && ` Version ${u.version} is ready to download (${megabytes(u.size)}).`}
+              {u.phase === 'downloading' && ` Downloading version ${u.version}: ${megabytes(u.received)} of ${megabytes(u.size)}.`}
+              {u.phase === 'ready' && ` Version ${u.version} is downloaded and checked. Parchemin will close, install it and open again; your library stays where it is.`}
+              {u.phase === 'installing' && ` Closing Parchemin to install version ${u.version}…`}
+              {u.phase === 'error' && ` ${u.message}`}
+              {held && ` ${held}`}
+            </span>
+            {u.phase === 'downloading' && (
+              <div className="bar update-bar" role="progressbar" aria-label="Download" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct}>
+                <i style={{ width: `${pct}%` }} />
+              </div>
+            )}
+            <div className="acts">
+              {(u.phase === 'idle' || u.phase === 'latest' || (u.phase === 'error' && !u.version)) && (
+                <button className="btn small" onClick={() => void checkForUpdate()}>{u.phase === 'error' ? 'Try again' : 'Check for updates'}</button>
+              )}
+              {u.phase === 'available' && <button className="btn small" onClick={() => void downloadUpdate()}>Download version {u.version}</button>}
+              {u.phase === 'error' && u.version && <button className="btn small" onClick={() => void downloadUpdate()}>Try the download again</button>}
+              {u.phase === 'ready' && (
+                <button
+                  className="btn small"
+                  onClick={async () => {
+                    setHeld('')
+                    setHeld((await installUpdate()) ?? '')
+                  }}
+                >
+                  Install and restart
+                </button>
+              )}
+            </div>
+            <label className="check update-auto">
+              <input
+                type="checkbox"
+                checked={auto}
+                onChange={(e) => {
+                  setAuto(e.target.checked)
+                  setAutoCheck(e.target.checked)
+                }}
+              />
+              <span>Check for a new version each time Parchemin opens</span>
+            </label>
+            <div className="sub">A check asks GitHub for one small file that names the newest version, and sends nothing about you or what you write. A new version is downloaded only when you choose, checked against its fingerprint before it runs, and installed when you say so.</div>
+          </>
+        )}
+      </div>
+    </div>
+  )
+}
+
 export function SafekeepingPane({ stories, onImport }: { stories: Story[]; onImport: () => void }) {
   const k = useSafekeeping(true)
   const [msg, setMsg] = useState('')
@@ -197,6 +271,8 @@ export function SafekeepingPane({ stories, onImport }: { stories: Story[]; onImp
               <div className="sub">Open formats, so the book is readable without Parchemin. A manuscript .docx is next on the roadmap.</div>
             </div>
           </div>
+
+          <UpdatesRow />
 
           <div className="krow">
             <div className="k">Writing suggestions</div>

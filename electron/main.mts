@@ -1,14 +1,17 @@
 /**
  * The desktop app: an Electron window around the same web app, as the mockup draws it (design/parchemin-desktop.html).
  * The page is served from the app's own files over the parchemin:// scheme, so storage, absolute paths and fetch
- * behave as on a website. Nothing here reaches another server: there is no updater and no telemetry, and the spelling
- * dictionaries Chromium would fetch from Google are pointed at the app itself, where there are none.
+ * behave as on a website. Nothing here reaches another server unless the writer asks: there is no telemetry, the
+ * updater (updates.mts) asks only when the writer checks for a new version, and the spelling dictionaries Chromium would
+ * fetch from Google are pointed at the app itself, where there are none.
  */
-import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, protocol, screen, session, shell, type MenuItemConstructorOptions } from 'electron'
+import { app, BrowserWindow, dialog, ipcMain, Menu, nativeTheme, net, protocol, screen, session, shell, type MenuItemConstructorOptions } from 'electron'
+import { spawn } from 'node:child_process'
 import { existsSync, readFileSync, writeFileSync } from 'node:fs'
 import { readFile, writeFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { downloadRelease, fetchRelease, newer, type Release } from './updates.mjs'
 
 const ROOT = path.join(path.dirname(fileURLToPath(import.meta.url)), '..')
 const DIST = path.join(ROOT, 'dist')
@@ -184,6 +187,61 @@ ipcMain.handle('write-file', async (_e, filePath: unknown, data: unknown): Promi
   } catch (e) {
     return `The file could not be saved: ${e instanceof Error ? e.message : String(e)}`
   }
+})
+
+/** Updates are for the installed Windows app; a copy run from the source, or on another system, is updated another way. */
+const canUpdate = () => app.isPackaged && process.platform === 'win32'
+/** The release the last check offered, and the installer once it is downloaded and checked. */
+let offered: Release | null = null
+let downloaded: { release: Release; file: string } | null = null
+let downloading = false
+// Chromium's own network stack, so the system's proxy settings apply; never a cached answer to "what is newest"
+const fetcher = (url: string) => net.fetch(url, { cache: 'no-store' })
+const said = (e: unknown) => (e instanceof Error ? e.message : String(e))
+
+ipcMain.handle('app-info', () => ({ version: app.getVersion(), updates: canUpdate() }))
+
+ipcMain.handle('update-check', async () => {
+  if (!canUpdate()) return { state: 'unsupported' }
+  try {
+    const release = await fetchRelease(fetcher)
+    if (!newer(release.version, app.getVersion())) return { state: 'latest', version: app.getVersion() }
+    offered = release
+    return { state: 'available', version: release.version, size: release.size, date: release.date }
+  } catch (e) {
+    return { state: 'error', message: said(e) }
+  }
+})
+
+ipcMain.handle('update-download', async (e) => {
+  const release = offered
+  if (!canUpdate() || !release) return { ok: false, message: 'Check for a new version first.' }
+  if (downloaded?.release.version === release.version) return { ok: true }
+  if (downloading) return { ok: false, message: 'The download is already under way.' }
+  downloading = true
+  let last = 0
+  try {
+    const file = await downloadRelease(fetcher, release, path.join(app.getPath('temp'), 'parchemin-update'), (received, total) => {
+      // a few updates a second are enough for a progress bar
+      const now = Date.now()
+      if ((now - last < 200 && received < total) || e.sender.isDestroyed()) return
+      last = now
+      e.sender.send('update-progress', { received, total })
+    })
+    downloaded = { release, file }
+    return { ok: true }
+  } catch (err) {
+    return { ok: false, message: said(err) }
+  } finally {
+    downloading = false
+  }
+})
+
+ipcMain.on('update-install', () => {
+  if (!canUpdate() || !downloaded) return
+  // the installer replaces this copy quietly and opens the new one, which it can only do once this one has closed
+  spawn(downloaded.file, ['/S', '--updated', '--force-run'], { detached: true, stdio: 'ignore' }).unref()
+  app.quit()
 })
 
 if (!app.requestSingleInstanceLock()) {
