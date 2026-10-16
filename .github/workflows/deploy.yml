@@ -1,6 +1,6 @@
 # Publishes the website (site/) and the web app (src/) to GitHub Pages: the site at the root, the app under app/.
 # Run by hand from the Actions tab. GitHub Pages needs a public repository (or a paid GitHub plan) and the source
-# is not public yet, so this does not run on push; the site deploys through Netlify (netlify.toml) for now.
+# is not public yet, so this does not run on push; the site deploys through Cloudflare Pages for now.
 # See site/README.md.
 name: Deploy to GitHub Pages
 

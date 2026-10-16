@@ -45,8 +45,30 @@ pointing at wherever the installer is hosted (GitHub releases only once the repo
 The site is published from `dist-pages/`, which `npm run build:pages` builds: the site at the root, the app under
 `app/`. The app's service worker is scoped to `app/`, so it never caches or intercepts the site itself.
 
-**Netlify** is the set-up route, because it builds from a private repository on its free plan and reads
-`netlify.toml` (build command, output folder, Node 24) by itself. One-time setup:
+**Cloudflare Pages** is the route chosen on 2026-10-15, at `https://parchemin.art/` (the app at
+`https://parchemin.art/app/`). Its free plan builds from a private repository, serves a static site with no bandwidth
+limit and allows 500 builds a month; nothing is paid but the domain, which stays registered at Wix. Cloudflare serves the
+domain's DNS, because a Pages project can only take a root domain (not just `www.`) from a zone on Cloudflare. One-time
+setup:
+
+1. Create a free Cloudflare account and add `parchemin.art` as a site on the Free plan. Cloudflare copies the DNS
+   records it finds; delete the old Wix ones (the three `A` records for `parchemin.art` and the `www` `CNAME` to
+   `cdn3.wixdns.net`). Note the two nameservers Cloudflare gives.
+2. At Wix (*Domains → parchemin.art*), point the domain to those two nameservers instead of `ns2/ns3.wixdns.net`.
+   Wix may ask to disconnect the domain from a Wix site first. Cloudflare says when the zone is active.
+3. In Cloudflare, *Workers & Pages → Create → Pages → Connect to Git*: let Cloudflare's GitHub app see the
+   `parchemin` repository only, pick it, production branch `main`, framework preset *None*, build command
+   `npm run build:pages`, output directory `dist-pages`. Add the environment variable
+   `ELECTRON_SKIP_BINARY_DOWNLOAD` = `1`, so the build does not fetch Electron, which the site does not use. The build
+   names `https://parchemin.art/` as the site's address by itself (`scripts/build-pages.mjs`).
+4. In the project, *Custom domains → Set up a custom domain*: add `parchemin.art`, then `www.parchemin.art`.
+   Cloudflare writes the DNS records. Then *Rules → Redirect Rules*, template "Redirect from WWW to root", so there is
+   one address.
+
+Every later push to `main` builds and publishes again; another branch gets a preview at its own `*.pages.dev` address.
+
+**Netlify** works the same way and stays configured (`netlify.toml`: build command, output folder, Node 24), but its
+free plan now counts credits (300 a month, 15 for each deploy), so it is the fallback. One-time setup:
 
 1. Sign in at app.netlify.com with GitHub and choose *Add new site → Import an existing project → GitHub*. Netlify's
    GitHub app asks which repositories it may see; grant it `parchemin` only.
@@ -55,7 +77,7 @@ The site is published from `dist-pages/`, which `npm run build:pages` builds: th
 4. Under *Site configuration → Domain management*, rename the `*.netlify.app` address or add your own domain. The
    build reads the address from Netlify, so the page's canonical link follows it with no change here.
 
-Settle the address before telling writers about the web app. A library lives in the browser's storage for the
+Settle the address before telling writers about the web app; `parchemin.art` is it. A library lives in the browser's storage for the
 address it was written at and does not follow a move; the Safekeeping backup file is how it would travel.
 
 Other static hosts work the same way: build with `npm run build:pages` and publish `dist-pages/`. `SITE_BASE` is the

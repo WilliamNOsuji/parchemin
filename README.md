@@ -42,7 +42,7 @@ The shell follows the desktop mockup under `design/` (integrated on 2026-10-12):
 
 ## The website
 
-`site/` holds the landing page from `design/parchemin-website.html`, as a second Vite root with the same bundled fonts (no request to Google Fonts). `npm run site` serves it, `npm run build:site` builds it into `dist-site/`, and `npm run build:pages` builds the site and the app together into `dist-pages/` the way they are published: the site at the root, the app under `app/`. Netlify publishes that folder after every push to `main` (`netlify.toml`); the one-time setup, what the page says while the source is private, and what to restore when it goes public are in `site/README.md`.
+`site/` holds the landing page from `design/parchemin-website.html`, as a second Vite root with the same bundled fonts (no request to Google Fonts). `npm run site` serves it, `npm run build:site` builds it into `dist-site/`, and `npm run build:pages` builds the site and the app together into `dist-pages/` the way they are published: the site at the root, the app under `app/`. Cloudflare Pages publishes that folder at `https://parchemin.art/` after every push to `main` (the app at `https://parchemin.art/app/`); the one-time setup, the Netlify fallback (`netlify.toml`), what the page says while the source is private, and what to restore when it goes public are in `site/README.md`.
 
 ## The desktop app
 
