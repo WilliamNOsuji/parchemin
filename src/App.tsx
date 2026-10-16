@@ -27,6 +27,15 @@ import { webItem } from './web/item'
 // The story pages pull in Tiptap and dnd-kit, so they load on demand.
 const StoryView = lazy(() => import('./components/StoryView').then((m) => ({ default: m.StoryView })))
 const StorySidebar = lazy(() => import('./components/StorySidebar').then((m) => ({ default: m.StorySidebar })))
+// the importer brings a Markdown reader with it, so it loads only when the writer imports
+const ImportDialog = lazy(() => import('./components/ImportDialog').then((m) => ({ default: m.ImportDialog })))
+
+/** What an import starts with: files dropped somewhere, and the story or folder they were dropped on. */
+export interface ImportStart {
+  files?: File[]
+  storyId?: string
+  folderId?: string | null
+}
 
 type Screen = 'home' | 'write' | 'outline' | 'cast' | 'canvas' | 'web' | 'safekeeping' | 'drawer'
 const screenOf = (r: Route): Screen => (r.name === 'story' ? r.tab : r.name)
@@ -101,6 +110,7 @@ export function App() {
   const [theme, setTheme] = useTheme()
 
   const [newStoryIn, setNewStoryIn] = useState<{ folderId: string | null } | null>(null)
+  const [importing, setImporting] = useState<ImportStart | null>(null)
   const [drawer, setDrawer] = useState(false)
   const [leftOpen, setLeftOpen] = useStored('parchemin.left', true)
   // boards and the Web want width, so the library sidebar starts folded there and remembers its own choice
@@ -135,6 +145,8 @@ export function App() {
     [screen, setRightOpen],
   )
   const toggleFocus = useCallback(() => setFocusOn((f) => !f), [])
+  // an import started from a story's screen offers that story first
+  const openImport = useCallback((start: ImportStart = {}) => setImporting({ storyId: route.name === 'story' ? route.storyId : undefined, ...start }), [route])
   const cycleTheme = useCallback(() => setTheme(THEMES[(THEMES.indexOf(theme) + 1) % THEMES.length]), [theme, setTheme])
   const say = useCallback((text: string) => {
     setNotice(text)
@@ -151,6 +163,7 @@ export function App() {
         actions: {
           go: navigate,
           newStory: () => setNewStoryIn({ folderId: null }),
+          importMarkdown: () => openImport(),
           newChapter: async () => {
             if (storyId) navigate({ name: 'story', storyId, tab: 'write', itemId: await addScene(storyId) })
           },
@@ -196,7 +209,7 @@ export function App() {
           toggleRight: () => setRightOpen((o) => !o),
         },
       }),
-    [route, stories, index, theme, storyId, currentSceneId, toggleFocus, openRight, cycleTheme, say, setLeftShown, setRightOpen],
+    [route, stories, index, theme, storyId, currentSceneId, toggleFocus, openRight, cycleTheme, say, setLeftShown, setRightOpen, openImport],
   )
 
   useEffect(() => {
@@ -230,6 +243,27 @@ export function App() {
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
   }, [palette, focusOn, writing, commands, rightTab, rightOpen, openRight, setRightOpen])
+
+  // Markdown files dropped anywhere the page does not take them start an import; anything else dropped is ignored, so
+  // the browser never opens the file in place of the app
+  useEffect(() => {
+    const files = (e: DragEvent) => !!e.dataTransfer?.types.includes('Files')
+    const over = (e: DragEvent) => {
+      if (files(e)) e.preventDefault()
+    }
+    const drop = (e: DragEvent) => {
+      if (!files(e) || e.defaultPrevented) return
+      e.preventDefault()
+      const list = [...(e.dataTransfer?.files ?? [])]
+      if (list.some((f) => /\.(md|markdown|mdown|mkd)$/i.test(f.name))) openImport({ files: list })
+    }
+    window.addEventListener('dragover', over)
+    window.addEventListener('drop', drop)
+    return () => {
+      window.removeEventListener('dragover', over)
+      window.removeEventListener('drop', drop)
+    }
+  }, [openImport])
 
   // a story moved to the drawer leaves the screen, and a link to one that is not here lands the same way: on the library
   useEffect(() => {
@@ -302,12 +336,16 @@ export function App() {
             setDrawer(false)
           }}
           onNavigate={() => setDrawer(false)}
+          onImport={(start) => {
+            openImport(start)
+            setDrawer(false)
+          }}
           extra={ribbon('mobile-ribbon')}
         />
 
         <main className="pane" id="main">
-          {route.name === 'home' && <Home stories={stories ?? []} index={index} onNewStory={() => setNewStoryIn({ folderId: null })} />}
-          {route.name === 'safekeeping' && <SafekeepingPane stories={stories ?? []} />}
+          {route.name === 'home' && <Home stories={stories ?? []} index={index} onNewStory={() => setNewStoryIn({ folderId: null })} onImport={() => openImport()} />}
+          {route.name === 'safekeeping' && <SafekeepingPane stories={stories ?? []} onImport={() => openImport()} />}
           {route.name === 'drawer' && <DrawerPage />}
           {route.name === 'story' && (
             <Suspense fallback={<p className="hint pad" role="status">Loading…</p>}>
@@ -333,6 +371,11 @@ export function App() {
 
       {palette && <CommandPalette commands={commands} onClose={() => setPalette(false)} />}
       {newStoryIn && <NewStoryDialog folderId={newStoryIn.folderId} onClose={() => setNewStoryIn(null)} />}
+      {importing && (
+        <Suspense fallback={null}>
+          <ImportDialog stories={stories ?? []} files={importing.files} storyId={importing.storyId} folderId={importing.folderId} onClose={() => setImporting(null)} />
+        </Suspense>
+      )}
     </div>
   )
 }

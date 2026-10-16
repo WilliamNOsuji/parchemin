@@ -83,7 +83,7 @@ function changesSince({ tables, words }: Keeping['changed']) {
 }
 
 /** Where the stories are, when they were last copied out, and what this browser promises. Plain facts, no alarms. */
-export function SafekeepingPane({ stories }: { stories: Story[] }) {
+export function SafekeepingPane({ stories, onImport }: { stories: Story[]; onImport: () => void }) {
   const k = useSafekeeping(true)
   const [msg, setMsg] = useState('')
   const [exportId, setExportId] = useState('')
@@ -167,6 +167,16 @@ export function SafekeepingPane({ stories }: { stories: Story[] }) {
                 <input ref={checkInput} type="file" accept="application/json,.json" hidden onChange={onPick(onCheck)} />
               </div>
               <div className="sub">Restoring adds the backup's stories and overwrites any with the same id. Nothing else is removed. Checking a file reads it back and changes nothing in your library.</div>
+            </div>
+          </div>
+
+          <div className="krow">
+            <div className="k">Import</div>
+            <div>
+              <div className="acts" style={{ marginTop: 0 }}>
+                <button className="btn small" onClick={onImport}>Import Markdown files…</button>
+              </div>
+              <div className="sub">One file or many. Each becomes a chapter, in a new story or at the end of one, and a file with headings can be split at them. You can also drop the files on a story in the library.</div>
             </div>
           </div>
 

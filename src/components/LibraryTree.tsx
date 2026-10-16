@@ -18,6 +18,8 @@ interface Props {
   sideTab: SideTab
   onSideTab: (t: SideTab) => void
   onNewStory: (folderId: string | null) => void
+  /** Markdown files to import, dropped or chosen, with the story or folder they go to. */
+  onImport: (start: { files?: File[]; storyId?: string; folderId?: string | null }) => void
   onNavigate?: () => void
   /** The ribbon's buttons, shown at the top on phones where there is no ribbon. */
   extra?: ReactNode
@@ -30,12 +32,14 @@ const INDENT = 16
  * The whole library as one tree: folders, stories, chapters, with status dots and word counts.
  * Drag a story onto a folder to move it. Chapters are reordered on the Outline page.
  */
-export function LibraryTree({ stories, folders, index, drawerCount, activeStoryId, activeSceneId, sideTab, onSideTab, onNewStory, onNavigate, extra }: Props) {
+export function LibraryTree({ stories, folders, index, drawerCount, activeStoryId, activeSceneId, sideTab, onSideTab, onNewStory, onImport, onNavigate, extra }: Props) {
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
   const [openStories, setOpenStories] = useState<Set<string>>(() => new Set(activeStoryId ? [activeStoryId] : []))
   const [query, setQuery] = useState('')
   const [tag, setTag] = useState<string | null>(null)
   const [dropTarget, setDropTarget] = useState<string | null | undefined>(undefined)
+  const [fileStory, setFileStory] = useState<string | null>(null)
+  const hasFiles = (e: React.DragEvent) => e.dataTransfer.types.includes('Files')
 
   // the story on screen opens in the tree when it becomes active; the chevron can close it again
   useEffect(() => {
@@ -63,9 +67,10 @@ export function LibraryTree({ stories, folders, index, drawerCount, activeStoryI
       return n
     })
 
+  // a story dragged onto a folder moves there; Markdown files dropped on a folder become a new story in it
   const dropProps = (folderId: string | null) => ({
     onDragOver: (e: React.DragEvent) => {
-      if (!e.dataTransfer.types.includes('application/x-parchemin-story')) return
+      if (!e.dataTransfer.types.includes('application/x-parchemin-story') && !hasFiles(e)) return
       e.preventDefault()
       setDropTarget(folderId)
     },
@@ -76,7 +81,28 @@ export function LibraryTree({ stories, folders, index, drawerCount, activeStoryI
       if (id) {
         e.preventDefault()
         void db.stories.update(id, { folderId })
+      } else if (hasFiles(e)) {
+        e.preventDefault()
+        onImport({ files: [...e.dataTransfer.files], folderId })
       }
+    },
+  })
+  // Markdown files dropped on a story are added to it, after its last chapter
+  const storyDrop = (storyId: string) => ({
+    onDragOver: (e: React.DragEvent) => {
+      if (!hasFiles(e)) return
+      e.preventDefault()
+      e.stopPropagation()
+      setFileStory(storyId)
+    },
+    onDragLeave: () => setFileStory((t) => (t === storyId ? null : t)),
+    onDrop: (e: React.DragEvent) => {
+      if (!hasFiles(e)) return
+      e.preventDefault()
+      e.stopPropagation()
+      setFileStory(null)
+      setDropTarget(undefined)
+      onImport({ files: [...e.dataTransfer.files], storyId })
     },
   })
 
@@ -86,7 +112,7 @@ export function LibraryTree({ stories, folders, index, drawerCount, activeStoryI
     const active = s.id === activeStoryId
     return (
       <div key={s.id}>
-        <div className="node-row" style={{ paddingLeft: depth * INDENT }}>
+        <div className={`node-row${fileStory === s.id ? ' drop' : ''}`} style={{ paddingLeft: depth * INDENT }} {...storyDrop(s.id)}>
           <button className="icon-btn" style={{ padding: '4px 2px' }} aria-label={open ? `Collapse ${s.title}` : `Expand ${s.title}`} aria-expanded={open} onClick={() => toggle(setOpenStories, s.id)}>
             <span className="chev" aria-hidden>{open ? '▾' : '▸'}</span>
           </button>
@@ -114,6 +140,7 @@ export function LibraryTree({ stories, folders, index, drawerCount, activeStoryI
               { label: 'Open the cast', onClick: () => navigate({ name: 'story', storyId: s.id, tab: 'cast' }) },
               { label: 'Open the boards', onClick: () => navigate({ name: 'story', storyId: s.id, tab: 'canvas' }) },
               { label: 'Open the Web', onClick: () => navigate({ name: 'story', storyId: s.id, tab: 'web' }) },
+              { label: 'Import Markdown files…', onClick: () => onImport({ storyId: s.id }) },
               {
                 label: 'Move to the drawer',
                 onClick: async () => {
@@ -161,6 +188,7 @@ export function LibraryTree({ stories, folders, index, drawerCount, activeStoryI
             label={`Actions for folder ${f.name}`}
             items={[
               { label: 'New story here', onClick: () => onNewStory(f.id) },
+              { label: 'Import Markdown files here…', onClick: () => onImport({ folderId: f.id }) },
               { label: 'New subfolder', onClick: () => void addFolder(f.id) },
               {
                 label: 'Rename',

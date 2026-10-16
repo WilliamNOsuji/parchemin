@@ -61,7 +61,7 @@ function Waiting({ index, stories }: { index: SceneRef[]; stories: Story[] }) {
   )
 }
 
-export function Home({ stories, index, onNewStory }: { stories: Story[]; index: SceneRef[]; onNewStory: () => void }) {
+export function Home({ stories, index, onNewStory, onImport }: { stories: Story[]; index: SceneRef[]; onNewStory: () => void; onImport: () => void }) {
   const [prompt, setPrompt] = useState(() => randomPrompt('stuck'))
   const install = useInstallPrompt()
   const recent = stories.slice(0, 3)
@@ -74,6 +74,7 @@ export function Home({ stories, index, onNewStory }: { stories: Story[]; index: 
         {(stories.length === 0 || install) && (
           <div className="acts lead-acts">
             {stories.length === 0 && <button className="btn primary big" onClick={onNewStory}><Icon name="plus" size={14} /> Start a new story</button>}
+            {stories.length === 0 && <button className="btn big" onClick={onImport}>Import Markdown files…</button>}
             {install && <button className="btn big" onClick={() => void install()}>Install app</button>}
           </div>
         )}

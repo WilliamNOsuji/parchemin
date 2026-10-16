@@ -126,12 +126,15 @@ code.
    bar, served over the app's own scheme with no outside request; backups and exports through the system's save
    dialog; Ctrl+N; `electron-builder.yml` for the installer. Still to do: the library as a folder (one `library.json`
    for everything, plus one Markdown file of clean prose per chapter, so the book is readable without Parchemin and
-   the writer's own Dropbox or iCloud carries it between devices); import by dropping `.docx`, `.md` or `.txt` on the
+   the writer's own Dropbox or iCloud carries it between devices); import by dropping `.docx` or `.txt` on the
    tree; spelling dictionaries that ship with the app; the Windows build, signed, as one quiet `.exe` (no account, no
    telemetry, updates off by default); the "Your words" page on first run. Left out on purpose: plugins, a Markdown
    source mode, frontmatter, paid sync. Open for the team: chapters in the tree or a list in the pane, what the right
    sidebar opens by default, which shortcuts ship on.
 2. **Import and export.** `.docx`, `.md` and `.txt` in; a manuscript `.docx`, "Copy for AO3" and poem-safe formats out.
+   Markdown import is built (2026-10-15, `src/importMarkdown.ts`, `src/components/ImportDialog.tsx`): one file or many,
+   from a dialog or dropped on the tree, split at headings if the writer wants. Still to do: `.docx` and `.txt` in, and
+   the formats out.
 3. **The canvas.** Built on 2026-10-15 (`src/canvas/`, `src/components/CanvasPane.tsx`): chapters, characters and
    settings as live cards; notes, groups and pictures that exist only on the board; arrows the writer names; each board
    a JSON Canvas document, saved and opened as a `.canvas` file. Nothing on a board touches the manuscript. Still to do:

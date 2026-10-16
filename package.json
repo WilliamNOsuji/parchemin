@@ -37,6 +37,7 @@
     "dexie": "^4.4.6",
     "dexie-react-hooks": "^4.4.0",
     "jszip": "^3.10.2",
+    "marked": "~18.0.14",
     "nanoid": "^6.0.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",

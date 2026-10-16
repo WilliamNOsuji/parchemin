@@ -22,6 +22,7 @@ export interface CommandContext {
   actions: {
     go: (r: Route) => void
     newStory: () => void
+    importMarkdown: () => void
     newChapter: () => void
     newCharacter: () => void
     newBoard: () => void
@@ -83,6 +84,7 @@ export function buildCommands({ route, stories, index, theme, actions: a }: Comm
   out.push(
     { id: 'library', label: 'Library', hint: 'Home', run: () => a.go({ name: 'home' }) },
     { id: 'new-story', label: 'New story', run: a.newStory },
+    { id: 'import', label: 'Import Markdown files', hint: story ? story.title : 'One or many, as chapters', run: a.importMarkdown },
     { id: 'backup', label: 'Save a backup file', hint: 'Safekeeping', run: a.backup },
     { id: 'safekeeping', label: 'Safekeeping', hint: 'Where your words are', run: () => a.go({ name: 'safekeeping' }) },
     { id: 'drawer', label: 'The drawer', hint: 'What you set aside', run: () => a.go({ name: 'drawer' }) },

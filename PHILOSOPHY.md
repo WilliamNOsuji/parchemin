@@ -142,7 +142,7 @@ When a feature idea comes up, run it through these questions. A "no" to the firs
 | Calm | The shell in `src/App.tsx` and `src/styles.css`: one accent, chrome a shade darker than the page, both sidebars collapsible, focus mode |
 | Structure is a skeleton, not a cage | The boards in `src/canvas/` and `src/components/CanvasPane.tsx`: one surface for whatever the writer needs to lay out, live cards from the story, arrows the writer names, and nothing on a board touches the manuscript |
 | The answers belong to the writer | The Web in `src/web/`: a thread is a link the writer made in a core idea, a grey line only means two names appear together in the text (`cooccur.ts`), and a chapter no idea names says so in words, with no score |
-| The writer owns the work | Local-first IndexedDB in `src/db.ts`, boards saved and opened as JSON Canvas files in `src/canvas/canvasFiles.ts`, the Web and its core ideas kept out of every export (`src/export.ts` reads only stories and chapters), backup in `src/backup.ts`, safekeeping in `src/safekeeping.ts`, exports in `src/export.ts`, fonts bundled in `src/main.tsx`, the desktop app's own scheme with no updater and no outside request in `electron/main.mts`, `LICENSE` (AGPL-3.0-or-later) |
+| The writer owns the work | Local-first IndexedDB in `src/db.ts`, boards saved and opened as JSON Canvas files in `src/canvas/canvasFiles.ts`, the Web and its core ideas kept out of every export (`src/export.ts` reads only stories and chapters), backup in `src/backup.ts`, safekeeping in `src/safekeeping.ts`, exports in `src/export.ts` and Markdown import in `src/importMarkdown.ts` (work written elsewhere comes in, and goes out again in the same format), fonts bundled in `src/main.tsx`, the desktop app's own scheme with no updater and no outside request in `electron/main.mts`, `LICENSE` (AGPL-3.0-or-later) |
 | Safe to cut | The drawer: `setAside*` and `putBack` in `src/db.ts`, `src/components/DrawerSection.tsx` |
 | The story is never written for you | Prompts in `src/prompts.ts`; the AI guide's limits in `AI-POLICY.md` |
 
@@ -157,6 +157,8 @@ order yet.
    Done on 2026-10-09: the licence (AGPL-3.0-or-later), the writing-suggestions switch with its help note, and visible
    backups (the safekeeping panel).
 2. **Getting work in and out.** Import (.docx, .md, .txt) and export (manuscript .docx, "Copy for AO3", poem-safe).
+   Done on 2026-10-15: Markdown import, one file or many, each a chapter or split at its headings, into a new story or
+   an existing one, and Parchemin's own Markdown export imports back whole.
 3. **Between devices.** A "move my library" flow, then optional sync across phone, laptop and desktop that writers can
    host themselves, with a very simple setup guide. How sync works is still open.
 4. **Writing support.** A rhythm view with other units and a CSV of daily counts, read-aloud, a notes pane beside the
