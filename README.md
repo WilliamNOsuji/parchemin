@@ -50,7 +50,7 @@ The shell follows the desktop mockup under `design/` (integrated on 2026-10-12):
 
 What the page does differently on a desktop goes through `src/desktop.ts`. Backups and exports are saved through the system's own dialog, so a backup always lands in a real folder and always counts; the status bar says "Kept on this computer" and the Safekeeping page drops the browser's persistence question; `Ctrl+N` makes a new chapter; and the window controls take the chrome's colours whenever the theme changes, light or dark. The library stays in the app's own storage for now: the library folder (`library.json` and a Markdown file per chapter) is the next step.
 
-`npm run dist` packages the app for the platform it runs on and `npm run dist:win` makes the Windows installer (`electron-builder.yml`: one click, per user, the writer's data kept when the app is removed). The Windows build and its signing have not been run yet; an unpacked Linux build has.
+`npm run dist` packages the app for the platform it runs on and `npm run dist:win` makes the Windows installer (`electron-builder.yml`: one click, per user, the writer's data kept when the app is removed). The Windows installer was first built on 2026-10-15, on Windows itself with Node 22 (`npm ci`, then `npm run dist:win`); it is not signed yet, so Windows warns before the first run. An unpacked Linux build has been made too.
 
 On Linux and WSL, Electron needs `libnss3`, `libnspr4` and `libasound2`, which a bare install may lack (`sudo apt install libnss3 libnspr4 libasound2t64`). Windows and macOS need nothing extra.
 
