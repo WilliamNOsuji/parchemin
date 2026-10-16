@@ -16,8 +16,8 @@ npm run build:pages  # the site and the app together in dist-pages/, laid out as
 ## Links, while the source is private
 
 The repository is private (decided 2026-10-12), so the page links to nothing on GitHub: a visitor would get a 404.
-The only outward link is "Write in the browser" / "Open the web app", which is `app/` relative to the site, so it works
-at any address. The build fails while any link carries `REPLACE-ME` (the check is in `vite.site.config.ts`).
+Since 2026-10-15 only the site is published, and the app ships as the desktop app, so the page links to no web app
+either. The build fails while any link carries `REPLACE-ME` (the check is in `vite.site.config.ts`).
 
 What the mockup had, and what the page says instead for now:
 
@@ -30,6 +30,8 @@ What the mockup had, and what the page says instead for now:
 | Get Parchemin, Windows | "Download the .exe" button to the releases page | The "Planned" tag, like macOS and Linux. The two "Download for Windows" buttons (nav and hero) still point at `#download` |
 | Get Parchemin, Source | "View on GitHub" button | The "Planned" tag, with "To be published under the AGPL-3.0-or-later." |
 | Footer | "AGPL-3.0-or-later" after the copyright, and a "Launch note" link | Copyright only, no link |
+| Hero | "Write in the browser" button to `app/` | Removed; "Download for Windows" stays |
+| Get Parchemin, In the browser | "Open the web app" button to `app/` | The "Planned" tag |
 
 The licence mentions are softened on purpose: a page that says the shipped code is under the AGPL tells everyone they
 may ask for its source.
@@ -39,14 +41,16 @@ may ask for its source.
 **When a Windows installer exists**, replace the Windows row's "Planned" tag with the "Download the .exe" button
 pointing at wherever the installer is hosted (GitHub releases only once the repository is public).
 **When the launch note is written**, add "Read the launch note" under How it is built and "Launch note" in the footer.
+**When the web app is published** beside the site, put back the two `app/` buttons, publish with `npm run build:pages`
+and `dist-pages` instead, and settle its address first (a library lives in the browser's storage for its address).
 
 ## Publishing
 
-The site is published from `dist-pages/`, which `npm run build:pages` builds: the site at the root, the app under
-`app/`. The app's service worker is scoped to `app/`, so it never caches or intercepts the site itself.
+The site alone is published, from `dist-site/`, which `npm run build:site` builds. (`npm run build:pages` builds the
+site and the web app together into `dist-pages/`, the app under `app/` with its service worker scoped there, for the
+day the web app is published too.)
 
-**Cloudflare Pages** is the route chosen on 2026-10-15, at `https://parchemin.art/` (the app at
-`https://parchemin.art/app/`). Its free plan builds from a private repository, serves a static site with no bandwidth
+**Cloudflare Pages** is the route chosen on 2026-10-15, at `https://parchemin.art/`. Its free plan builds from a private repository, serves a static site with no bandwidth
 limit and allows 500 builds a month; nothing is paid but the domain, which stays registered at Wix. Cloudflare serves the
 domain's DNS, because a Pages project can only take a root domain (not just `www.`) from a zone on Cloudflare. One-time
 setup:
@@ -58,9 +62,9 @@ setup:
    Wix may ask to disconnect the domain from a Wix site first. Cloudflare says when the zone is active.
 3. In Cloudflare, *Workers & Pages → Create → Pages → Connect to Git*: let Cloudflare's GitHub app see the
    `parchemin` repository only, pick it, production branch `main`, framework preset *None*, build command
-   `npm run build:pages`, output directory `dist-pages`. Add the environment variable
+   `npm run build:site`, output directory `dist-site`. Add the environment variable
    `ELECTRON_SKIP_BINARY_DOWNLOAD` = `1`, so the build does not fetch Electron, which the site does not use. The build
-   names `https://parchemin.art/` as the site's address by itself (`scripts/build-pages.mjs`).
+   names `https://parchemin.art/` as the site's address by itself (`vite.site.config.ts`).
 4. In the project, *Custom domains → Set up a custom domain*: add `parchemin.art`, then `www.parchemin.art`.
    Cloudflare writes the DNS records. Then *Rules → Redirect Rules*, template "Redirect from WWW to root", so there is
    one address.
@@ -77,7 +81,7 @@ free plan now counts credits (300 a month, 15 for each deploy), so it is the fal
 4. Under *Site configuration → Domain management*, rename the `*.netlify.app` address or add your own domain. The
    build reads the address from Netlify, so the page's canonical link follows it with no change here.
 
-Settle the address before telling writers about the web app; `parchemin.art` is it. A library lives in the browser's storage for the
+The site's address is `parchemin.art`. A library lives in the browser's storage for the
 address it was written at and does not follow a move; the Safekeeping backup file is how it would travel.
 
 Other static hosts work the same way: build with `npm run build:pages` and publish `dist-pages/`. `SITE_BASE` is the

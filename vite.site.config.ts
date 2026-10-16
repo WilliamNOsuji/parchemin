@@ -1,9 +1,16 @@
 import { defineConfig, type Plugin } from 'vite'
 
+/** Where the published site lives (site/README.md, "Publishing"). */
+const ADDRESS = 'https://parchemin.art/'
+// Cloudflare Pages says which branch it is building: main is the real site, anything else a preview of it
+if (!process.env.SITE_URL && process.env.CF_PAGES) {
+  process.env.SITE_URL = process.env.CF_PAGES_BRANCH === 'main' ? ADDRESS : `${process.env.CF_PAGES_URL}/`
+}
+
 /**
  * Two checks for publishing. The build fails while a link still carries a REPLACE-ME placeholder
  * (see site/README.md), and when SITE_URL is set the page names its own address as the canonical one.
- * scripts/build-pages.mjs and the deploy workflow set SITE_URL; a plain `npm run build:site` leaves it out.
+ * A Cloudflare Pages build sets SITE_URL by itself (above); a plain local `npm run build:site` leaves it out.
  */
 function publishChecks(): Plugin {
   return {
