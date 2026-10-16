@@ -25,7 +25,8 @@ if (!new RegExp(`^version: ${version.replace(/\./g, '\\.')}$`, 'm').test(feed)) 
 
 const gh = (...args) => execFileSync('gh', args, { stdio: ['ignore', 'pipe', 'inherit'] }).toString().trim()
 try {
-  gh('release', 'view', `v${version}`, '--repo', REPO)
+  // asked quietly: "not found" is the answer hoped for
+  execFileSync('gh', ['release', 'view', `v${version}`, '--repo', REPO], { stdio: 'ignore' })
   stop(`Version ${version} is already published. Bump the version in package.json, build again, then publish.`)
 } catch {
   // not published yet: carry on
