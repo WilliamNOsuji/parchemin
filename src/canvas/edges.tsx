@@ -1,5 +1,5 @@
 import { nanoid } from 'nanoid'
-import { useId, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactNode } from 'react'
+import { useId, useRef, useState, type KeyboardEvent, type MouseEvent, type PointerEvent, type ReactNode } from 'react'
 import { anchor, edgePath, nearestSide } from './edgePath'
 import { bounds } from './geometry'
 import { colorOf, type CanvasDoc, type CanvasEdge, type CanvasSide, type Layer, type Point } from './types'
@@ -31,27 +31,26 @@ function LabelInput({ at, value, onDone }: { at: Point; value: string; onDone: (
     onDone(label)
   }
   return (
-    <foreignObject x={at.x - 90} y={at.y - 14} width={180} height={28}>
-      <input
-        className="edge-input"
-        autoFocus
-        defaultValue={value}
-        aria-label="Name this arrow"
-        placeholder="Name this arrow"
-        onFocus={(e) => e.currentTarget.select()}
-        onKeyDown={(e) => {
-          if (e.key === 'Enter') {
-            e.preventDefault()
-            finish(e.currentTarget.value.trim())
-          } else if (e.key === 'Escape') {
-            e.preventDefault()
-            e.stopPropagation()
-            finish(null)
-          }
-        }}
-        onBlur={(e) => finish(e.currentTarget.value.trim())}
-      />
-    </foreignObject>
+    <input
+      className="edge-input"
+      style={{ left: at.x, top: at.y }}
+      autoFocus
+      defaultValue={value}
+      aria-label="Name this arrow"
+      placeholder="Name this arrow"
+      onFocus={(e) => e.currentTarget.select()}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter') {
+          e.preventDefault()
+          finish(e.currentTarget.value.trim())
+        } else if (e.key === 'Escape') {
+          e.preventDefault()
+          e.stopPropagation()
+          finish(null)
+        }
+      }}
+      onBlur={(e) => finish(e.currentTarget.value.trim())}
+    />
   )
 }
 
@@ -85,7 +84,7 @@ export function EdgeLayer({ doc, layer, picked, onPick, onChange }: Props) {
     // the keyboard goes back to the arrow it was on
     requestAnimationFrame(() => document.querySelector<SVGElement>(`[data-edge-id="${id}"] .hit`)?.focus({ preventScroll: true }))
   }
-  const down = (id: string) => (e: PointerEvent<SVGElement>) => {
+  const down = (id: string) => (e: PointerEvent<Element>) => {
     if (e.button !== 0) return
     e.stopPropagation()
     onPick(id, e.shiftKey)
@@ -105,61 +104,48 @@ export function EdgeLayer({ doc, layer, picked, onPick, onChange }: Props) {
   const pad = 240
   const left = Math.floor(box.x - pad)
   const top = Math.floor(box.y - pad)
+  const drawn = doc.edges.flatMap((e) => {
+    const a = layer.rects.get(e.fromNode)
+    const b = layer.rects.get(e.toNode)
+    return a && b ? [{ e, ...edgePath(a, e.fromSide, b, e.toSide) }] : []
+  })
+  const edit = (id: string) => (ev: MouseEvent) => {
+    ev.stopPropagation()
+    setEditing(id)
+  }
   return (
-    // Chrome keeps an SVG label's first scale when a CSS zoom above it changes, and paints it in the old place;
-    // drawing the layer anew at each zoom keeps the labels on their arrows
-    <svg key={layer.view.zoom} className="edges" style={{ left, top }} width={Math.ceil(box.width + 2 * pad)} height={Math.ceil(box.height + 2 * pad)} viewBox={`${left} ${top} ${Math.ceil(box.width + 2 * pad)} ${Math.ceil(box.height + 2 * pad)}`} role="group" aria-label="Arrows">
-      <defs>
-        {head(`arr${uid}`)}
-        {head(`arr-on${uid}`, undefined, 'on')}
-        {colours.map((c, i) => head(`arr${i}${uid}`, c))}
-      </defs>
-      {doc.edges.map((e) => {
-        const a = layer.rects.get(e.fromNode)
-        const b = layer.rects.get(e.toNode)
-        if (!a || !b) return null
-        const { d, mid } = edgePath(a, e.fromSide, b, e.toSide)
-        const on = pickedSet.has(e.id)
-        const c = colorOf(e.color)
-        const m = marker(e)
-        return (
-          <g key={e.id} className={`edge${on ? ' picked' : ''}`} data-edge-id={e.id}>
-            <path className="line" d={d} style={c && !on ? { stroke: c } : undefined} markerEnd={(e.toEnd ?? 'arrow') === 'arrow' ? m : undefined} markerStart={(e.fromEnd ?? 'none') === 'arrow' ? m : undefined} />
-            <path
-              className="hit"
-              d={d}
-              tabIndex={0}
-              role="button"
-              aria-pressed={on}
-              aria-label={name(e)}
-              onPointerDown={down(e.id)}
-              onDoubleClick={(ev) => {
-                ev.stopPropagation()
-                setEditing(e.id)
-              }}
-              onKeyDown={key(e.id)}
-            />
-            {editing === e.id ? (
-              <LabelInput at={mid} value={e.label ?? ''} onDone={(label) => commit(e.id, label)} />
-            ) : e.label ? (
-              <text
-                x={mid.x}
-                y={mid.y}
-                textAnchor="middle"
-                dominantBaseline="central"
-                onPointerDown={down(e.id)}
-                onDoubleClick={(ev) => {
-                  ev.stopPropagation()
-                  setEditing(e.id)
-                }}
-              >
-                {e.label}
-              </text>
-            ) : null}
-          </g>
-        )
-      })}
-    </svg>
+    <>
+      <svg className="edges" style={{ left, top }} width={Math.ceil(box.width + 2 * pad)} height={Math.ceil(box.height + 2 * pad)} viewBox={`${left} ${top} ${Math.ceil(box.width + 2 * pad)} ${Math.ceil(box.height + 2 * pad)}`} role="group" aria-label="Arrows">
+        <defs>
+          {head(`arr${uid}`)}
+          {head(`arr-on${uid}`, undefined, 'on')}
+          {colours.map((c, i) => head(`arr${i}${uid}`, c))}
+        </defs>
+        {drawn.map(({ e, d }) => {
+          const on = pickedSet.has(e.id)
+          const c = colorOf(e.color)
+          const m = marker(e)
+          return (
+            <g key={e.id} className={`edge${on ? ' picked' : ''}`} data-edge-id={e.id}>
+              <path className="line" d={d} style={c && !on ? { stroke: c } : undefined} markerEnd={(e.toEnd ?? 'arrow') === 'arrow' ? m : undefined} markerStart={(e.fromEnd ?? 'none') === 'arrow' ? m : undefined} />
+              <path className="hit" d={d} tabIndex={0} role="button" aria-pressed={on} aria-label={name(e)} onPointerDown={down(e.id)} onDoubleClick={edit(e.id)} onKeyDown={key(e.id)} />
+            </g>
+          )
+        })}
+      </svg>
+      {/* names are HTML, not SVG text: Chrome paints SVG text under a CSS zoom at the scale it was first drawn at */}
+      <div className="edge-labels">
+        {drawn.map(({ e, mid }) =>
+          editing === e.id ? (
+            <LabelInput key={e.id} at={mid} value={e.label ?? ''} onDone={(label) => commit(e.id, label)} />
+          ) : e.label ? (
+            <span key={e.id} className={`edge-label${pickedSet.has(e.id) ? ' picked' : ''}`} data-edge-label={e.id} style={{ left: mid.x, top: mid.y }} onPointerDown={down(e.id)} onDoubleClick={edit(e.id)}>
+              {e.label}
+            </span>
+          ) : null,
+        )}
+      </div>
+    </>
   )
 }
 

@@ -6,8 +6,7 @@ import { navigate, replaceRoute } from '../route'
 import type { CoreIdea, Scene, Story, WebLinkKind } from '../types'
 import type { Cooccurrence } from '../web/cooccur'
 import { parseWebItem, webItem, type WebItemKind } from '../web/item'
-import { ALL_SHOWN } from '../web/types'
-import { useWebModel, type WebData } from '../web/useWebModel'
+import { useWebParts, type WebParts } from '../web/useWebModel'
 import { Icon } from './Icons'
 import { Section } from './RightSidebar'
 import { SettingSheet } from './SettingSheet'
@@ -26,7 +25,7 @@ interface Props {
 const KIND_NAME: Record<WebItemKind, string> = { idea: 'core idea', character: 'character', setting: 'setting', symbol: 'symbol', chapter: 'chapter', board: 'board' }
 
 /** The plain evidence for a part: which chapters name it, and how. Nothing more is claimed. */
-function evidence(key: string, kind: WebItemKind, id: string, co: Cooccurrence, scenes: Scene[], web: WebData): string {
+function evidence(key: string, kind: WebItemKind, id: string, co: Cooccurrence, scenes: Scene[], web: WebParts): string {
   if (kind === 'board') return 'A board is linked to an idea by hand; its cards are not read as text.'
   if (kind === 'chapter') {
     const names = [...co.mentions].filter(([, chapters]) => chapters.has(id)).map(([k]) => nameOf(k, scenes, web)).filter(Boolean)
@@ -38,14 +37,17 @@ function evidence(key: string, kind: WebItemKind, id: string, co: Cooccurrence, 
   return `Appears in ch. ${chapters.join(', ')} as ${spellings.join(', ')}.`
 }
 
-function nameOf(key: string, scenes: Scene[], web: WebData): string {
+function nameOf(key: string, scenes: Scene[], web: WebParts): string {
   const item = parseWebItem(key)
   if (!item) return ''
   switch (item.kind) {
     case 'idea':
       return ideaTitle(web.coreIdeas.find((c) => c.id === item.id)?.title ?? '')
-    case 'character':
-      return web.characters.find((c) => c.id === item.id)?.name.trim() || 'Unnamed'
+    case 'character': {
+      // a part that has left the story has no name at all, so the sidebar can say it is gone
+      const c = web.characters.find((x) => x.id === item.id)
+      return c ? c.name.trim() || 'Unnamed' : ''
+    }
     case 'setting': {
       const s = web.settings.find((x) => x.id === item.id)
       return s ? settingName(s) : ''
@@ -54,8 +56,10 @@ function nameOf(key: string, scenes: Scene[], web: WebData): string {
       const s = web.symbols.find((x) => x.id === item.id)
       return s ? symbolName(s) : ''
     }
-    case 'board':
-      return web.boards.find((b) => b.id === item.id)?.name.trim() || 'Untitled board'
+    case 'board': {
+      const b = web.boards.find((x) => x.id === item.id)
+      return b ? b.name.trim() || 'Untitled board' : ''
+    }
     case 'chapter': {
       const i = scenes.findIndex((s) => s.id === item.id)
       return i < 0 ? '' : `ch. ${i + 1} · ${scenes[i].title.trim() || 'Untitled'}`
@@ -64,7 +68,7 @@ function nameOf(key: string, scenes: Scene[], web: WebData): string {
 }
 
 /** A part of the story picked in the Web: what it is, the ideas the writer says it carries, and where its name appears. */
-function Part({ story, scenes, web, kind, id }: { story: Story; scenes: Scene[]; web: WebData; kind: Exclude<WebItemKind, 'idea'>; id: string }) {
+function Part({ story, scenes, web, kind, id }: { story: Story; scenes: Scene[]; web: WebParts; kind: Exclude<WebItemKind, 'idea'>; id: string }) {
   const key = webItem(kind, id)
   const name = nameOf(key, scenes, web)
   const link = { kind: kind as WebLinkKind, id }
@@ -158,7 +162,7 @@ function IdeasList({ story, ideas }: { story: Story; ideas: CoreIdea[] }) {
 
 /** The Web's sidebar: the picked core idea in its editor, or the picked part with its plain evidence; and the symbols. */
 export function WebSidebar({ story, scenes, itemId, rightTab }: Props) {
-  const web = useWebModel(story, scenes, ALL_SHOWN)
+  const web = useWebParts(story, scenes)
   const item = parseWebItem(itemId)
   if (!web) return null
 

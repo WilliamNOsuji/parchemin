@@ -67,8 +67,14 @@ function Over({ boardId, doc, layer, picked, story, setDoc, onOpenRight }: { boa
 /** The board's name in the crumbs, renamed where it sits. Only the name is written straight to the database. */
 function BoardName({ board }: { board: Board }) {
   const [name, setName] = useState(board.name)
+  // Escape leaves the name as it was: the blur that follows must not save what was typed
+  const cancelled = useRef(false)
   useEffect(() => setName(board.name), [board.name])
   const save = () => {
+    if (cancelled.current) {
+      cancelled.current = false
+      return
+    }
     const next = name.trim() || 'Untitled board'
     setName(next)
     if (next !== board.name) void db.boards.update(board.id, { name: next })
@@ -84,6 +90,7 @@ function BoardName({ board }: { board: Board }) {
       onKeyDown={(e) => {
         if (e.key === 'Enter') e.currentTarget.blur()
         else if (e.key === 'Escape') {
+          cancelled.current = true
           setName(board.name)
           e.currentTarget.blur()
         }
@@ -97,6 +104,9 @@ function BoardView({ story, scenes, board, onOpenRight }: { story: Story; scenes
   const sel = useCanvasSelection()
   const picked = sel.boardId === board.id ? sel.picked : []
   const surface = useRef<CanvasSurfaceHandle>(null)
+  // a card added after a wait (a file dialog, a new setting) goes onto the board as it is then, not as it was
+  const latest = useRef(doc)
+  latest.current = doc
   const [adding, setAdding] = useState<AddFilter | null>(null)
   const [notice, setNotice] = useState('')
   const say = useCallback((text: string) => {
@@ -114,6 +124,8 @@ function BoardView({ story, scenes, board, onOpenRight }: { story: Story; scenes
 
   /** Puts a card in the free spot nearest the middle of the view, so it covers nothing, and picks it. */
   const place = (node: CanvasNode) => {
+    const doc = latest.current
+    if (!doc) return
     const c = surface.current?.center() ?? { x: 0, y: 0 }
     const x0 = Math.round((c.x - node.width / 2) / GRID) * GRID
     const y0 = Math.round((c.y - node.height / 2) / GRID) * GRID
@@ -151,7 +163,7 @@ function BoardView({ story, scenes, board, onOpenRight }: { story: Story; scenes
     }
     if (kind === 'image') {
       const img = await pickImage(story.id)
-      if (img === 'not-a-picture') say('That file is not a picture Parchemin can keep: PNG, JPEG, GIF, WebP or AVIF.')
+      if (img === 'not-a-picture') say('That file is not a picture Parchemin can read.')
       else if (img) place(newNode('image', { x: 0, y: 0 }, img.id))
       return
     }
@@ -204,11 +216,20 @@ export function CanvasPane({ story, scenes, boardId, onOpenRight }: Props) {
   const file = useRef<HTMLInputElement>(null)
   const [error, setError] = useState('')
 
-  // the boards open on the first board, and an address whose board went to the drawer lands on another
+  // the boards open on the first board, and an address whose board went to the drawer lands on another; a board just
+  // made is in the database before the list has caught up, so the database is asked before moving away from it
   useEffect(() => {
     if (!boards || board) return
-    if (boards.length) replaceRoute({ name: 'story', storyId: story.id, tab: 'canvas', itemId: boards[0].id })
-    else if (boardId) replaceRoute({ name: 'story', storyId: story.id, tab: 'canvas' })
+    let live = true
+    void (async () => {
+      const row = boardId ? await db.boards.get(boardId) : undefined
+      if (!live || (row && row.storyId === story.id)) return
+      if (boards.length) replaceRoute({ name: 'story', storyId: story.id, tab: 'canvas', itemId: boards[0].id })
+      else if (boardId) replaceRoute({ name: 'story', storyId: story.id, tab: 'canvas' })
+    })()
+    return () => {
+      live = false
+    }
   }, [boards, board, boardId, story.id])
 
   if (!boards) return null

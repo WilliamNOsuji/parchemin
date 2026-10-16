@@ -6,8 +6,7 @@ import { cooccurrence, type Cooccurrence } from './cooccur'
 import { buildWebModel, type WebModel } from './model'
 import type { WebFilters } from './types'
 
-export interface WebData {
-  model: WebModel
+export interface WebParts {
   co: Cooccurrence
   characters: Character[]
   settings: Setting[]
@@ -15,11 +14,14 @@ export interface WebData {
   boards: Board[]
   coreIdeas: CoreIdea[]
 }
+export interface WebData extends WebParts {
+  model: WebModel
+}
 
 const byCreated = <T extends { createdAt: number }>(rows: T[]) => rows.sort((a, b) => a.createdAt - b.createdAt)
 
-/** The story's Web, live: the parts from the database, the chapters from the pane, read once. undefined while loading. */
-export function useWebModel(story: Story, scenes: Scene[], filters: WebFilters): WebData | undefined {
+/** The story's parts and where their names appear, live; what the sidebar needs, without drawing anything. undefined while loading. */
+export function useWebParts(story: Story, scenes: Scene[]): WebParts | undefined {
   const parts = useLiveQuery(async () => {
     const [characters, settings, symbols, boards, coreIdeas] = await Promise.all([
       db.characters.where('storyId').equals(story.id).toArray(),
@@ -32,11 +34,12 @@ export function useWebModel(story: Story, scenes: Scene[], filters: WebFilters):
   }, [story.id])
   // a result that belongs to the story before this one is not handed out
   const ready = parts && parts.storyId === story.id ? parts : undefined
+  // each chapter's reading is kept until its text or the story's names change, so a second reader costs little
+  return useMemo(() => (ready ? { ...ready, co: cooccurrence({ scenes, characters: ready.characters, settings: ready.settings, symbols: ready.symbols }) } : undefined), [ready, scenes])
+}
 
-  const co = useMemo(() => (ready ? cooccurrence({ scenes, characters: ready.characters, settings: ready.settings, symbols: ready.symbols }) : undefined), [ready, scenes])
-  return useMemo(() => {
-    if (!ready || !co) return undefined
-    const model = buildWebModel({ scenes, ...ready, co, filters })
-    return { model, co, ...ready }
-  }, [ready, co, scenes, filters])
+/** The story's Web, live: the parts from the database, the chapters from the pane, read once. undefined while loading. */
+export function useWebModel(story: Story, scenes: Scene[], filters: WebFilters): WebData | undefined {
+  const parts = useWebParts(story, scenes)
+  return useMemo(() => (parts ? { ...parts, model: buildWebModel({ scenes, ...parts, filters }) } : undefined), [parts, scenes, filters])
 }

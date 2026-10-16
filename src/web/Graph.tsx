@@ -17,7 +17,7 @@ const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia('
 /** The layout is redone only when the space changes by more than this, so a sidebar opening does not reshuffle the Web. */
 const RELAYOUT = 0.15
 /** The legend floats over the right of a wide graph, so the nodes are laid out and fitted beside it. */
-const beside = (w: number) => (w >= 700 ? 250 : 0)
+const beside = (w: number) => (w > 560 ? 250 : 0)
 
 interface Props {
   nodes: WebNode[]

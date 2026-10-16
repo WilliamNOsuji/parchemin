@@ -10,8 +10,8 @@ import { kindOf, refOf, type CanvasDoc, type CanvasNode } from './types'
 
 /** The longest side a picture keeps on a board, so a photo does not swell the library or the backup. */
 const MAX_SIDE = 1600
-/** A picture this small is kept exactly as it is, animation and all. */
-const KEEP_BYTES = 1_500_000
+/** A GIF this small is kept as it is, so it keeps moving. */
+const KEEP_GIF = 1_500_000
 
 const readAsDataUrl = (file: File) =>
   new Promise<string>((resolve, reject) => {
@@ -21,11 +21,16 @@ const readAsDataUrl = (file: File) =>
     r.readAsDataURL(file)
   })
 
+/**
+ * The picture as the board keeps it. Every picture is drawn again, which leaves behind what a camera writes into a
+ * file (the place it was taken, the device), and a photo stays a JPEG while anything that may be see-through keeps its
+ * transparency. Only a small GIF is kept byte for byte, so it still moves.
+ */
 async function shrink(file: File): Promise<string | null> {
   try {
     const bmp = await createImageBitmap(file)
     const scale = Math.min(1, MAX_SIDE / Math.max(bmp.width, bmp.height))
-    if (scale === 1 && file.size <= KEEP_BYTES) {
+    if (file.type === 'image/gif' && scale === 1 && file.size <= KEEP_GIF) {
       bmp.close()
       return cleanImage(await readAsDataUrl(file))
     }
@@ -34,8 +39,8 @@ async function shrink(file: File): Promise<string | null> {
     canvas.height = Math.round(bmp.height * scale)
     canvas.getContext('2d')!.drawImage(bmp, 0, 0, canvas.width, canvas.height)
     bmp.close()
-    // a photo is kept as a JPEG; anything that may be see-through keeps its transparency as a WebP
-    return cleanImage(file.type === 'image/jpeg' ? canvas.toDataURL('image/jpeg', 0.85) : canvas.toDataURL('image/webp', 0.9))
+    if (file.type === 'image/jpeg') return cleanImage(canvas.toDataURL('image/jpeg', 0.85))
+    return cleanImage(file.type === 'image/png' ? canvas.toDataURL('image/png') : canvas.toDataURL('image/webp', 0.9))
   } catch {
     return null
   }
@@ -49,7 +54,7 @@ export function pickImage(storyId: string): Promise<{ id: string; name: string }
   return new Promise((resolve) => {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = 'image/png,image/jpeg,image/gif,image/webp,image/avif'
+    input.accept = 'image/*'
     input.addEventListener('change', async () => {
       const file = input.files?.[0]
       if (!file) return resolve(null)
@@ -161,7 +166,7 @@ export function AddFromStory({ story, scenes, doc, onAdd, open: controlled, onOp
               onClick={async () => {
                 setOpen(null)
                 const img = await pickImage(story.id)
-                if (img === 'not-a-picture') onSay?.('That file is not a picture Parchemin can keep: PNG, JPEG, GIF, WebP or AVIF.')
+                if (img === 'not-a-picture') onSay?.('That file is not a picture Parchemin can read.')
                 else if (img) onAdd(newNode('image', { x: 0, y: 0 }, img.id))
               }}
             >

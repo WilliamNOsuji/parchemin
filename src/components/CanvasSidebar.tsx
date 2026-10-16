@@ -6,6 +6,7 @@ import { openCanvasFile, saveCanvasFile } from '../canvas/canvasFiles'
 import { removeFromDoc } from '../canvas/geometry'
 import { setPicked, useCanvasSelection } from '../canvas/selection'
 import { COLOR_CHOICES, colorOf, kindOf, refOf, type CanvasDoc, type CanvasEdge, type CanvasNode, type CardKind } from '../canvas/types'
+import { settingName } from '../craft/settings'
 import { voiceById } from '../craft/voices'
 import { createBoard, db, setAsideBoard } from '../db'
 import { navigate } from '../route'
@@ -15,6 +16,7 @@ import { Icon } from './Icons'
 import { Menu } from './Menu'
 import { Section } from './RightSidebar'
 import { SettingSheet } from './SettingSheet'
+import { useAutosave } from './useAutosave'
 import './canvas-pane.css'
 import './settings.css'
 
@@ -45,8 +47,10 @@ function cardName(n: CanvasNode, scenes: Scene[], names: Names): string {
       const i = scenes.findIndex((s) => s.id === ref)
       return i < 0 ? 'No longer in the story' : `${i + 1} · ${scenes[i].title.trim() || 'Untitled'}`
     }
-    case 'setting':
-      return names.settings.get(ref)?.name.trim() || (names.settings.has(ref) ? 'Unnamed setting' : 'No longer in the story')
+    case 'setting': {
+      const s = names.settings.get(ref)
+      return s ? settingName(s) : 'No longer in the story'
+    }
     case 'image':
       return names.images.get(ref) || 'A picture'
     case 'group':
@@ -102,27 +106,27 @@ function ArrowTo({ node, doc, boardId, scenes, names }: { node: CanvasNode; doc:
   )
 }
 
-/** The fields of a live character card: the same profile as on the Cast page. */
-function CharacterFields({ c }: { c: Character }) {
+/** The fields of a live character card: the same profile as on the Cast page, saved as the writer types. */
+function CharacterFields({ character }: { character: Character }) {
+  const [c, update] = useAutosave(character, (id, patch) => db.characters.update(id, { ...patch, updatedAt: Date.now() }))
   const voice = voiceById(c.craft?.voice)
-  const save = (patch: Partial<Character>) => void db.characters.update(c.id, { ...patch, updatedAt: Date.now() })
   return (
     <>
       <p className="hint">A character card is the live profile. Change it here or on the Cast page, and both change.</p>
       <div className="two">
         <label className="field">
           <span>Name</span>
-          <GrowingText key={`n${c.updatedAt}`} defaultValue={c.name} onBlur={(e) => e.target.value.trim() !== c.name && e.target.value.trim() && save({ name: e.target.value.trim() })} />
+          <GrowingText value={c.name} placeholder="Name" onChange={(e) => update({ name: e.target.value.replace(/\n/g, ' ') })} />
         </label>
         <label className="field">
           <span>Role</span>
-          <GrowingText key={`r${c.updatedAt}`} defaultValue={c.role} placeholder="Hero, mentor, rival…" onBlur={(e) => e.target.value !== c.role && save({ role: e.target.value })} />
+          <GrowingText value={c.role} placeholder="Hero, mentor, rival…" onChange={(e) => update({ role: e.target.value })} />
         </label>
       </div>
       <div className="f"><span>Voice</span><div>{voice ? voice.name : <span className="empty">No voice yet. Give them one on the Cast page.</span>}</div></div>
       <label className="field">
         <span>Wants in a room</span>
-        <GrowingText key={`w${c.updatedAt}`} defaultValue={c.craft?.wantInRoom ?? ''} placeholder={voice?.want ?? 'What do they want from the people in a room?'} onBlur={(e) => e.target.value !== (c.craft?.wantInRoom ?? '') && save({ craft: { ...c.craft, wantInRoom: e.target.value } })} />
+        <GrowingText value={c.craft?.wantInRoom ?? ''} placeholder={voice?.want ?? 'What do they want from the people in a room?'} onChange={(e) => update({ craft: { ...c.craft, wantInRoom: e.target.value } })} />
       </label>
       <div className="acts">
         <button className="btn small" onClick={() => navigate({ name: 'story', storyId: c.storyId, tab: 'cast', itemId: c.id })}>Open on the Cast page</button>
@@ -211,7 +215,7 @@ function Selected({ doc, boardId, scenes, names }: { doc: CanvasDoc; boardId: st
   let body: ReactNode = null
   if (kind === 'character') {
     const c = names.characters.get(ref)
-    body = c ? <CharacterFields key={c.id} c={c} /> : <p className="hint">This person is no longer in the story. Put them back from the drawer and the card comes back to life.</p>
+    body = c ? <CharacterFields key={c.id} character={c} /> : <p className="hint">This person is no longer in the story. Put them back from the drawer and the card comes back to life.</p>
   } else if (kind === 'chapter') {
     const i = scenes.findIndex((s) => s.id === ref)
     body = i >= 0 ? <ChapterFields scene={scenes[i]} n={i + 1} /> : <p className="hint">This chapter is no longer in the story. Put it back from the drawer and the card comes back to life.</p>
